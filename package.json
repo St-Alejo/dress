@@ -1,0 +1,25 @@
+{
+  "name": "vestirse",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Probador de ropa virtual de tres capas: overlay en vivo, generación fotorrealista y motor de ajuste de talla.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build:packages": "npm run build -w packages/shared-types -w packages/fit-engine",
+    "dev:api": "npm run start:dev -w apps/api",
+    "dev:web": "npm start -w apps/web",
+    "db:migrate": "npm run db:migrate -w apps/api",
+    "db:seed": "npm run db:seed -w apps/api",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "test": "npm test --workspaces --if-present",
+    "test:invariants": "npm run test:invariants --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
