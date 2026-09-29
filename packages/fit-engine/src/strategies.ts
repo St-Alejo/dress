@@ -132,8 +132,9 @@ export class PoseRatioStrategy implements FitStrategy {
 
   evaluate({ chart, poseRatios, category }: FitContext): StrategyResult | null {
     if (!poseRatios || !['top', 'outerwear', 'dress'].includes(category)) return null;
-    // Hombros proporcionalmente anchos favorecen levemente la talla siguiente en prendas superiores.
-    const lean = poseRatios.shoulderToHipRatio > 1.25 ? 1 : poseRatios.shoulderToHipRatio < 0.95 ? -1 : 0;
+    // Relación normalizada (1 ≈ típica). Hombros proporcionalmente anchos favorecen
+    // levemente la talla siguiente en prendas superiores; estrechos, la anterior.
+    const lean = poseRatios.shoulderToHipRatio > 1.12 ? 1 : poseRatios.shoulderToHipRatio < 0.9 ? -1 : 0;
     if (lean === 0) return null;
     const scores: Record<string, number> = {};
     chart.sizes.forEach((s, i) => (scores[s] = lean > 0 ? i / (chart.sizes.length - 1 || 1) : 1 - i / (chart.sizes.length - 1 || 1)));

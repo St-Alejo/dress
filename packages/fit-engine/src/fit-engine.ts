@@ -63,7 +63,9 @@ export class FitEngine {
 
     const ranked = this.rank(chart, results);
     let [best, second] = ranked;
-    const basis = unique(results.flatMap((r) => r.basis));
+    const measured = results.some((r) => r.evidence === 'measured');
+    // Con medidas reales, la tabla genérica por altura es ruido: no se muestra como base.
+    const basis = unique(results.flatMap((r) => r.basis)).filter((b) => !(measured && b === 'fit.basis.genericChart'));
 
     let alternativeSize: string | undefined;
     if (second && best.score - second.score < BETWEEN_SIZES_MARGIN) {

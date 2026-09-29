@@ -143,6 +143,7 @@ export class TryOnSession {
       uploadedPhotoUrl: p.photoKey ? `/api/tryon/sessions/${p.id}/photo` : undefined,
       photoExpiresAt: p.photoExpiresAt?.toISOString(),
       resultImageUrl: p.resultKey ? `/api/tryon/sessions/${p.id}/result` : undefined,
+      resultSaved: p.resultSaved,
       generationStatus: p.generationStatus,
       fitRecommendation: p.fitRecommendation,
       createdAt: p.createdAt.toISOString(),

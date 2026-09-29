@@ -38,8 +38,8 @@ export class TryOnService {
   async start(args: { garmentId: string; mode: TryOnMode; bodyModelId?: string }, requester: Requester) {
     if (!(await this.catalog.findGarment(args.garmentId))) throw new NotFoundException('prenda no encontrada');
     const session = TryOnSession.start({ id: randomUUID(), ...args, requester, now: new Date() });
+    // El uso de modalidad lo reporta el cliente al elegirla; crear la sesión no cuenta dos veces.
     await this.sessions.create(session);
-    await this.metrics.record('mode-used', { mode: args.mode, garmentId: args.garmentId });
     return session.toDto();
   }
 

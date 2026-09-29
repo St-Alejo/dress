@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Paquetes compartidos
+        run: npm run build:packages
+      - name: Cliente Prisma
+        run: npm run db:generate -w apps/api
+      - name: Typecheck API
+        run: npm run lint -w apps/api
+      - name: Tests (fit-engine, shared-types, api, web)
+        run: npm test
+      - name: Invariantes éticas
+        run: npm run test:invariants
+      - name: Build web (producción)
+        run: npm run build -w apps/web
+      - name: Build API
+        run: npm run build -w apps/api
+
+  ai-worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ai-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e ".[dev]"
+      - run: pytest -q

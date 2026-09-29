@@ -28,6 +28,7 @@ export interface BodyMeasurements {
 
 /** Proporciones derivadas de keypoints de pose (nÃºmeros, nunca imagen). */
 export interface PoseRatios {
+  /** Relación hombros/caderas normalizada: 1 ≈ proporción típica. */
   shoulderToHipRatio: number;
   torsoToHeightRatio?: number;
 }
@@ -110,6 +111,8 @@ export interface TryOnSession {
   /** TTL corto por defecto (secciÃ³n 8). */
   photoExpiresAt?: string;
   resultImageUrl?: string;
+  /** true solo si la persona guardó el resultado en su cuenta (sobrevive al TTL). */
+  resultSaved?: boolean;
   generationStatus?: GenerationStatus;
   fitRecommendation?: FitRecommendation;
   createdAt: string;

@@ -1,0 +1,236 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens de diseño. Tono editorial y sereno: papel cálido, tinta profunda y un
+ * solo acento terracota. Nada en la interfaz juzga cuerpos: los colores de
+ * confianza describen la calidad del dato, nunca a la persona.
+ */
+:root {
+  --paper: #f7f4ef;
+  --surface: #ffffff;
+  --surface-2: #efeae2;
+  --ink: #1d1b19;
+  --ink-2: #4a4540;
+  --muted: #6b655e;
+  --line: #e2dcd2;
+  --accent: #a84a24;
+  --accent-ink: #ffffff;
+  --accent-soft: #f4e4d9;
+  --conf-high: #2f6b4f;
+  --conf-high-soft: #e1efe7;
+  --conf-medium: #8a5a0b;
+  --conf-medium-soft: #f6ead2;
+  --conf-low: #6b655e;
+  --conf-low-soft: #ebe7e1;
+  --danger: #a2332b;
+  --focus: #1f5fbf;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgb(29 27 25 / 6%), 0 8px 24px rgb(29 27 25 / 6%);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #141312;
+    --surface: #1d1b19;
+    --surface-2: #26231f;
+    --ink: #f2eee8;
+    --ink-2: #d2ccc3;
+    --muted: #a39c92;
+    --line: #34302b;
+    --accent: #e0825a;
+    --accent-ink: #1d1b19;
+    --accent-soft: #3a2519;
+    --conf-high: #7cc4a0;
+    --conf-high-soft: #1e3329;
+    --conf-medium: #e2b560;
+    --conf-medium-soft: #372b15;
+    --conf-low: #a39c92;
+    --conf-low-soft: #2a2724;
+    --danger: #ef8a80;
+    --focus: #8ab4ff;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: #141312;
+  --surface: #1d1b19;
+  --surface-2: #26231f;
+  --ink: #f2eee8;
+  --ink-2: #d2ccc3;
+  --muted: #a39c92;
+  --line: #34302b;
+  --accent: #e0825a;
+  --accent-ink: #1d1b19;
+  --accent-soft: #3a2519;
+  --conf-high: #7cc4a0;
+  --conf-high-soft: #1e3329;
+  --conf-medium: #e2b560;
+  --conf-medium-soft: #372b15;
+  --conf-low: #a39c92;
+  --conf-low-soft: #2a2724;
+  --danger: #ef8a80;
+  --focus: #8ab4ff;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    border-radius: 999px;
+    font-weight: 560;
+    font-size: 0.95rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.05s;
+  }
+  .btn:hover {
+    border-color: var(--ink-2);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .btn-primary:hover {
+    border-color: var(--accent);
+    filter: brightness(1.05);
+  }
+  .btn-ghost {
+    background: transparent;
+    border-color: transparent;
+  }
+  .btn-ghost:hover {
+    background: var(--surface-2);
+    border-color: transparent;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    min-width: 44px;
+    justify-content: center;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 0.9rem;
+    font-weight: 540;
+    cursor: pointer;
+  }
+  .chip[aria-pressed='true'],
+  .chip[aria-selected='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .field {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    color: var(--ink-2);
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 1rem;
+  }
+  .eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
