@@ -58,6 +58,14 @@ export interface Brand {
   name: string;
 }
 
+/** "left" = lado izquierdo de la persona (derecha de la imagen sin espejo), igual que MediaPipe. */
+export interface OverlayAnchors {
+  leftShoulder: [number, number];
+  rightShoulder: [number, number];
+  leftHip: [number, number];
+  rightHip: [number, number];
+}
+
 export interface GarmentItem {
   id: string;
   name: string;
@@ -67,6 +75,9 @@ export interface GarmentItem {
   color: string;
   priceCents: number;
   images: { front: string; flat: string; overlay: string };
+  /** Anclas (px en la imagen de overlay) para alinearla con los keypoints de Track A. */
+  overlayAnchors: OverlayAnchors;
+  overlaySize: [number, number];
   sizeChart: SizeChartEntry[];
   /** "cae holgado", "tela con poco stretch" â€” contexto no visual. */
   fabricNotes?: string;

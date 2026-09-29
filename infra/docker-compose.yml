@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: vestirse
       POSTGRES_PASSWORD: vestirse
       POSTGRES_DB: vestirse
-    ports: ["5432:5432"]
+    ports: ["55432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vestirse"]
@@ -16,40 +16,22 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports: ["6380:6379"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  # Almacenamiento S3-compatible (RustFS; las imágenes oficiales de MinIO ya no se publican).
+  # La API crea el bucket y la regla de expiración de uploads/ al arrancar (sección 8, punto 2).
+  s3:
+    image: rustfs/rustfs:latest
     environment:
-      MINIO_ROOT_USER: vestirse
-      MINIO_ROOT_PASSWORD: vestirse-secret
+      RUSTFS_ACCESS_KEY: vestirse
+      RUSTFS_SECRET_KEY: vestirse-secret
+      RUSTFS_CONSOLE_ENABLE: "true"
     ports: ["9000:9000", "9001:9001"]
-    volumes: [miniodata:/data]
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
-      retries: 10
-
-  # Crea el bucket y la regla de expiración automática (sección 8, punto 2):
-  # las fotos subidas bajo uploads/ se borran solas tras 1 día, además del cron de la API.
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 vestirse vestirse-secret &&
-      mc mb --ignore-existing local/vestirse &&
-      mc ilm rule add --expire-days 1 --prefix uploads/ local/vestirse || true &&
-      mc anonymous set download local/vestirse/catalog &&
-      echo 'bucket listo'
-      "
+    volumes: [s3data:/data]
 
   ai-worker:
     build: ../services/ai-worker
@@ -66,4 +48,4 @@ services:
 
 volumes:
   pgdata:
-  miniodata:
+  s3data:

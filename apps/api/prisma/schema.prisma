@@ -1,0 +1,198 @@
+// Modelo persistente. Regla de arquitectura (sección 8/12): NUNCA se guardan
+// fotos en Postgres — solo claves de objeto en S3 y su fecha de expiración.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum GarmentCategory {
+  top
+  bottom
+  dress
+  outerwear
+  footwear
+  accessory
+}
+
+enum Stretch {
+  none
+  low
+  medium
+  high
+}
+
+enum TryOnMode {
+  similar_model
+  live_overlay
+  photorealistic
+}
+
+enum GenerationStatus {
+  idle
+  queued
+  processing
+  done
+  failed
+  fallback
+}
+
+enum FitFeeling {
+  runs_small
+  true_to_size
+  runs_large
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  passwordHash      String
+  role              Role           @default(user)
+  /// Consentimiento separado para reentrenar modelos (sección 8.4). Nunca true por defecto.
+  retrainingConsent Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  sessions          TryOnSession[]
+  reviews           FitReview[]
+}
+
+model Brand {
+  id           String             @id @default(uuid())
+  name         String             @unique
+  garments     Garment[]
+  calibrations BrandCalibration[]
+}
+
+model Garment {
+  id               String            @id @default(uuid())
+  name             String
+  brandId          String
+  brand            Brand             @relation(fields: [brandId], references: [id])
+  category         GarmentCategory
+  /// Estilo de la ilustración (tshirt, jeans, dress-a...) usado por el renderer de previews.
+  style            String
+  pattern          String            @default("solid")
+  color            String
+  priceCents       Int
+  imageFrontKey    String
+  imageFlatKey     String
+  imageOverlayKey  String
+  fabricNotes      String?
+  stretch          Stretch           @default(low)
+  knownLimitations String[]          @default([])
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  sizeChart        SizeChartEntry[]
+  previews         BodyModelPreview[]
+  reviews          FitReview[]
+  sessions         TryOnSession[]
+}
+
+model SizeChartEntry {
+  id        String  @id @default(uuid())
+  garmentId String
+  garment   Garment @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  size      String
+  sortOrder Int
+  chestMin  Float?
+  chestMax  Float?
+  waistMin  Float?
+  waistMax  Float?
+  hipMin    Float?
+  hipMax    Float?
+  heightMin Float?
+  heightMax Float?
+
+  @@unique([garmentId, size])
+}
+
+/// Catálogo "cuerpo similar al mío" — obligatorio y diverso desde el día uno (sección 4, regla 4).
+model BodyModel {
+  id          String             @id @default(uuid())
+  bodyTypeTag String
+  typicalSize String
+  heightMin   Int
+  heightMax   Int
+  skinTone    String
+  /// Parámetros del avatar ilustrado (anchos de hombro, cintura, cadera...).
+  shape       Json
+  avatarKey   String
+  sortOrder   Int                @default(0)
+  previews    BodyModelPreview[]
+}
+
+model BodyModelPreview {
+  bodyModelId String
+  bodyModel   BodyModel @relation(fields: [bodyModelId], references: [id], onDelete: Cascade)
+  garmentId   String
+  garment     Garment   @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  imageKey    String
+
+  @@id([bodyModelId, garmentId])
+}
+
+model TryOnSession {
+  id                String           @id @default(uuid())
+  userId            String?
+  user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Identificador anónimo de navegador: las sesiones sin cuenta son válidas.
+  ownerSid          String
+  garmentId         String
+  garment           Garment          @relation(fields: [garmentId], references: [id])
+  mode              TryOnMode
+  bodyModelId       String?
+  photoKey          String?
+  photoExpiresAt    DateTime?
+  resultKey         String?
+  resultSaved       Boolean          @default(false)
+  generationStatus  GenerationStatus @default(idle)
+  fitRecommendation Json?
+  createdAt         DateTime         @default(now())
+
+  @@index([ownerSid])
+  @@index([photoExpiresAt])
+}
+
+model FitReview {
+  id         String     @id @default(uuid())
+  garmentId  String
+  garment    Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sizeBought String
+  feeling    FitFeeling
+  zones      String[]
+  comment    String?
+  createdAt  DateTime   @default(now())
+
+  @@index([garmentId])
+}
+
+model BrandCalibration {
+  brandId    String
+  brand      Brand           @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  category   GarmentCategory
+  sampleSize Int             @default(0)
+  shiftSum   Int             @default(0)
+
+  @@id([brandId, category])
+}
+
+/// Métricas de la sección 14. No hay (ni debe haber) métrica de "tiempo mirando el propio cuerpo".
+model MetricEvent {
+  id        String   @id @default(uuid())
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+}
