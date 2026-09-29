@@ -11,3 +11,4 @@ apps/api/src/generated/
 test-results/
 playwright-report/
 *.egg-info/
+*.tsbuildinfo
