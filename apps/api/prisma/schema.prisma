@@ -86,6 +86,10 @@ model Garment {
   imageFrontKey    String
   imageFlatKey     String
   imageOverlayKey  String
+  /// Foto real de producto (subida por el admin o generada con IA). Se prefiere sobre la ilustración.
+  photoKey         String?
+  /// Holgura de diseño { chestEaseCm, waistEaseCm, hipEaseCm }.
+  fitIntent        Json?
   fabricNotes      String?
   stretch          Stretch           @default(low)
   knownLimitations String[]          @default([])
@@ -111,6 +115,13 @@ model SizeChartEntry {
   hipMax    Float?
   heightMin Float?
   heightMax Float?
+  /// Medidas de la PRENDA en esta talla (no del cuerpo), en cm.
+  gChest    Float?
+  gWaist    Float?
+  gHip      Float?
+  gLength   Float?
+  gSleeve   Float?
+  gInseam   Float?
 
   @@unique([garmentId, size])
 }
@@ -155,11 +166,17 @@ model TryOnSession {
   resultKey         String?
   resultSaved       Boolean          @default(false)
   generationStatus  GenerationStatus @default(idle)
+  /// Última transición de estado: el reaper la usa para detectar generaciones atascadas.
+  statusChangedAt   DateTime         @default(now())
+  failureReason     String?
   fitRecommendation Json?
+  /// Conjunto a probar: [{ garmentId, size }]. Nunca incluye estatura ni peso.
+  outfit            Json?
   createdAt         DateTime         @default(now())
 
   @@index([ownerSid])
   @@index([photoExpiresAt])
+  @@index([generationStatus, statusChangedAt])
 }
 
 model FitReview {
@@ -185,6 +202,18 @@ model BrandCalibration {
   shiftSum   Int             @default(0)
 
   @@id([brandId, category])
+}
+
+/// Configuración de IA de la tienda (una sola fila, id = "default").
+/// La clave se guarda cifrada con AES-256-GCM; nunca se devuelve completa.
+model AiSettings {
+  id           String   @id @default("default")
+  provider     String   @default("mock")
+  model        String?
+  encryptedKey String?
+  keyLast4     String?
+  lastTestOk   Boolean?
+  updatedAt    DateTime @updatedAt
 }
 
 /// Métricas de la sección 14. No hay (ni debe haber) métrica de "tiempo mirando el propio cuerpo".

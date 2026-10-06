@@ -14,10 +14,16 @@ export interface TryOnSessionProps {
   resultSaved: boolean;
   generationStatus: GenerationStatus;
   fitRecommendation?: FitRecommendation;
+  /** Por qué terminó en `failed` o `fallback` (código del contrato o motivo interno). */
+  failureReason?: string;
+  /** Última transición de estado: permite detectar generaciones atascadas. */
+  statusChangedAt: Date;
   createdAt: Date;
 }
 
 export class DomainError extends Error {}
+
+const IN_FLIGHT: GenerationStatus[] = ['queued', 'processing'];
 
 /**
  * Entidad raíz de una prueba. Encapsula las reglas de la sección 8:
@@ -37,6 +43,7 @@ export class TryOnSession {
       bodyModelId: args.bodyModelId,
       resultSaved: false,
       generationStatus: 'idle',
+      statusChangedAt: args.now,
       createdAt: args.now,
     });
   }
@@ -52,6 +59,8 @@ export class TryOnSession {
   get resultKey() { return this.props.resultKey; }
   get status() { return this.props.generationStatus; }
   get fitRecommendation() { return this.props.fitRecommendation; }
+  get failureReason() { return this.props.failureReason; }
+  get isInFlight() { return IN_FLIGHT.includes(this.props.generationStatus); }
   get snapshot(): Readonly<TryOnSessionProps> { return { ...this.props }; }
 
   static photoKeyFor(id: string) { return `uploads/sessions/${id}/photo.jpg`; }
@@ -68,35 +77,49 @@ export class TryOnSession {
 
   /** Adjuntar foto implica modo fotorrealista y fija la expiración (TTL corto por defecto). */
   attachPhoto(now: Date, ttlHours: number) {
-    if (this.props.generationStatus === 'queued' || this.props.generationStatus === 'processing') {
-      throw new DomainError('no se puede cambiar la foto mientras se genera');
-    }
+    if (this.isInFlight) throw new DomainError('no se puede cambiar la foto mientras se genera');
     this.props.mode = 'photorealistic';
     this.props.photoKey = TryOnSession.photoKeyFor(this.id);
     this.props.photoExpiresAt = new Date(now.getTime() + ttlHours * 3600_000);
-    this.props.generationStatus = 'idle';
+    this.transition('idle', now);
   }
 
-  requestGeneration() {
+  /** También se permite desde `failed` o `fallback`: reintentar es decisión de la persona. */
+  requestGeneration(now = new Date()) {
     if (!this.props.photoKey) throw new DomainError('primero hay que subir una foto');
-    if (this.props.generationStatus === 'queued' || this.props.generationStatus === 'processing') {
-      throw new DomainError('ya hay una generación en curso');
-    }
-    this.props.generationStatus = 'queued';
+    if (this.isInFlight) throw new DomainError('ya hay una generación en curso');
+    this.transition('queued', now);
   }
 
-  markProcessing() {
-    this.props.generationStatus = 'processing';
+  markProcessing(now = new Date()) {
+    if (!this.isInFlight) throw new DomainError('la generación no está en curso');
+    this.transition('processing', now);
   }
 
-  complete() {
+  complete(now = new Date()) {
     this.props.resultKey = TryOnSession.resultKeyFor(this.id);
-    this.props.generationStatus = 'done';
+    this.transition('done', now);
   }
 
-  /** Circuit breaker: se ofrece el modelo similar / overlay en vez de dejar a la persona frente a un error. */
-  fallback() {
-    this.props.generationStatus = 'fallback';
+  /** El proveedor no está disponible: se ofrece el modelo similar / overlay en vez de un error. */
+  fallback(reason: string, now = new Date()) {
+    this.transition('fallback', now, reason);
+  }
+
+  /** Fallo definitivo (sin foto, atascada, reintentos agotados). La persona puede volver a intentar. */
+  fail(reason: string, now = new Date()) {
+    this.transition('failed', now, reason);
+  }
+
+  /** Una generación en curso que no cambia de estado en `maxMs` se considera atascada. */
+  isStuck(now: Date, maxMs: number): boolean {
+    return this.isInFlight && now.getTime() - this.props.statusChangedAt.getTime() > maxMs;
+  }
+
+  private transition(status: GenerationStatus, now: Date, reason?: string) {
+    this.props.generationStatus = status;
+    this.props.statusChangedAt = now;
+    this.props.failureReason = reason;
   }
 
   saveResult(userId: string) {
@@ -125,7 +148,7 @@ export class TryOnSession {
     if (this.props.resultKey && !this.props.resultSaved) {
       keys.push(this.props.resultKey);
       this.props.resultKey = undefined;
-      if (this.props.generationStatus === 'done') this.props.generationStatus = 'idle';
+      if (this.props.generationStatus === 'done') this.transition('idle', new Date());
     }
     this.props.photoKey = undefined;
     this.props.photoExpiresAt = undefined;
@@ -145,6 +168,7 @@ export class TryOnSession {
       resultImageUrl: p.resultKey ? `/api/tryon/sessions/${p.id}/result` : undefined,
       resultSaved: p.resultSaved,
       generationStatus: p.generationStatus,
+      failureReason: p.failureReason,
       fitRecommendation: p.fitRecommendation,
       createdAt: p.createdAt.toISOString(),
     };

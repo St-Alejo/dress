@@ -9,5 +9,7 @@ export abstract class TryOnSessionRepository {
   abstract findOwned(id: string, requester: Requester): Promise<TryOnSession | null>;
   abstract listOwned(requester: Requester, limit: number): Promise<TryOnSession[]>;
   abstract findWithExpiredPhotos(now: Date, limit: number): Promise<TryOnSession[]>;
+  /** Generaciones en curso (`queued`/`processing`) sin cambios desde `changedBefore`. */
+  abstract findStuck(changedBefore: Date, limit: number): Promise<TryOnSession[]>;
   abstract findByUser(userId: string): Promise<TryOnSession[]>;
 }

@@ -1,8 +1,8 @@
-import { Body, Controller, Injectable, Module, NotFoundException, Post, UnprocessableEntityException } from '@nestjs/common';
+import { Body, Controller, HttpCode, Injectable, Module, NotFoundException, Post, UnprocessableEntityException } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min, ValidateNested } from 'class-validator';
+import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { BrandCalibration, FitEngine, SizeChart } from '@vestirse/fit-engine';
-import type { FitRecommendation, GarmentCategory } from '@vestirse/shared-types';
+import type { EstimatedBody, FitAnalysis, FitRecommendation, GarmentCategory, Silhouette } from '@vestirse/shared-types';
 import { PrismaService } from '../../common/prisma.service';
 import { CurrentRequester, type Requester } from '../../common/requester';
 import { CatalogModule } from '../catalog/catalog.module';
@@ -38,12 +38,23 @@ export class PrismaCalibrationRepository extends CalibrationRepository {
   }
 }
 
+/**
+ * Perfil corporal. El peso y las medidas se usan solo para calcular en esta
+ * petición: NUNCA se persisten ni se registran.
+ */
 class MeasurementsDto {
   @IsNumber() @Min(120) @Max(230) heightCm: number;
+  @IsOptional() @IsNumber() @Min(30) @Max(300) weightKg?: number;
+  @IsOptional() @IsIn(['feminine', 'masculine', 'neutral']) silhouette?: Silhouette;
   @IsOptional() @IsNumber() @Min(50) @Max(200) chestCm?: number;
   @IsOptional() @IsNumber() @Min(40) @Max(200) waistCm?: number;
   @IsOptional() @IsNumber() @Min(50) @Max(200) hipCm?: number;
   @IsOptional() @IsBoolean() estimatedFromPose?: boolean;
+}
+
+class AnalyzeDto {
+  @IsUUID() garmentId: string;
+  @ValidateNested() @Type(() => MeasurementsDto) measurements: MeasurementsDto;
 }
 
 class PoseRatiosDto {
@@ -84,12 +95,34 @@ export class FitService {
       sizeChart: garment.sizeChart,
       category: garment.category,
       stretch: garment.stretch,
+      fitIntent: garment.fitIntent,
       poseRatios: dto.poseRatios,
       calibration: await this.calibration.get(garment.brandId, garment.category),
     });
     await this.metrics.record('size-recommended', { garmentId: garment.id, confidence: rec.confidence });
     if (dto.sessionId) await this.saveOnSession(dto.sessionId, requester, rec);
     return rec;
+  }
+
+  /**
+   * "Medirse las prendas por talla": cómo le queda cada talla a este cuerpo,
+   * más la talla recomendada. Cálculo puro; nada se guarda.
+   */
+  async analyze(dto: AnalyzeDto): Promise<{ body: EstimatedBody; analyses: FitAnalysis[]; recommendation: FitRecommendation }> {
+    const garment = await this.catalog.findGarment(dto.garmentId);
+    if (!garment) throw new NotFoundException();
+    const input = {
+      measurements: dto.measurements,
+      sizeChart: garment.sizeChart,
+      category: garment.category,
+      stretch: garment.stretch,
+      fitIntent: garment.fitIntent,
+    };
+    return {
+      body: this.engine.bodyFor(dto.measurements),
+      analyses: this.engine.analyze(input),
+      recommendation: this.engine.recommend({ ...input, calibration: await this.calibration.get(garment.brandId, garment.category) }),
+    };
   }
 
   /** La persona corrige la talla: siempre se acepta y alimenta la calibración de la marca. */
@@ -131,6 +164,12 @@ export class FitController {
   @Post('estimate')
   estimate(@Body() dto: EstimateFitDto, @CurrentRequester() requester: Requester) {
     return this.fit.estimate(dto, requester);
+  }
+
+  @Post('analyze')
+  @HttpCode(200)
+  analyze(@Body() dto: AnalyzeDto) {
+    return this.fit.analyze(dto);
   }
 
   @Post('override')

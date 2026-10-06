@@ -9,6 +9,7 @@ import { PrismaModule } from './common/prisma.service';
 import { RequesterMiddleware } from './common/requester';
 import { StorageModule } from './common/storage';
 import { AdminModule } from './modules/admin/admin.module';
+import { AiSettingsModule } from './modules/ai-settings/ai-settings.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { FitModule } from './modules/fit/fit.module';
@@ -36,6 +37,7 @@ import { TryOnModule } from './modules/tryon/tryon.module';
     PrismaModule,
     StorageModule,
     MetricsModule,
+    AiSettingsModule,
     CatalogModule,
     FitModule,
     TryOnModule,

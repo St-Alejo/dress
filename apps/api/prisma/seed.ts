@@ -4,7 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { S3ObjectStorage } from '../src/common/storage';
+import { fitIntentFor } from '../src/modules/catalog/domain/garment-grading';
 import type { GarmentArt } from '../src/modules/catalog/infrastructure/illustration/garment-art';
+import { sizeRows } from '../src/modules/catalog/infrastructure/size-rows';
 import { IllustrationPublisher } from '../src/modules/catalog/infrastructure/illustration/illustration-publisher';
 import { BODIES, BRANDS, GARMENTS, type SeedGarment } from '../src/seed/seed-data';
 
@@ -55,16 +57,8 @@ async function main() {
         fabricNotes: g.fabricNotes,
         stretch: g.stretch,
         knownLimitations: g.knownLimitations ?? [],
-        sizeChart: {
-          create: g.sizeChart.map((e, i) => ({
-            size: e.size,
-            sortOrder: i,
-            chestMin: e.chest?.[0], chestMax: e.chest?.[1],
-            waistMin: e.waist?.[0], waistMax: e.waist?.[1],
-            hipMin: e.hip?.[0], hipMax: e.hip?.[1],
-            heightMin: e.height?.[0], heightMax: e.height?.[1],
-          })),
-        },
+        fitIntent: fitIntentFor(g.style) ?? undefined,
+        sizeChart: { create: sizeRows(g.style, g.sizeChart) },
       },
     });
     garmentIds[g.key] = created.id;

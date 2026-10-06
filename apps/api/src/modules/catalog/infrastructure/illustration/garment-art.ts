@@ -1,4 +1,6 @@
-import { BodyGeometry } from './body-geometry';
+import { BODY_LANDMARKS } from '@vestirse/fit-engine';
+import type { GarmentDims } from '@vestirse/shared-types';
+import { BodyGeometry, PX_PER_CM } from './body-geometry';
 import { mirrorX, polygon, shade, smoothClosedPath, type Pt } from './svg';
 
 export const GARMENT_STYLES = [
@@ -28,6 +30,28 @@ export interface GarmentArt {
   style: GarmentStyle;
   color: string;
   pattern: Pattern;
+  /** Medidas reales de la talla elegida: si están, la prenda se dibuja a escala real. */
+  dims?: GarmentDims;
+}
+
+/** Semiancho frontal (px) de un contorno en cm, con la misma aproximación que BodyGeometry. */
+const frontHalfPx = (circumferenceCm: number) => ((circumferenceCm / 3.1) * PX_PER_CM) / 2;
+
+/**
+ * Traduce las medidas de la prenda a geometría sobre ESTE cuerpo: holgura real,
+ * dónde cae el dobladillo y dónde terminan mangas y perneras.
+ */
+function sizing(g: BodyGeometry, dims?: GarmentDims) {
+  if (!dims) return {};
+  const floor = g.y(1) + 4;
+  return {
+    torsoEase: dims.chestCm !== undefined ? Math.max(1.5, frontHalfPx(dims.chestCm) - g.chestHalf) : undefined,
+    hemY: dims.lengthCm !== undefined ? Math.min(floor, g.y(BODY_LANDMARKS.hps) + dims.lengthCm * PX_PER_CM) : undefined,
+    sleeveY: dims.sleeveCm ? g.shoulderY + dims.sleeveCm * PX_PER_CM : undefined,
+    legEase: dims.hipCm !== undefined ? Math.max(1.5, (frontHalfPx(dims.hipCm) - g.hipHalf) * 0.6) : undefined,
+    pantsEndY: dims.inseamCm !== undefined ? Math.min(floor, g.crotchY + dims.inseamCm * PX_PER_CM) : undefined,
+    skirtEndY: dims.lengthCm !== undefined ? Math.min(floor, g.waistY + dims.lengthCm * PX_PER_CM) : undefined,
+  };
 }
 
 /** Orden de capas: lo que va debajo se dibuja primero. */
@@ -119,24 +143,26 @@ export function drawGarment(g: BodyGeometry, art: GarmentArt): string {
   const fill = fillOf(art);
   const dark = shade(art.color, -0.3);
   const detail = (d: string) => `<path d="${d}" fill="none" stroke="${dark}" stroke-width="2" stroke-linecap="round" opacity=".6"/>`;
-  const topHem = g.hipY + g.H * 0.02;
+  const sz = sizing(g, art.dims);
+  const topHem = sz.hemY ?? g.hipY + g.H * 0.02;
   const bothSleeves = (toY: number, ease: number) =>
-    path(polygon(sleeve(g, 'l', toY, ease)), fill) + path(polygon(sleeve(g, 'r', toY, ease)), fill);
+    path(polygon(sleeve(g, 'l', sz.sleeveY ?? toY, ease)), fill) + path(polygon(sleeve(g, 'r', sz.sleeveY ?? toY, ease)), fill);
+  const torsoEase = (fallback: number) => sz.torsoEase ?? fallback;
 
   switch (art.style) {
     case 'tshirt':
-      return bothSleeves(g.y(0.28), 4) + path(smoothClosedPath(torsoShell(g, topHem, 6), 0.35), fill);
+      return bothSleeves(g.y(0.28), 4) + path(smoothClosedPath(torsoShell(g, topHem, torsoEase(6)), 0.35), fill);
     case 'shirt':
       return (
         bothSleeves(g.wristY - g.H * 0.01, 3) +
-        path(smoothClosedPath(torsoShell(g, topHem + g.H * 0.02, 5, 0, 0.05), 0.35), fill) +
+        path(smoothClosedPath(torsoShell(g, sz.hemY ?? topHem + g.H * 0.02, torsoEase(5), 0, 0.05), 0.35), fill) +
         detail(`M${g.cx},${g.shoulderY + g.H * 0.02} L${g.cx},${topHem}`) +
         [0.24, 0.3, 0.36, 0.42, 0.48].map((t) => `<circle cx="${g.cx + 4}" cy="${g.y(t)}" r="2" fill="${dark}"/>`).join('')
       );
     case 'sweater':
       return (
         bothSleeves(g.wristY, 6) +
-        path(smoothClosedPath(torsoShell(g, topHem, 9, 0, 0.012), 0.35), fill) +
+        path(smoothClosedPath(torsoShell(g, topHem, torsoEase(9), 0, 0.012), 0.35), fill) +
         detail(`M${g.cx - g.torsoHalfAt(topHem) - 8},${topHem - 8} L${g.cx + g.torsoHalfAt(topHem) + 8},${topHem - 8}`)
       );
     case 'hoodie': {
@@ -144,18 +170,18 @@ export function drawGarment(g: BodyGeometry, art: GarmentArt): string {
       return (
         hood +
         bothSleeves(g.wristY, 8) +
-        path(smoothClosedPath(torsoShell(g, topHem, 12, 0, 0.015), 0.35), fill) +
+        path(smoothClosedPath(torsoShell(g, topHem, torsoEase(12), 0, 0.015), 0.35), fill) +
         path(polygon([[g.cx - g.waistHalf * 0.7, g.y(0.42)], [g.cx + g.waistHalf * 0.7, g.y(0.42)], [g.cx + g.waistHalf * 0.8, g.y(0.48)], [g.cx - g.waistHalf * 0.8, g.y(0.48)]]), shade(art.color, -0.12)) +
         detail(`M${g.cx - 6},${g.shoulderY + 4} l-2,${g.H * 0.06} M${g.cx + 6},${g.shoulderY + 4} l2,${g.H * 0.06}`)
       );
     }
     case 'jacket':
     case 'coat': {
-      const hem = art.style === 'coat' ? g.kneeY + g.H * 0.02 : topHem + g.H * 0.01;
+      const hem = sz.hemY ?? (art.style === 'coat' ? g.kneeY + g.H * 0.02 : topHem + g.H * 0.01);
       const flare = art.style === 'coat' ? 22 : 4;
       return (
         bothSleeves(g.wristY + g.H * 0.005, 10) +
-        path(smoothClosedPath(torsoShell(g, hem, 14, flare, 0.09), 0.3), fill) +
+        path(smoothClosedPath(torsoShell(g, hem, torsoEase(14), flare, 0.09), 0.3), fill) +
         detail(`M${g.cx},${g.shoulderY + g.H * 0.09} L${g.cx},${hem}`) +
         detail(`M${g.cx},${g.shoulderY + g.H * 0.09} L${g.cx - g.neckW * 1.4},${g.shoulderY} M${g.cx},${g.shoulderY + g.H * 0.09} L${g.cx + g.neckW * 1.4},${g.shoulderY}`)
       );
@@ -163,7 +189,9 @@ export function drawGarment(g: BodyGeometry, art: GarmentArt): string {
     case 'jeans':
     case 'trousers': {
       const wide = art.style === 'trousers' ? 8 : 0;
-      const legs = path(polygon(pantLeg(g, 'l', g.ankleY, 3, wide)), fill) + path(polygon(pantLeg(g, 'r', g.ankleY, 3, wide)), fill);
+      const end = sz.pantsEndY ?? g.ankleY;
+      const legEase = sz.legEase ?? 3;
+      const legs = path(polygon(pantLeg(g, 'l', end, legEase, wide)), fill) + path(polygon(pantLeg(g, 'r', end, legEase, wide)), fill);
       const waistband = path(
         polygon([[g.cx - g.torsoHalfAt(g.waistY + 10) - 4, g.waistY + 2], [g.cx + g.torsoHalfAt(g.waistY + 10) + 4, g.waistY + 2], [g.cx + g.hipHalf + 3, g.waistY + (g.hipY - g.waistY) * 0.45], [g.cx - g.hipHalf - 3, g.waistY + (g.hipY - g.waistY) * 0.45]]),
         fill,
@@ -172,15 +200,15 @@ export function drawGarment(g: BodyGeometry, art: GarmentArt): string {
       return legs + waistband + seams;
     }
     case 'shorts': {
-      const end = g.thighMidY + g.H * 0.03;
+      const end = sz.pantsEndY ?? g.thighMidY + g.H * 0.03;
       return (
-        path(polygon(pantLeg(g, 'l', end, 6)), fill) +
-        path(polygon(pantLeg(g, 'r', end, 6)), fill) +
+        path(polygon(pantLeg(g, 'l', end, sz.legEase ?? 6)), fill) +
+        path(polygon(pantLeg(g, 'r', end, sz.legEase ?? 6)), fill) +
         path(polygon([[g.cx - g.torsoHalfAt(g.waistY + 10) - 5, g.waistY + 2], [g.cx + g.torsoHalfAt(g.waistY + 10) + 5, g.waistY + 2], [g.cx + g.hipHalf + 6, g.hipY], [g.cx - g.hipHalf - 6, g.hipY]]), fill)
       );
     }
     case 'skirt': {
-      const end = g.kneeY + g.H * 0.01;
+      const end = sz.skirtEndY ?? g.kneeY + g.H * 0.01;
       const halfW = g.torsoHalfAt(g.waistY + 6);
       const pts: Pt[] = [
         [g.cx + halfW + 3, g.waistY + 2],
@@ -194,9 +222,9 @@ export function drawGarment(g: BodyGeometry, art: GarmentArt): string {
     }
     case 'dress-a':
     case 'dress-wrap': {
-      const end = g.kneeY + g.H * 0.03;
+      const end = sz.hemY ?? g.kneeY + g.H * 0.03;
       const sleeves = art.style === 'dress-wrap' ? bothSleeves(g.elbowY, 4) : '';
-      const body = torsoShell(g, end, 5, art.style === 'dress-a' ? 55 : 28, art.style === 'dress-wrap' ? 0.08 : 0.03);
+      const body = torsoShell(g, end, torsoEase(5), art.style === 'dress-a' ? 55 : 28, art.style === 'dress-wrap' ? 0.08 : 0.03);
       const wrap = art.style === 'dress-wrap' ? detail(`M${g.cx - g.neckW},${g.shoulderY} L${g.cx + g.waistHalf},${g.waistY} L${g.cx + g.hipHalf * 0.6},${end}`) : '';
       const belt = detail(`M${g.cx - g.waistHalf - 5},${g.waistY} L${g.cx + g.waistHalf + 5},${g.waistY}`);
       return sleeves + path(smoothClosedPath(body, 0.3), fill) + belt + wrap;

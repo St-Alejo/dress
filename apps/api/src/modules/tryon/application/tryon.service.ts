@@ -17,6 +17,20 @@ export interface GenerationJob {
   sessionId: string;
 }
 
+/**
+ * Reintentos con backoff exponencial (5 s, 10 s) para fallos transitorios del proveedor.
+ * El jobId es idempotente por solicitud: si el mismo pedido se encola dos veces, BullMQ lo ignora.
+ */
+export function generationJobOptions(sessionId: string, requestedAt: Date) {
+  return {
+    jobId: `gen-${sessionId}-${requestedAt.getTime()}`,
+    attempts: 3,
+    backoff: { type: 'exponential' as const, delay: 5_000 },
+    removeOnComplete: true,
+    removeOnFail: 100,
+  };
+}
+
 const ACCEPTED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
@@ -92,7 +106,7 @@ export class TryOnService {
     const session = await this.owned(id, requester);
     this.domain(() => session.requestGeneration());
     await this.sessions.save(session);
-    await this.queue.add('generate', { sessionId: session.id }, { attempts: 1, removeOnComplete: true, removeOnFail: 100 });
+    await this.queue.add('generate', { sessionId: session.id }, generationJobOptions(session.id, session.snapshot.statusChangedAt));
     return session.toDto();
   }
 

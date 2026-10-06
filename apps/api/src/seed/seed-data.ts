@@ -1,4 +1,5 @@
 import type { GarmentCategory, LetterSize } from '@vestirse/shared-types';
+import { LETTER_BODY } from '../modules/catalog/domain/garment-grading';
 import type { BodyShape } from '../modules/catalog/infrastructure/illustration/body-geometry';
 import type { GarmentStyle, Pattern } from '../modules/catalog/infrastructure/illustration/garment-art';
 import type { HairStyle } from '../modules/catalog/infrastructure/illustration/renderer';
@@ -59,16 +60,7 @@ export interface SeedSizeEntry {
   height?: Range;
 }
 
-const LETTER: Record<LetterSize, { chest: Range; waist: Range; hip: Range }> = {
-  XS: { chest: [78, 84], waist: [60, 66], hip: [84, 90] },
-  S: { chest: [85, 91], waist: [67, 73], hip: [91, 97] },
-  M: { chest: [92, 99], waist: [74, 81], hip: [98, 104] },
-  L: { chest: [100, 107], waist: [82, 89], hip: [105, 111] },
-  XL: { chest: [108, 115], waist: [90, 98], hip: [112, 118] },
-  XXL: { chest: [116, 123], waist: [99, 107], hip: [119, 125] },
-  '3XL': { chest: [124, 131], waist: [108, 116], hip: [126, 132] },
-  '4XL': { chest: [132, 140], waist: [117, 126], hip: [133, 140] },
-};
+const LETTER = LETTER_BODY as Record<LetterSize, { chest: Range; waist: Range; hip: Range }>;
 const ALL_LETTERS = Object.keys(LETTER) as LetterSize[];
 
 /** Tabla detallada por tallas alfabéticas; `keys` elige qué medidas publica la marca. */

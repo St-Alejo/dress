@@ -1,15 +1,21 @@
 import type {
-  BodyMeasurements,
+  BodyProfile,
+  EstimatedBody,
+  FitAnalysis,
   FitConfidence,
+  FitIntent,
   FitRecommendation,
   GarmentCategory,
   GarmentItem,
   PoseRatios,
   SizeChartEntry,
 } from '@vestirse/shared-types';
+import { BodyEstimator } from './body-estimator';
 import { BrandCalibration } from './brand-calibration';
+import { FitAnalyzer } from './fit-analysis';
 import { SizeChart } from './size-chart';
 import {
+  GarmentMeasurementsStrategy,
   HeightOnlyStrategy,
   ManualMeasurementsStrategy,
   PoseRatioStrategy,
@@ -18,10 +24,12 @@ import {
 } from './strategies';
 
 export interface FitInput {
-  measurements: BodyMeasurements;
+  /** Estatura obligatoria; peso, silueta y medidas con cinta opcionales. */
+  measurements: BodyProfile;
   sizeChart: SizeChartEntry[];
   category: GarmentCategory;
   stretch?: GarmentItem['stretch'];
+  fitIntent?: FitIntent;
   poseRatios?: PoseRatios;
   calibration?: BrandCalibration;
 }
@@ -34,13 +42,33 @@ const BETWEEN_SIZES_MARGIN = 0.15;
  * nunca es una certeza: siempre trae confianza y la base del cálculo.
  */
 export class FitEngine {
+  private readonly estimator = new BodyEstimator();
+  private readonly analyzer = new FitAnalyzer();
+
   constructor(
     private readonly strategies: FitStrategy[] = [
+      new GarmentMeasurementsStrategy(),
       new ManualMeasurementsStrategy(),
       new HeightOnlyStrategy(),
       new PoseRatioStrategy(),
     ],
   ) {}
+
+  /** Cuerpo usado para el análisis (medidas con cinta o estimación por estatura y peso). */
+  bodyFor(profile: BodyProfile): EstimatedBody {
+    return this.estimator.estimate(profile);
+  }
+
+  /** Análisis por talla: cómo le queda cada talla a este cuerpo ("medirse las prendas por talla"). */
+  analyze(input: Omit<FitInput, 'calibration' | 'poseRatios'>): FitAnalysis[] {
+    return this.analyzer.analyzeAll({
+      body: this.bodyFor(input.measurements),
+      category: input.category,
+      sizeChart: input.sizeChart,
+      stretch: input.stretch,
+      fitIntent: input.fitIntent,
+    });
+  }
 
   recommend(input: FitInput): FitRecommendation {
     if (!(input.measurements.heightCm > 0)) throw new Error('La altura es obligatoria para estimar la talla');
@@ -50,6 +78,9 @@ export class FitEngine {
       measurements: input.measurements,
       category: input.category,
       poseRatios: input.poseRatios,
+      body: this.bodyFor(input.measurements),
+      stretch: input.stretch,
+      fitIntent: input.fitIntent,
     };
     const results = this.strategies
       .map((s) => s.evaluate(ctx))
@@ -63,9 +94,9 @@ export class FitEngine {
 
     const ranked = this.rank(chart, results);
     let [best, second] = ranked;
-    const measured = results.some((r) => r.evidence === 'measured');
-    // Con medidas reales, la tabla genérica por altura es ruido: no se muestra como base.
-    const basis = unique(results.flatMap((r) => r.basis)).filter((b) => !(measured && b === 'fit.basis.genericChart'));
+    const bodyKnown = results.some((r) => r.evidence === 'measured' || r.evidence === 'estimated');
+    // Con contornos (medidos o estimados), la tabla genérica por altura es ruido: no se muestra como base.
+    const basis = unique(results.flatMap((r) => r.basis)).filter((b) => !(bodyKnown && b === 'fit.basis.genericChart'));
 
     let alternativeSize: string | undefined;
     if (second && best.score - second.score < BETWEEN_SIZES_MARGIN) {
@@ -115,7 +146,10 @@ export class FitEngine {
   private confidence(results: StrategyResult[], chart: SizeChart, outsideChart: boolean): FitConfidence {
     if (outsideChart) return 'low';
     const measured = results.some((r) => r.evidence === 'measured');
-    if (measured && chart.isDetailed()) return 'high';
+    const garmentBased = results.some((r) => r.basis.includes('fit.basis.garmentMeasurements'));
+    // Contornos medidos con cinta + tabla detallada (del cuerpo o de la prenda) → alta.
+    // Estimados por estatura y peso → media: es una aproximación y así se dice.
+    if (measured && (chart.isDetailed() || garmentBased)) return 'high';
     return 'medium';
   }
 

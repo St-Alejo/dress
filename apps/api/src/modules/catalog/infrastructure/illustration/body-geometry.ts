@@ -14,7 +14,7 @@ export interface BodyShape {
 export const VIEW_W = 400;
 export const VIEW_H = 900;
 const FLOOR_Y = 885;
-const PX_PER_CM = 4.4;
+export const PX_PER_CM = 4.4;
 /** Ancho frontal aproximado de una circunferencia (cm → cm). */
 const frontWidth = (circumference: number) => circumference / 3.1;
 

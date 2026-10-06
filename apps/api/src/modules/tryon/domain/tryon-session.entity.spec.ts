@@ -56,4 +56,38 @@ describe('TryOnSession', () => {
     expect(s.isOwnedBy(requester)).toBe(true);
     expect(s.isOwnedBy({ sid: 'otro' })).toBe(false);
   });
+
+  it('fallar deja el motivo y permite reintentar', () => {
+    const s = start();
+    s.attachPhoto(now, 24);
+    s.requestGeneration(now);
+    s.markProcessing(now);
+    s.fail('stuck', now);
+    expect(s.toDto()).toMatchObject({ generationStatus: 'failed', failureReason: 'stuck' });
+    s.requestGeneration(now);
+    expect(s.toDto()).toMatchObject({ generationStatus: 'queued', failureReason: undefined });
+  });
+
+  it('el fallback también es reintentable', () => {
+    const s = start();
+    s.attachPhoto(now, 24);
+    s.requestGeneration(now);
+    s.fallback('not-configured', now);
+    expect(s.isInFlight).toBe(false);
+    expect(() => s.requestGeneration(now)).not.toThrow();
+  });
+
+  it('no se puede marcar en proceso algo que no está en curso', () => {
+    expect(() => start().markProcessing(now)).toThrow(DomainError);
+  });
+
+  it('detecta generaciones atascadas por tiempo sin cambio de estado', () => {
+    const s = start();
+    s.attachPhoto(now, 24);
+    s.requestGeneration(now);
+    expect(s.isStuck(new Date(now.getTime() + 60_000), 120_000)).toBe(false);
+    expect(s.isStuck(new Date(now.getTime() + 180_000), 120_000)).toBe(true);
+    s.markProcessing(new Date(now.getTime() + 170_000));
+    expect(s.isStuck(new Date(now.getTime() + 180_000), 120_000)).toBe(false);
+  });
 });

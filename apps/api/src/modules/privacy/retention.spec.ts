@@ -1,29 +1,7 @@
-import type { Readable } from 'node:stream';
 import type { PrismaService } from '../../common/prisma.service';
-import type { Requester } from '../../common/requester';
-import { ObjectStorage } from '../../common/storage';
-import { TryOnSessionRepository } from '../tryon/application/tryon-session.repository';
+import { MemorySessions, MemoryStorage } from '../../testing/memory';
 import { TryOnSession } from '../tryon/domain/tryon-session.entity';
 import { RetentionService } from './privacy.module';
-
-class MemoryStorage extends ObjectStorage {
-  objects = new Map<string, Buffer>();
-  async put(key: string, body: Buffer) { this.objects.set(key, body); }
-  async get() { return null as { body: Readable } | null; }
-  async getBuffer(key: string) { return this.objects.get(key) ?? null; }
-  async deleteMany(keys: string[]) { keys.forEach((k) => this.objects.delete(k)); }
-}
-
-class MemorySessions extends TryOnSessionRepository {
-  items = new Map<string, TryOnSession>();
-  async create(s: TryOnSession) { this.items.set(s.id, s); }
-  async save(s: TryOnSession) { this.items.set(s.id, s); }
-  async findById(id: string) { return this.items.get(id) ?? null; }
-  async findOwned(id: string, r: Requester) { const s = this.items.get(id); return s?.isOwnedBy(r) ? s : null; }
-  async listOwned() { return [...this.items.values()]; }
-  async findWithExpiredPhotos(now: Date, limit: number) { return [...this.items.values()].filter((s) => s.isExpired(now)).slice(0, limit); }
-  async findByUser(userId: string) { return [...this.items.values()].filter((s) => s.snapshot.userId === userId); }
-}
 
 function sessionWithPhoto(id: string, createdAt: Date, userId?: string) {
   const s = TryOnSession.start({ id, garmentId: 'g', mode: 'similar-model', requester: { sid: 'sid-' + id, userId }, now: createdAt });

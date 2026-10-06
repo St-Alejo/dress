@@ -36,7 +36,9 @@ services:
   ai-worker:
     build: ../services/ai-worker
     environment:
-      TRYON_ENGINE: ${TRYON_ENGINE:-mock}
+      # El proveedor llega en cada petición (X-AI-Provider); este es solo el valor por defecto.
+      DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-mock}
+      WORKER_TOKEN: ${WORKER_TOKEN:-}
       MOCK_DELAY_SECONDS: ${MOCK_DELAY_SECONDS:-4}
       REPLICATE_API_TOKEN: ${REPLICATE_API_TOKEN:-}
       FAL_KEY: ${FAL_KEY:-}

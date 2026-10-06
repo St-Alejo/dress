@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Brand, GarmentItem, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
+import type { Brand, FitIntent, GarmentDims, GarmentItem, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
 import { mediaUrl } from '../../../common/mappers';
 import { PrismaService } from '../../../common/prisma.service';
 import type { Prisma } from '../../../generated/prisma/client';
@@ -25,7 +25,13 @@ export function toGarmentItem(row: GarmentRow): GarmentItem {
     category: row.category,
     color: row.color,
     priceCents: row.priceCents,
-    images: { front: mediaUrl(row.imageFrontKey), flat: mediaUrl(row.imageFlatKey), overlay: mediaUrl(row.imageOverlayKey) },
+    images: {
+      front: mediaUrl(row.imageFrontKey),
+      flat: mediaUrl(row.imageFlatKey),
+      overlay: mediaUrl(row.imageOverlayKey),
+      ...(row.photoKey ? { photo: mediaUrl(row.photoKey) } : {}),
+    },
+    fitIntent: (row.fitIntent as FitIntent | null) ?? undefined,
     overlayAnchors: overlayAnchors(),
     overlaySize: [VIEW_W, VIEW_H],
     fabricNotes: row.fabricNotes ?? undefined,
@@ -41,6 +47,14 @@ export function toGarmentItem(row: GarmentRow): GarmentItem {
       if (waist) entry.waistCm = waist;
       if (hip) entry.hipCm = hip;
       if (height) entry.heightCm = height;
+      const garment: GarmentDims = {};
+      if (e.gChest !== null) garment.chestCm = e.gChest;
+      if (e.gWaist !== null) garment.waistCm = e.gWaist;
+      if (e.gHip !== null) garment.hipCm = e.gHip;
+      if (e.gLength !== null) garment.lengthCm = e.gLength;
+      if (e.gSleeve !== null) garment.sleeveCm = e.gSleeve;
+      if (e.gInseam !== null) garment.inseamCm = e.gInseam;
+      if (Object.keys(garment).length) entry.garment = garment;
       return entry;
     }),
   };
@@ -92,7 +106,7 @@ export class PrismaCatalogRepository extends CatalogRepository {
   }
 
   async garmentImageKeys(id: string) {
-    const row = await this.prisma.garment.findUnique({ where: { id }, select: { imageFlatKey: true, imageFrontKey: true } });
-    return row ? { flat: row.imageFlatKey, front: row.imageFrontKey } : null;
+    const row = await this.prisma.garment.findUnique({ where: { id }, select: { imageFlatKey: true, imageFrontKey: true, photoKey: true } });
+    return row ? { flat: row.imageFlatKey, front: row.imageFrontKey, photo: row.photoKey ?? undefined } : null;
   }
 }

@@ -31,13 +31,13 @@ Admin de demo: `admin@vestirse.local` / `admin1234` (cámbialo con `ADMIN_EMAIL`
 
 ### Track B con un modelo real
 
-El ai-worker usa `TRYON_ENGINE=mock` por defecto (composición simple, gratis). Para CatVTON real:
+El proveedor se elige en el panel de admin (o con `AI_PROVIDER` en `apps/api/.env`) y viaja al worker
+en cada petición (`X-AI-Provider`), así que cambiarlo no requiere reiniciar nada. `mock` (composición
+simple, gratis) siempre está disponible. El contrato API↔worker está versionado en
+`contracts/ai-worker/v1/` y ambos lados lo validan en sus tests.
 
-```bash
-TRYON_ENGINE=fal FAL_KEY=... npm run infra:up
-# o bien
-TRYON_ENGINE=replicate REPLICATE_API_TOKEN=... REPLICATE_MODEL_VERSION=owner/modelo:version npm run infra:up
-```
+Para que solo la API pueda llamar al worker, define el mismo `WORKER_TOKEN` en `apps/api/.env` y al
+levantar la infraestructura (`WORKER_TOKEN=... npm run infra:up`).
 
 Los adaptadores hospedados están cubiertos con tests de contrato (HTTP simulado); no se han probado contra el proveedor real en este repo.
 

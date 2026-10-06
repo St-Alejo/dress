@@ -20,6 +20,8 @@ const toEntity = (r: Row) =>
     resultKey: r.resultKey ?? undefined,
     resultSaved: r.resultSaved,
     generationStatus: r.generationStatus,
+    failureReason: r.failureReason ?? undefined,
+    statusChangedAt: r.statusChangedAt,
     fitRecommendation: (r.fitRecommendation as unknown as FitRecommendation) ?? undefined,
     createdAt: r.createdAt,
   });
@@ -37,6 +39,8 @@ function toData(s: TryOnSession) {
     resultKey: p.resultKey ?? null,
     resultSaved: p.resultSaved,
     generationStatus: p.generationStatus,
+    failureReason: p.failureReason ?? null,
+    statusChangedAt: p.statusChangedAt,
     fitRecommendation: (p.fitRecommendation as unknown as Prisma.InputJsonValue) ?? undefined,
   };
 }
@@ -76,6 +80,14 @@ export class PrismaTryOnSessionRepository extends TryOnSessionRepository {
 
   async findWithExpiredPhotos(now: Date, limit: number) {
     const rows = await this.prisma.tryOnSession.findMany({ where: { photoExpiresAt: { lte: now } }, take: limit });
+    return rows.map(toEntity);
+  }
+
+  async findStuck(changedBefore: Date, limit: number) {
+    const rows = await this.prisma.tryOnSession.findMany({
+      where: { generationStatus: { in: ['queued', 'processing'] }, statusChangedAt: { lt: changedBefore } },
+      take: limit,
+    });
     return rows.map(toEntity);
   }
 

@@ -14,5 +14,6 @@ export abstract class CatalogRepository {
   abstract listBrands(): Promise<Brand[]>;
   /** Modelos de cuerpo; si se pasa `garmentId`, `previewImages` trae solo esa prenda. */
   abstract listBodyModels(garmentId?: string): Promise<SimilarBodyModel[]>;
-  abstract garmentImageKeys(id: string): Promise<{ flat: string; front: string } | null>;
+  /** `photo` = foto real de producto, preferida para la IA cuando existe. */
+  abstract garmentImageKeys(id: string): Promise<{ flat: string; front: string; photo?: string } | null>;
 }

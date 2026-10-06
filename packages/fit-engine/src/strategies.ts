@@ -1,4 +1,13 @@
-import { LETTER_SIZES, type BodyMeasurements, type GarmentCategory, type PoseRatios } from '@vestirse/shared-types';
+import {
+  LETTER_SIZES,
+  type BodyMeasurements,
+  type EstimatedBody,
+  type FitIntent,
+  type GarmentCategory,
+  type GarmentItem,
+  type PoseRatios,
+} from '@vestirse/shared-types';
+import { FitAnalyzer } from './fit-analysis';
 import type { MeasureKey, SizeChart } from './size-chart';
 
 export interface FitContext {
@@ -6,9 +15,13 @@ export interface FitContext {
   measurements: BodyMeasurements;
   category: GarmentCategory;
   poseRatios?: PoseRatios;
+  /** Cuerpo con contornos medidos o estimados (estatura + peso). */
+  body?: EstimatedBody;
+  stretch?: GarmentItem['stretch'];
+  fitIntent?: FitIntent;
 }
 
-export type EvidenceKind = 'measured' | 'height' | 'pose';
+export type EvidenceKind = 'measured' | 'estimated' | 'height' | 'pose';
 
 export interface StrategyResult {
   /** Puntaje 0..1 por talla (1 = encaje perfecto). */
@@ -120,6 +133,35 @@ export class HeightOnlyStrategy implements FitStrategy {
     const scores: Record<string, number> = {};
     for (const size of chart.sizes) scores[size] = rangeScore(height, rangeOf(size));
     return { scores, weight, evidence: 'height', basis: ['fit.basis.heightProvided', basis] };
+  }
+}
+
+/**
+ * Compara el cuerpo (medido o estimado por estatura y peso) con las medidas REALES
+ * de la prenda en cada talla. Es la evidencia más directa de "cómo me queda".
+ */
+export class GarmentMeasurementsStrategy implements FitStrategy {
+  readonly name = 'garment-measurements';
+  private readonly analyzer = new FitAnalyzer();
+  private static readonly VERDICT_SCORE = { good: 1, large: 0.55, 'too-small': 0.1, 'too-large': 0.1 } as const;
+
+  evaluate({ chart, category, body, stretch, fitIntent }: FitContext): StrategyResult | null {
+    if (!body || body.chestCm === undefined) return null;
+    const analyses = this.analyzer.analyzeAll({ body, category, sizeChart: [...chart.all], stretch, fitIntent });
+    if (analyses.length === 0 || analyses.every((a) => a.zones.length === 0)) return null;
+    const scores: Record<string, number> = {};
+    for (const a of analyses) {
+      // Dentro del mismo veredicto, gana la talla con más zonas "como fue diseñada".
+      const asDesigned = a.zones.filter((z) => z.label === 'regular').length / Math.max(1, a.zones.length);
+      const lengthOk = !a.length || a.length.label === 'as-designed' ? 0.05 : 0;
+      scores[a.size] = Math.min(1, GarmentMeasurementsStrategy.VERDICT_SCORE[a.verdict] * 0.85 + asDesigned * 0.1 + lengthOk);
+    }
+    return {
+      scores,
+      weight: body.estimated ? 2.5 : 3.5,
+      evidence: body.estimated ? 'estimated' : 'measured',
+      basis: [body.estimated ? 'fit.basis.estimatedFromWeight' : 'fit.basis.tapeMeasured', 'fit.basis.garmentMeasurements'],
+    };
   }
 }
 

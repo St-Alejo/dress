@@ -46,12 +46,97 @@ export interface SimilarBodyModel {
   previewImages: Record<string, string>;
 }
 
+export type Silhouette = 'feminine' | 'masculine' | 'neutral';
+
+/**
+ * Perfil corporal para "medirse las prendas por talla". La estatura sigue siendo
+ * lo único obligatorio; el peso permite estimar contornos. El peso NUNCA se
+ * persiste en el servidor ni se registra en logs.
+ */
+export interface BodyProfile extends BodyMeasurements {
+  weightKg?: number;
+  /** Solo orienta la estimación de contornos; "neutral" promedia. */
+  silhouette?: Silhouette;
+}
+
+/**
+ * Cuerpo estimado a partir del perfil (cm). Con solo estatura no se inventan
+ * contornos (quedan indefinidos): solo se pueden evaluar largos.
+ */
+export interface EstimatedBody {
+  heightCm: number;
+  chestCm?: number;
+  waistCm?: number;
+  hipCm?: number;
+  /** true = inferido de estatura/peso; false = medido con cinta. */
+  estimated: boolean;
+}
+
+/** Medidas de la PRENDA (no del cuerpo) para una talla: contornos y largos en cm. */
+export interface GarmentDims {
+  chestCm?: number;
+  waistCm?: number;
+  hipCm?: number;
+  /** Largo desde el hombro (superiores/vestidos/abrigos) o desde la cintura (faldas). */
+  lengthCm?: number;
+  /** Largo de manga desde el hombro. */
+  sleeveCm?: number;
+  /** Entrepierna (pantalones y shorts). */
+  inseamCm?: number;
+}
+
+/** Holgura con la que la prenda está diseñada (cm sobre el contorno del cuerpo). */
+export interface FitIntent {
+  chestEaseCm?: number;
+  waistEaseCm?: number;
+  hipEaseCm?: number;
+}
+
 export interface SizeChartEntry {
   size: string;
   chestCm?: [number, number];
   waistCm?: [number, number];
   hipCm?: [number, number];
   heightCm?: [number, number];
+  /** Dimensiones reales de la prenda en esta talla. */
+  garment?: GarmentDims;
+}
+
+export type EaseLabel = 'tight' | 'fitted' | 'regular' | 'loose' | 'oversized';
+export type LengthLabel = 'too-short' | 'short' | 'as-designed' | 'long' | 'too-long';
+export type HemLandmark = 'waist' | 'hip' | 'upper-thigh' | 'mid-thigh' | 'knee' | 'mid-calf' | 'ankle' | 'floor';
+export type SleeveLandmark = 'upper-arm' | 'elbow' | 'forearm' | 'wrist' | 'over-hand';
+export type FitVerdict = 'too-small' | 'good' | 'large' | 'too-large';
+
+/** Análisis determinista de cómo le queda UNA talla a UN cuerpo. Fuente de verdad de la talla. */
+export interface FitAnalysis {
+  size: string;
+  verdict: FitVerdict;
+  zones: { zone: 'chest' | 'waist' | 'hip'; easeCm: number; label: EaseLabel }[];
+  length?: { label: LengthLabel; landmark: HemLandmark };
+  sleeve?: { label: LengthLabel; landmark: SleeveLandmark };
+  /** Claves i18n con notas legibles. */
+  notes: string[];
+  bodyEstimated: boolean;
+}
+
+/** Una prenda del conjunto con la talla elegida. */
+export interface OutfitItem {
+  garmentId: string;
+  size: string;
+}
+
+export type AiProvider = 'mock' | 'gemini' | 'fashn' | 'fal-fashn';
+
+/** Configuración de IA visible para el admin. La clave nunca viaja completa al cliente. */
+export interface AiProviderSettings {
+  provider: AiProvider;
+  model?: string;
+  keyConfigured: boolean;
+  keyHint?: string;
+  lastTestOk?: boolean | null;
+  updatedAt?: string;
+  source: 'database' | 'environment' | 'none';
 }
 
 export interface Brand {
@@ -75,7 +160,9 @@ export interface GarmentItem {
   category: GarmentCategory;
   color: string;
   priceCents: number;
-  images: { front: string; flat: string; overlay: string };
+  /** `photo` = foto real de producto (subida o generada); se prefiere cuando existe. */
+  images: { front: string; flat: string; overlay: string; photo?: string };
+  fitIntent?: FitIntent;
   /** Anclas (px en la imagen de overlay) para alinearla con los keypoints de Track A. */
   overlayAnchors: OverlayAnchors;
   overlaySize: [number, number];
@@ -114,7 +201,11 @@ export interface TryOnSession {
   /** true solo si la persona guardó el resultado en su cuenta (sobrevive al TTL). */
   resultSaved?: boolean;
   generationStatus?: GenerationStatus;
+  /** Motivo cuando `generationStatus` es `failed` o `fallback` (p. ej. "timeout", "stuck"). */
+  failureReason?: string;
   fitRecommendation?: FitRecommendation;
+  /** Conjunto a probar sobre la foto (varias prendas con su talla). */
+  outfit?: OutfitItem[];
   createdAt: string;
 }
 
@@ -192,3 +283,5 @@ export const FORBIDDEN_ROUTE_PATTERN =
 
 /** Retención por defecto de fotos subidas (sección 8, punto 2). */
 export const PHOTO_TTL_HOURS = 24;
+
+export * from './worker-contract';

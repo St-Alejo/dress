@@ -53,6 +53,7 @@
     "@types/node": "^22.0.0",
     "@types/opossum": "^8.1.8",
     "@types/supertest": "^6.0.2",
+    "ajv": "^8.18.0",
     "jest": "^30.0.0",
     "prisma": "7.10.0",
     "supertest": "^7.1.0",
@@ -61,10 +62,16 @@
     "typescript": "~5.9.0"
   },
   "jest": {
-    "moduleFileExtensions": ["js", "json", "ts"],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
-    "transform": { "^.+\\.ts$": ["ts-jest", { "diagnostics": false }] },
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
     "testEnvironment": "node"
   }
 }
