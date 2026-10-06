@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vestirse.local/contracts/ai-worker/v1/manifest.schema.json",
+  "title": "Manifest de POST /v1/generate",
+  "description": "Viaja como campo multipart `manifest` junto a `person_image` y `garment_images` (mismo orden que `garments`). Nunca contiene estatura ni peso: solo descriptores gruesos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "requestId", "garments", "bodyBrief"],
+  "properties": {
+    "contractVersion": { "const": "1" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "garments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["index", "category", "name", "color", "fit"],
+        "properties": {
+          "index": { "type": "integer", "minimum": 0, "maximum": 3 },
+          "category": { "enum": ["top", "bottom", "dress", "outerwear", "footwear", "accessory"] },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "color": { "type": "string", "maxLength": 40 },
+          "fit": { "type": "string", "maxLength": 400 }
+        }
+      }
+    },
+    "bodyBrief": { "type": "string", "maxLength": 120 }
+  }
+}

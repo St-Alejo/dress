@@ -1,0 +1,9 @@
+{
+  "contractVersion": "1",
+  "requestId": "6f1c2a8e-0000-4000-8000-000000000002",
+  "garments": [
+    { "index": 0, "category": "top", "name": "Camiseta", "color": "black", "fit": "regular fit" },
+    { "index": 1, "category": "bottom", "name": "Pantalón chino", "color": "beige", "fit": "trouser hems are too long and bunch at the ankles" }
+  ],
+  "bodyBrief": "person as shown in the photo"
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vestirse.local/contracts/ai-worker/v1/errors.schema.json",
+  "title": "Cuerpo de error del worker",
+  "description": "Toda respuesta no-2xx del worker usa esta forma. El status HTTP se deriva del código (ver packages/shared-types/src/worker-contract.ts).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code", "detail", "retryable"],
+  "properties": {
+    "code": {
+      "enum": ["bad-input", "unsupported", "unauthorized", "not-configured", "rate-limited", "content-policy", "provider-error", "timeout"]
+    },
+    "detail": { "type": "string", "maxLength": 300 },
+    "retryable": { "type": "boolean" }
+  }
+}

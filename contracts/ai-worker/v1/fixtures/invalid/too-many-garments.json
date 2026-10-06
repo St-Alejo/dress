@@ -1,0 +1,7 @@
+{ "contractVersion": "1", "requestId": "r1", "garments": [
+  { "index": 0, "category": "top", "name": "a", "color": "", "fit": "" },
+  { "index": 1, "category": "top", "name": "b", "color": "", "fit": "" },
+  { "index": 2, "category": "top", "name": "c", "color": "", "fit": "" },
+  { "index": 3, "category": "top", "name": "d", "color": "", "fit": "" },
+  { "index": 3, "category": "top", "name": "e", "color": "", "fit": "" }
+], "bodyBrief": "" }

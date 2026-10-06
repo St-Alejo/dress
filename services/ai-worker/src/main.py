@@ -1,14 +1,28 @@
+import hmac
+import json
 import time
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response
+from pydantic import ValidationError
 
-from .config import Settings, build_engine
-from .engines import EngineError, GarmentTransferEngine, TransferRequest, UnsupportedCategory
+from .config import Settings
+from .contract import CONTRACT_VERSION, Manifest, WorkerError, worker_error_handler
+from .providers import Credentials, GarmentInput, ProviderRegistry, TransferRequest, TryOnProvider, default_registry
 
-app = FastAPI(title="Vestirse AI worker", version="0.1.0")
+app = FastAPI(title="Vestirse AI worker", version="1.0.0")
+app.add_exception_handler(WorkerError, worker_error_handler)
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation(request, exc: RequestValidationError):
+    # Campos multipart faltantes o mal formados también responden con la forma del contrato.
+    first = exc.errors()[0] if exc.errors() else {}
+    where = ".".join(str(p) for p in first.get("loc", []))
+    return await worker_error_handler(request, WorkerError("bad-input", f"petición inválida: {where}"))
 
 
 @lru_cache
@@ -17,47 +31,100 @@ def get_settings() -> Settings:
 
 
 @lru_cache
-def get_engine() -> GarmentTransferEngine:
-    return build_engine(get_settings())
+def get_registry() -> ProviderRegistry:
+    return default_registry()
+
+
+def require_token(
+    settings: Annotated[Settings, Depends(get_settings)],
+    x_worker_token: Annotated[str | None, Header()] = None,
+) -> None:
+    """Solo la API puede llamar al worker (secreto compartido, comparación en tiempo constante)."""
+    if settings.worker_token and not hmac.compare_digest(x_worker_token or "", settings.worker_token):
+        raise WorkerError("unauthorized", "token del worker inválido")
+
+
+def get_credentials(
+    settings: Annotated[Settings, Depends(get_settings)],
+    x_ai_provider: Annotated[str | None, Header()] = None,
+    x_ai_model: Annotated[str | None, Header()] = None,
+    x_ai_key: Annotated[str | None, Header()] = None,
+) -> Credentials:
+    return Credentials(provider=x_ai_provider or settings.default_provider, model=x_ai_model, api_key=x_ai_key)
+
+
+def get_provider(
+    credentials: Annotated[Credentials, Depends(get_credentials)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    registry: Annotated[ProviderRegistry, Depends(get_registry)],
+) -> TryOnProvider:
+    """El proveedor se resuelve por petición: cambiarlo en el panel de admin no requiere reiniciar."""
+    return registry.build(credentials, settings)
 
 
 @app.get("/health")
-def health() -> dict:
-    return {"status": "ok", "engine": get_engine().name}
+def health(registry: Annotated[ProviderRegistry, Depends(get_registry)]) -> dict:
+    return {"status": "ok", "contractVersion": CONTRACT_VERSION, "providers": registry.names}
 
 
-async def _read_limited(file: UploadFile, limit: int) -> bytes:
+async def _read_limited(file: UploadFile, limit: int, label: str) -> bytes:
     data = await file.read(limit + 1)
     if len(data) > limit:
-        raise HTTPException(413, "imagen demasiado grande")
+        raise WorkerError("bad-input", f"{label}: imagen demasiado grande")
     if not data:
-        raise HTTPException(422, "imagen vacía")
+        raise WorkerError("bad-input", f"{label}: imagen vacía")
     return data
 
 
-@app.post("/generate")
+def _parse_manifest(raw: str) -> Manifest:
+    try:
+        return Manifest.model_validate(json.loads(raw))
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise WorkerError("bad-input", "manifest inválido") from exc
+
+
+@app.post("/v1/generate", dependencies=[Depends(require_token)])
 async def generate(
     person_image: Annotated[UploadFile, File()],
-    garment_image: Annotated[UploadFile, File()],
-    category: Annotated[str, Form()],
-    engine: Annotated[GarmentTransferEngine, Depends(get_engine)],
+    garment_images: Annotated[list[UploadFile], File()],
+    manifest: Annotated[str, Form()],
+    provider: Annotated[TryOnProvider, Depends(get_provider)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> Response:
-    person = await _read_limited(person_image, settings.max_upload_bytes)
-    garment = await _read_limited(garment_image, settings.max_upload_bytes)
+    meta = _parse_manifest(manifest)
+    if len(garment_images) != len(meta.garments):
+        raise WorkerError("bad-input", "el número de imágenes no coincide con el manifest")
+    person = await _read_limited(person_image, settings.max_upload_bytes, "persona")
+    garments = [
+        GarmentInput(
+            image=await _read_limited(garment_images[g.index], settings.max_upload_bytes, f"prenda {g.index}"),
+            category=g.category,
+            name=g.name,
+            color=g.color,
+            fit=g.fit,
+        )
+        for g in meta.garments
+        if g.index < len(garment_images)
+    ]
+    if len(garments) != len(meta.garments):
+        raise WorkerError("bad-input", "índice de prenda fuera de rango")
+
     started = time.perf_counter()
     try:
-        result = await engine.generate(TransferRequest(person=person, garment=garment, category=category))  # type: ignore[arg-type]
-    except UnsupportedCategory as exc:
-        raise HTTPException(422, str(exc)) from exc
-    except EngineError as exc:
-        raise HTTPException(502, str(exc)) from exc
+        result = await provider.generate(
+            TransferRequest(person=person, garments=garments, body_brief=meta.bodyBrief, request_id=meta.requestId)
+        )
     finally:
         # Las imágenes nunca se persisten: se liberan al terminar la petición.
-        del person, garment
+        del person, garments
     duration_ms = int((time.perf_counter() - started) * 1000)
     return Response(
         content=result,
         media_type="image/png",
-        headers={"X-Engine": engine.name, "X-Duration-Ms": str(duration_ms)},
+        headers={"X-Engine": provider.name, "X-Duration-Ms": str(duration_ms), "X-Request-Id": meta.requestId},
     )
+
+
+@app.post("/v1/providers/test", dependencies=[Depends(require_token)])
+async def test_provider(provider: Annotated[TryOnProvider, Depends(get_provider)]) -> dict:
+    return {"ok": True, "provider": provider.name, "detail": await provider.test()}
