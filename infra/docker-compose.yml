@@ -25,13 +25,17 @@ services:
   # Almacenamiento S3-compatible (RustFS; las imágenes oficiales de MinIO ya no se publican).
   # La API crea el bucket y la regla de expiración de uploads/ al arrancar (sección 8, punto 2).
   s3:
-    image: rustfs/rustfs:latest
+    image: rustfs/rustfs:1.0.0
     environment:
       RUSTFS_ACCESS_KEY: vestirse
       RUSTFS_SECRET_KEY: vestirse-secret
       RUSTFS_CONSOLE_ENABLE: "true"
     ports: ["9000:9000", "9001:9001"]
     volumes: [s3data:/data]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:9000/health"]
+      interval: 5s
+      retries: 10
 
   ai-worker:
     build: ../services/ai-worker
@@ -42,11 +46,38 @@ services:
       MOCK_DELAY_SECONDS: ${MOCK_DELAY_SECONDS:-4}
       REPLICATE_API_TOKEN: ${REPLICATE_API_TOKEN:-}
       FAL_KEY: ${FAL_KEY:-}
-    ports: ["8000:8000"]
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 10s
-      retries: 5
+    ports: ["${AI_WORKER_PORT:-8000}:8000"]
+    # El healthcheck vive en el Dockerfile del worker.
+
+  # --- Perfil "full": la app completa en contenedores (docker compose --profile full up -d --build) ---
+  # Los secretos por defecto son SOLO para desarrollo local; en otro entorno defínelos en infra/.env.
+  api:
+    profiles: [full]
+    build: { context: .., dockerfile: infra/docker/api.Dockerfile }
+    environment:
+      DATABASE_URL: postgresql://vestirse:vestirse@postgres:5432/vestirse
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      S3_ENDPOINT: http://s3:9000
+      S3_BUCKET: vestirse
+      S3_ACCESS_KEY: vestirse
+      S3_SECRET_KEY: vestirse-secret
+      AI_WORKER_URL: http://ai-worker:8000
+      WORKER_TOKEN: ${WORKER_TOKEN:-}
+      JWT_SECRET: ${JWT_SECRET:-solo-desarrollo-jwt-secret-cambiar}
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-solo-desarrollo-cifrado-cambiar}
+      WEB_ORIGIN: http://localhost:${WEB_PORT:-8080}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      s3: { condition: service_healthy }
+      ai-worker: { condition: service_started }
+
+  web:
+    profiles: [full]
+    build: { context: .., dockerfile: infra/docker/web.Dockerfile }
+    ports: ["${WEB_PORT:-8080}:80"]
+    depends_on: [api]
 
 volumes:
   pgdata:

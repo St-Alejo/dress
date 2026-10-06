@@ -1,7 +1,16 @@
 FROM python:3.12-slim
 WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+# Única fuente de verdad de las dependencias: pyproject.toml.
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir "fastapi>=0.115" "uvicorn[standard]>=0.32" "httpx>=0.28" "pillow>=11" "pydantic-settings>=2.6" "python-multipart>=0.0.20"
+RUN python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']))" > requirements.txt \
+ && pip install --no-cache-dir -r requirements.txt \
+ && useradd --system --uid 10001 worker
+
 COPY src ./src
+USER worker
 EXPOSE 8000
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-graceful-shutdown", "10"]

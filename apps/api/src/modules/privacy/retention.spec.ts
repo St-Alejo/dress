@@ -1,4 +1,6 @@
 import type { PrismaService } from '../../common/prisma.service';
+import { PHOTO_TTL_HOURS } from '@vestirse/shared-types';
+import { PRIVATE_PREFIX, PRIVATE_PREFIX_EXPIRATION_DAYS } from '../../common/storage';
 import { MemorySessions, MemoryStorage } from '../../testing/memory';
 import { TryOnSession } from '../tryon/domain/tryon-session.entity';
 import { RetentionService } from './privacy.module';
@@ -47,5 +49,11 @@ describe('RetentionService (sección 8)', () => {
     expect(result.deletedObjects).toBe(2);
     expect(userDeleted).toBe('u1');
     expect([...storage.objects.keys()].every((k) => k.includes('/other/'))).toBe(true);
+  });
+
+  it('el TTL prometido nunca supera la regla de borrado del bucket, y las fotos anónimas viven en ese prefijo', () => {
+    expect(PHOTO_TTL_HOURS).toBeLessThanOrEqual(PRIVATE_PREFIX_EXPIRATION_DAYS * 24);
+    expect(TryOnSession.photoKeyFor('x').startsWith(PRIVATE_PREFIX)).toBe(true);
+    expect(TryOnSession.savedKeyFor('u', 'x').startsWith(PRIVATE_PREFIX)).toBe(false);
   });
 });

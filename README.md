@@ -29,6 +29,18 @@ Admin de demo: `admin@vestirse.local` / `admin1234` (cámbialo con `ADMIN_EMAIL`
 > Los puertos de Postgres y Redis del host son 55432 y 6380 para no chocar con instalaciones locales.
 > Se usa **RustFS** como S3 local porque las imágenes oficiales de MinIO ya no se publican.
 
+### Todo en contenedores (perfil `full`)
+
+```bash
+docker compose -f infra/docker-compose.yml --profile full up -d --build
+docker compose -f infra/docker-compose.yml exec api npm run db:seed   # la primera vez
+# web en http://localhost:8080 (WEB_PORT=... para cambiarlo; AI_WORKER_PORT para el worker)
+```
+
+La API aplica las migraciones al arrancar y expone `GET /api/health` (base de datos y Redis críticos;
+el worker aparece como `degraded` si no responde, porque la app sigue funcionando con el fallback).
+Los secretos por defecto del perfil `full` son solo para desarrollo local.
+
 ### Track B con un modelo real
 
 El proveedor se elige en el panel de admin (o con `AI_PROVIDER` en `apps/api/.env`) y viaja al worker

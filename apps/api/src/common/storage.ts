@@ -20,8 +20,14 @@ export abstract class ObjectStorage {
   abstract deleteMany(keys: string[]): Promise<void>;
 }
 
-/** Prefijo de objetos sensibles (fotos y resultados) con expiración automática. */
+/**
+ * Prefijo de objetos sensibles ANÓNIMOS (fotos y resultados no guardados) con
+ * expiración automática del bucket. Todo lo que deba sobrevivir más de
+ * `PRIVATE_PREFIX_EXPIRATION_DAYS` (resultados guardados en la cuenta, fotos con
+ * consentimiento) tiene que vivir fuera de este prefijo, p. ej. en `saved/`.
+ */
 export const PRIVATE_PREFIX = 'uploads/';
+export const PRIVATE_PREFIX_EXPIRATION_DAYS = 1;
 export const CATALOG_PREFIX = 'catalog/';
 
 @Injectable()
@@ -57,7 +63,7 @@ export class S3ObjectStorage extends ObjectStorage implements OnModuleInit {
         new PutBucketLifecycleConfigurationCommand({
           Bucket: this.bucket,
           LifecycleConfiguration: {
-            Rules: [{ ID: 'expire-uploads', Status: 'Enabled', Filter: { Prefix: PRIVATE_PREFIX }, Expiration: { Days: 1 } }],
+            Rules: [{ ID: 'expire-uploads', Status: 'Enabled', Filter: { Prefix: PRIVATE_PREFIX }, Expiration: { Days: PRIVATE_PREFIX_EXPIRATION_DAYS } }],
           },
         }),
       );
