@@ -34,7 +34,14 @@ import { TryOnModule } from './modules/tryon/tryon.module';
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        connection: { host: config.get('REDIS_HOST', 'localhost'), port: Number(config.get('REDIS_PORT', 6379)) },
+        connection: {
+          host: config.get('REDIS_HOST', 'localhost'),
+          port: Number(config.get('REDIS_PORT', 6379)),
+          username: config.get('REDIS_USERNAME') || undefined,
+          password: config.get('REDIS_PASSWORD') || undefined,
+          // family 0: resuelve IPv4 e IPv6 (las redes privadas de Railway son IPv6).
+          family: 0,
+        },
       }),
     }),
     ScheduleModule.forRoot(),

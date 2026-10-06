@@ -16,6 +16,8 @@ export class EnvironmentVariables {
   @IsString() @MinLength(1) DATABASE_URL!: string;
   @IsOptional() @IsString() REDIS_HOST?: string;
   @IsOptional() @Type(() => Number) @IsInt() REDIS_PORT?: number;
+  @IsOptional() @IsString() REDIS_USERNAME?: string;
+  @IsOptional() @IsString() REDIS_PASSWORD?: string;
 
   @IsUrl(url) S3_ENDPOINT!: string;
   @IsString() @MinLength(1) S3_BUCKET!: string;
