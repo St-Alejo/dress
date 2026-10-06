@@ -5,14 +5,18 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
+import { loggerParams } from './common/logging';
 import { PrismaModule } from './common/prisma.service';
 import { RequesterMiddleware } from './common/requester';
 import { StorageModule } from './common/storage';
 import { AdminModule } from './modules/admin/admin.module';
 import { AiSettingsModule } from './modules/ai-settings/ai-settings.module';
+import { validateEnv } from './config/env.schema';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { FitModule } from './modules/fit/fit.module';
+import { HealthModule } from './modules/health/health.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
@@ -20,7 +24,8 @@ import { TryOnModule } from './modules/tryon/tryon.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    LoggerModule.forRoot(loggerParams(process.env.NODE_ENV)),
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],
@@ -45,6 +50,7 @@ import { TryOnModule } from './modules/tryon/tryon.module';
     ReviewsModule,
     AuthModule,
     AdminModule,
+    HealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
