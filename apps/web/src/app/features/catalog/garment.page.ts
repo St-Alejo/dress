@@ -25,7 +25,10 @@ import { BodyPickerComponent } from './body-picker.component';
       <a routerLink="/" class="btn btn-ghost -ml-3 text-sm">← {{ 'nav.catalog' | transloco }}</a>
 
       @if (store.error()) {
-        <div class="card p-5 mt-4" role="alert">{{ 'common.loadError' | transloco }}</div>
+        <div class="card p-5 mt-4 space-y-3" role="alert">
+          <p>{{ 'common.loadError' | transloco }}</p>
+          <button type="button" class="btn" (click)="load(id())">{{ 'common.retry' | transloco }}</button>
+        </div>
       } @else if (store.garment(); as g) {
         <div class="mt-2 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <!-- Escenario visual -->
@@ -108,15 +111,18 @@ export class GarmentPage {
     const title = inject(Title);
     effect(() => {
       const id = this.id();
-      untracked(() => {
-        this.store.garment.set(null);
-        this.store.loadGarment(id).catch(() => this.store.error.set('load'));
-      });
+      untracked(() => this.load(id));
     });
     effect(() => {
       const g = this.store.garment();
       if (g) title.setTitle(`${g.name} · Vestirse`);
     });
+  }
+
+  load(id: string) {
+    this.store.error.set(null);
+    this.store.garment.set(null);
+    this.store.loadGarment(id).catch(() => this.store.error.set('load'));
   }
 
   setMode(m: TryOnMode) {

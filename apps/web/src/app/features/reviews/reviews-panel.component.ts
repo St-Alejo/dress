@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { FitFeeling, FitReview, FitReviewSummary, FitZone, GarmentItem } from '@vestirse/shared-types';
 import { ApiService } from '../../core/api.service';
+import { NoticeStore } from '../../core/notice.store';
 
 /** Reseñas de ajuste de otras personas (paso 7): contexto, no estética. */
 @Component({
@@ -12,6 +13,15 @@ import { ApiService } from '../../core/api.service';
   template: `
     <section class="card p-5 space-y-4" aria-labelledby="rv-title">
       <h2 id="rv-title" class="text-xl">{{ 'reviews.title' | transloco }}</h2>
+
+      @if (loading()) {
+        <p class="text-sm text-[var(--muted)]" role="status">{{ 'common.loading' | transloco }}</p>
+      } @else if (loadFailed()) {
+        <div class="text-sm space-y-2" role="alert">
+          <p>{{ 'common.loadError' | transloco }}</p>
+          <button type="button" class="btn" (click)="load()">{{ 'common.retry' | transloco }}</button>
+        </div>
+      }
 
       @if (summary(); as s) {
         @if (s.total > 0) {
@@ -85,6 +95,9 @@ import { ApiService } from '../../core/api.service';
 })
 export class ReviewsPanelComponent {
   private readonly api = inject(ApiService);
+  private readonly notices = inject(NoticeStore);
+  readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly garment = input.required<GarmentItem>();
 
   readonly reviews = signal<FitReview[]>([]);
@@ -101,10 +114,19 @@ export class ReviewsPanelComponent {
   private readonly total = computed(() => this.summary()?.total || 1);
 
   constructor() {
-    effect(() => {
-      const id = this.garment().id;
-      void this.api.reviews(id).then((r) => this.apply(r));
-    });
+    effect(() => void this.load(this.garment().id));
+  }
+
+  async load(garmentId = this.garment().id) {
+    this.loading.set(true);
+    this.loadFailed.set(false);
+    try {
+      this.apply(await this.api.reviews(garmentId));
+    } catch {
+      this.loadFailed.set(true);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   pct(n: number) {
@@ -129,6 +151,8 @@ export class ReviewsPanelComponent {
       this.sent.set(true);
       this.comment = '';
       this.picked.set([]);
+    } catch (err) {
+      this.notices.error(err, 'errors.reviewSubmit');
     } finally {
       this.sending.set(false);
     }

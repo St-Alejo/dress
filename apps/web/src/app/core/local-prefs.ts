@@ -27,3 +27,25 @@ export const localPrefs = {
     }
   },
 };
+
+/**
+ * Igual que `localPrefs`, pero en sessionStorage: dura lo que la pestaña. Se usa
+ * para recordar los ids de sesión de prueba al recargar (nunca la foto ni medidas).
+ */
+export const tabPrefs = {
+  read<T>(key: string, fallback: T): T {
+    try {
+      const raw = globalThis.sessionStorage?.getItem(`vestirse:${key}`);
+      return raw ? (JSON.parse(raw) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  write(key: string, value: unknown): void {
+    try {
+      globalThis.sessionStorage?.setItem(`vestirse:${key}`, JSON.stringify(value));
+    } catch {
+      /* noop */
+    }
+  },
+};

@@ -50,6 +50,15 @@ const EXPECTED_SECONDS = 20;
             </div>
             <p class="text-xs text-[var(--muted)]">{{ 'photo.generatingHint' | transloco }}</p>
           </div>
+        } @else if (gen.status === 'failed') {
+          <div class="card p-5 space-y-3" role="alert">
+            <p class="font-medium">{{ 'photo.failed.title' | transloco }}</p>
+            <p class="text-sm text-[var(--ink-2)]">{{ 'photo.failed.body' | transloco }}</p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn btn-primary" (click)="generate()">{{ 'common.retry' | transloco }}</button>
+              <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
+            </div>
+          </div>
         } @else if (gen.status === 'fallback') {
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.fallback.title' | transloco }}</p>
@@ -129,7 +138,7 @@ const EXPECTED_SECONDS = 20;
               </fieldset>
               <label class="field">
                 {{ 'photo.manualCrop' | transloco }}
-                <input type="range" min="0" max="0.5" step="0.01" [value]="manualCrop()" (input)="manualCrop.set(+$any($event.target).value)" />
+                <input type="range" min="0" max="0.5" step="0.01" [value]="manualCrop()" (input)="onCrop($event)" />
               </label>
               <div class="flex gap-2">
                 <button type="button" class="btn btn-primary" (click)="upload()">{{ 'photo.upload' | transloco }}</button>
@@ -239,8 +248,11 @@ export class PhotoTryOnComponent {
   }
 
   async deletePhoto() {
-    await this.store.deletePhoto();
-    this.reset('intro');
+    if (await this.store.deletePhoto()) this.reset('intro');
+  }
+
+  onCrop(ev: Event) {
+    this.manualCrop.set(Number((ev.target as HTMLInputElement).value));
   }
 
   reset(step: Step = 'intro') {

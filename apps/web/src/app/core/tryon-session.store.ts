@@ -11,7 +11,9 @@ import type {
 } from '@vestirse/shared-types';
 import { ApiService } from './api.service';
 import { GenerationSocketService } from './generation-socket.service';
-import { localPrefs } from './local-prefs';
+import { backoffDelay, sleep } from './http/backoff';
+import { localPrefs, tabPrefs } from './local-prefs';
+import { NoticeStore } from './notice.store';
 
 interface GenerationState {
   status: GenerationStatus;
@@ -21,15 +23,22 @@ interface GenerationState {
 }
 
 const REMEMBER_KEY = 'measurements';
+const SESSIONS_KEY = 'tryon-sessions';
+/** Estados en los que la generación ya no avanza sola. */
+export const SETTLED: ReadonlySet<GenerationStatus> = new Set(['done', 'fallback', 'failed', 'idle']);
+/** Si ni el socket ni el sondeo traen novedades en este tiempo, se deja de esperar. */
+export const POLL_DEADLINE_MS = 6 * 60_000;
 
 /**
  * TryOnSessionStore — única fuente de verdad de la prueba en curso (sección 5).
- * Todo en signals: los componentes leen, las acciones escriben.
+ * Todo en signals: los componentes leen, las acciones escriben. Ninguna acción
+ * falla en silencio: si el servidor rechaza algo, el estado se revierte y se avisa.
  */
 @Injectable({ providedIn: 'root' })
 export class TryOnSessionStore {
   private readonly api = inject(ApiService);
   private readonly socket = inject(GenerationSocketService);
+  private readonly notices = inject(NoticeStore);
 
   readonly garment = signal<GarmentItem | null>(null);
   readonly bodyModels = signal<SimilarBodyModel[]>([]);
@@ -64,7 +73,8 @@ export class TryOnSessionStore {
   readonly hasPhoto = computed(() => !!this.session()?.uploadedPhotoUrl);
 
   private stopWatching?: () => void;
-  private sessionsByGarment = new Map<string, string>();
+  /** Prenda → sesión. Vive en sessionStorage: recargar la página no pierde la prueba en curso. */
+  private readonly sessionsByGarment = new Map<string, string>(Object.entries(tabPrefs.read<Record<string, string>>(SESSIONS_KEY, {})));
 
   async loadGarment(id: string) {
     this.error.set(null);
@@ -80,7 +90,16 @@ export class TryOnSessionStore {
     const known = this.sessionsByGarment.get(id);
     if (known) {
       const s = await this.api.session(known).catch(() => null);
-      if (s) this.adoptSession(s);
+      if (s) {
+        this.adoptSession(s);
+        // Una generación que seguía en curso al recargar se vuelve a seguir.
+        if (!SETTLED.has(s.generationStatus ?? 'idle')) {
+          this.generation.set({ status: s.generationStatus!, progress: 0.1, startedAt: performance.now() });
+          this.watch(s.id);
+        }
+      } else {
+        this.forgetSession(id);
+      }
     }
     if (this.measurements()) await this.estimate(this.measurements()!);
   }
@@ -91,12 +110,18 @@ export class TryOnSessionStore {
   }
 
   async setMode(mode: TryOnMode) {
+    const previous = this.mode();
     this.mode.set(mode);
     const g = this.garment();
     if (!g) return;
     const s = this.session();
-    if (s) this.session.set(await this.api.changeMode(s.id, mode));
-    else void this.api.modeUsed(mode, g.id);
+    if (!s) return void this.api.modeUsed(mode, g.id);
+    try {
+      this.session.set(await this.api.changeMode(s.id, mode));
+    } catch (err) {
+      this.mode.set(previous);
+      this.notices.error(err, 'errors.modeChange');
+    }
   }
 
   async estimate(m: BodyMeasurements) {
@@ -113,6 +138,8 @@ export class TryOnSessionStore {
         sessionId: this.session()?.id,
       });
       this.fit.set(rec);
+    } catch (err) {
+      this.notices.error(err, 'errors.fitEstimate');
     } finally {
       this.fitLoading.set(false);
     }
@@ -135,8 +162,14 @@ export class TryOnSessionStore {
     const g = this.garment();
     const f = this.fit();
     if (!g || !f) return;
+    // Actualización optimista: se muestra al instante y se revierte si el servidor falla.
     this.fit.set({ ...f, userOverride: size === f.recommendedSize ? undefined : size });
-    await this.api.overrideSize({ garmentId: g.id, recommendedSize: f.recommendedSize, chosenSize: size, sessionId: this.session()?.id });
+    try {
+      await this.api.overrideSize({ garmentId: g.id, recommendedSize: f.recommendedSize, chosenSize: size, sessionId: this.session()?.id });
+    } catch (err) {
+      this.fit.set(f);
+      this.notices.error(err, 'errors.sizeOverride');
+    }
   }
 
   async ensureSession(): Promise<TryOnSession> {
@@ -154,67 +187,99 @@ export class TryOnSessionStore {
   }
 
   async generate() {
-    const s = await this.ensureSession();
-    const startedAt = performance.now();
-    this.generation.set({ status: 'queued', progress: 0.02, startedAt });
-    this.watch(s.id);
+    const previous = this.generation();
     try {
+      const s = await this.ensureSession();
+      this.generation.set({ status: 'queued', progress: 0.02, startedAt: performance.now() });
+      this.watch(s.id);
       this.adoptSession(await this.api.generate(s.id));
-    } catch {
-      this.generation.set({ status: 'fallback', progress: 1, fallbackReason: 'provider-error' });
+    } catch (err) {
+      // No se pudo ni encolar (sin conexión, ya había una en curso...): no es un fallback del proveedor.
+      this.stopWatching?.();
+      this.generation.set(SETTLED.has(previous.status) ? previous : { status: 'idle', progress: 0 });
+      this.notices.error(err, 'errors.generate');
     }
   }
 
-  async deletePhoto() {
+  /** Devuelve si se borró, para que la vista solo cambie de paso cuando el servidor lo confirmó. */
+  async deletePhoto(): Promise<boolean> {
     const s = this.session();
-    if (!s) return;
-    this.stopWatching?.();
-    this.adoptSession(await this.api.deletePhoto(s.id));
-    this.generation.set({ status: 'idle', progress: 0 });
+    if (!s) return false;
+    try {
+      const updated = await this.api.deletePhoto(s.id);
+      this.stopWatching?.();
+      this.adoptSession(updated);
+      this.generation.set({ status: 'idle', progress: 0 });
+      this.notices.success('photo.deleted');
+      return true;
+    } catch (err) {
+      this.notices.error(err, 'errors.deletePhoto');
+      return false;
+    }
   }
 
   async saveResult() {
     const s = this.session();
-    if (s) this.adoptSession(await this.api.saveResult(s.id));
+    if (!s) return;
+    try {
+      this.adoptSession(await this.api.saveResult(s.id));
+      this.notices.success('photo.saved');
+    } catch (err) {
+      this.notices.error(err, 'errors.saveResult');
+    }
   }
 
   private adoptSession(s: TryOnSession) {
     this.session.set(s);
     this.sessionsByGarment.set(s.garmentId, s.id);
+    tabPrefs.write(SESSIONS_KEY, Object.fromEntries(this.sessionsByGarment));
     if (s.fitRecommendation && !this.fit()) this.fit.set(s.fitRecommendation);
     const status = s.generationStatus ?? 'idle';
-    if (status === 'done' || status === 'fallback') {
-      this.generation.update((g) => ({ ...g, status, progress: 1 }));
+    if (status === 'done' || status === 'fallback' || status === 'failed') {
+      this.generation.update((g) => ({ ...g, status, progress: 1, fallbackReason: s.failureReason ?? g.fallbackReason }));
     }
+  }
+
+  private forgetSession(garmentId: string) {
+    this.sessionsByGarment.delete(garmentId);
+    tabPrefs.write(SESSIONS_KEY, Object.fromEntries(this.sessionsByGarment));
   }
 
   private watch(sessionId: string) {
     this.stopWatching?.();
-    this.stopWatching = this.socket.watch(sessionId, async (e) => {
+    const abort = new AbortController();
+    const unsubscribe = this.socket.watch(sessionId, async (e) => {
       this.generation.update((g) => ({ ...g, status: e.status, progress: e.progress, fallbackReason: e.fallbackReason }));
-      if (e.status === 'done' || e.status === 'fallback') {
+      if (SETTLED.has(e.status)) {
         this.stopWatching?.();
-        this.adoptSession(await this.api.session(sessionId));
+        const s = await this.api.session(sessionId).catch(() => null);
+        if (s) this.adoptSession(s);
         const started = this.generation().startedAt;
         if (e.status === 'done' && started) void this.api.generationPerceived(sessionId, Math.round(performance.now() - started));
       }
     });
-    // Respaldo si el WebSocket no conecta: sondeo liviano.
-    void this.pollUntilSettled(sessionId);
+    this.stopWatching = () => {
+      unsubscribe();
+      abort.abort();
+    };
+    // Respaldo si el WebSocket no conecta: sondeo con espera creciente y tope de tiempo.
+    void this.pollUntilSettled(sessionId, abort.signal).catch(() => undefined);
   }
 
-  private async pollUntilSettled(sessionId: string) {
-    for (let i = 0; i < 120; i++) {
-      await new Promise((r) => setTimeout(r, 2500));
-      const g = this.generation();
-      if (g.status === 'done' || g.status === 'fallback' || g.status === 'idle') return;
-      if (this.session()?.id !== sessionId) return;
+  private async pollUntilSettled(sessionId: string, signal: AbortSignal) {
+    const deadline = Date.now() + POLL_DEADLINE_MS;
+    for (let attempt = 0; Date.now() < deadline; attempt++) {
+      await sleep(backoffDelay(attempt), signal);
+      if (SETTLED.has(this.generation().status) || this.session()?.id !== sessionId) return;
       const s = await this.api.session(sessionId).catch(() => null);
-      if (s && (s.generationStatus === 'done' || s.generationStatus === 'fallback')) {
-        this.generation.update((x) => ({ ...x, status: s.generationStatus!, progress: 1 }));
+      if (s && SETTLED.has(s.generationStatus ?? 'idle')) {
         this.adoptSession(s);
+        this.stopWatching?.();
         return;
       }
     }
+    // El servidor también rescata las atascadas; aquí solo se deja de esperar y se avisa.
+    this.generation.update((g) => ({ ...g, status: 'failed', progress: 1, fallbackReason: 'client-timeout' }));
+    this.notices.push('error', 'errors.generationTimeout');
   }
 }

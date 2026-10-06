@@ -35,6 +35,39 @@ export interface AdminBodyModel {
   avatarKey: string;
 }
 
+type Range = [number, number];
+
+/** Cuerpo de alta de prenda (refleja GarmentDto de la API). */
+export interface AdminGarmentInput {
+  name: string;
+  brandId: string;
+  category: GarmentCategory;
+  style: string;
+  color: string;
+  pattern: string;
+  priceCents: number;
+  stretch: GarmentItem['stretch'];
+  fabricNotes?: string;
+  sizeChart: { size: string; chest?: Range; waist?: Range; hip?: Range; height?: Range }[];
+}
+
+export type AdminGarmentPatch = Partial<Pick<AdminGarmentInput, 'name' | 'priceCents' | 'color' | 'pattern' | 'fabricNotes' | 'sizeChart'>> & { active?: boolean };
+
+/** Cuerpo de alta de modelo de cuerpo (refleja BodyModelDto de la API). */
+export interface AdminBodyModelInput {
+  bodyTypeTag: string;
+  typicalSize: string;
+  heightMin: number;
+  heightMax: number;
+  skinTone: string;
+  hair: string;
+  hairColor: string;
+  shoulderCm: number;
+  chestCm: number;
+  waistCm: number;
+  hipCm: number;
+}
+
 export interface AdminMetrics extends MetricsSummary {
   calibrations: { brand: string; category: string; sampleSize: number; meanShift: number }[];
 }
@@ -148,10 +181,10 @@ export class ApiService {
   adminGarments() {
     return this.get<AdminGarment[]>('/admin/garments');
   }
-  adminCreateGarment(body: unknown) {
+  adminCreateGarment(body: AdminGarmentInput) {
     return this.send<{ id: string }>('POST', '/admin/garments', body);
   }
-  adminUpdateGarment(id: string, body: unknown) {
+  adminUpdateGarment(id: string, body: AdminGarmentPatch) {
     return this.send<{ id: string }>('PATCH', `/admin/garments/${id}`, body);
   }
   adminBrands() {
@@ -163,7 +196,7 @@ export class ApiService {
   adminBodyModels() {
     return this.get<AdminBodyModel[]>('/admin/body-models');
   }
-  adminCreateBodyModel(body: unknown) {
+  adminCreateBodyModel(body: AdminBodyModelInput) {
     return this.send<{ id: string }>('POST', '/admin/body-models', body);
   }
   adminDeleteBodyModel(id: string) {

@@ -6,12 +6,13 @@ import { AuthStore } from './core/auth.store';
 import { ComparisonStore } from './core/comparison/comparison.store';
 import { LOCALES, setLocale } from './core/i18n';
 import { localPrefs } from './core/local-prefs';
+import { NoticesComponent } from './shared/ui/notice.component';
 
 type Theme = 'system' | 'light' | 'dark';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslocoPipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslocoPipe, NoticesComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 btn">{{ 'nav.skip' | transloco }}</a>
@@ -45,6 +46,7 @@ type Theme = 'system' | 'light' | 'dark';
         <span>{{ 'footer.promise' | transloco }}</span>
       </div>
     </footer>
+    <ui-notices />
   `,
 })
 export class App {

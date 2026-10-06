@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
-import type { Brand, GarmentCategory, TryOnMode } from '@vestirse/shared-types';
+import type { Brand, GarmentCategory, GarmentItem, TryOnMode } from '@vestirse/shared-types';
 import { ApiService, type AdminBodyModel, type AdminGarment, type AdminMetrics } from '../../core/api.service';
+import { AppError } from '../../core/http/app-error';
+import { NoticeStore } from '../../core/notice.store';
 import { PricePipe } from '../../shared/price.pipe';
 
 type Tab = 'metrics' | 'garments' | 'bodies';
@@ -151,6 +153,7 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
 })
 export class AdminPage {
   private readonly api = inject(ApiService);
+  private readonly notices = inject(NoticeStore);
   readonly tabs: Tab[] = ['metrics', 'garments', 'bodies'];
   readonly tab = signal<Tab>('metrics');
   readonly styles = STYLES;
@@ -165,7 +168,7 @@ export class AdminPage {
   readonly busy = signal(false);
   readonly message = signal<string | null>(null);
 
-  draft = { name: '', brandId: '', style: 'tshirt', color: '#3f5f86', pattern: 'solid', priceCents: 2999, stretch: 'low' };
+  draft = { name: '', brandId: '', style: 'tshirt', color: '#3f5f86', pattern: 'solid', priceCents: 2999, stretch: 'low' as GarmentItem['stretch'] };
   body = { bodyTypeTag: '', typicalSize: 'M', heightMin: 165, heightMax: 175, chestCm: 98, waistCm: 82, hipCm: 102, shoulderCm: 43, skinTone: '#c99a74', hair: 'short', hairColor: '#2b1b12' };
 
   private readonly modeTotal = computed(() => {
@@ -188,15 +191,23 @@ export class AdminPage {
 
   async loadMetrics(days: number) {
     this.days.set(days);
-    this.metrics.set(await this.api.adminMetrics(days || undefined));
+    try {
+      this.metrics.set(await this.api.adminMetrics(days || undefined));
+    } catch (err) {
+      this.notices.error(err, 'errors.load');
+    }
   }
 
   async refresh() {
-    const [garments, brands, bodies] = await Promise.all([this.api.adminGarments(), this.api.adminBrands(), this.api.adminBodyModels()]);
-    this.garments.set(garments);
-    this.brands.set(brands);
-    this.bodies.set(bodies);
-    if (!this.draft.brandId && brands[0]) this.draft.brandId = brands[0].id;
+    try {
+      const [garments, brands, bodies] = await Promise.all([this.api.adminGarments(), this.api.adminBrands(), this.api.adminBodyModels()]);
+      this.garments.set(garments);
+      this.brands.set(brands);
+      this.bodies.set(bodies);
+      if (!this.draft.brandId && brands[0]) this.draft.brandId = brands[0].id;
+    } catch (err) {
+      this.notices.error(err, 'errors.load');
+    }
   }
 
   async createGarment() {
@@ -232,11 +243,13 @@ export class AdminPage {
     this.message.set(null);
     try {
       await fn();
-      if (okMessage) this.message.set('✓');
+      if (okMessage) this.notices.success(okMessage);
       await this.refresh();
     } catch (err) {
-      const body = (err as { error?: { message?: string | string[] } }).error;
-      this.message.set(Array.isArray(body?.message) ? body.message.join('; ') : (body?.message ?? 'Error'));
+      // En admin el detalle del servidor (validación) es útil tal cual.
+      const e = AppError.from(err);
+      if (e.status === 400 || e.status === 409 || e.status === 422) this.message.set(e.message);
+      else this.notices.error(e);
     } finally {
       this.busy.set(false);
     }

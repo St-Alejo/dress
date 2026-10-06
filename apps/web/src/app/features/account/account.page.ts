@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth.store';
+import { NoticeStore } from '../../core/notice.store';
 
 @Component({
   selector: 'app-account-page',
@@ -23,13 +24,13 @@ import { AuthStore } from '../../core/auth.store';
             <a routerLink="/admin" class="btn">{{ 'nav.admin' | transloco }}</a>
           }
           <label class="flex items-start gap-3 rounded-xl border border-[var(--line)] p-3">
-            <input type="checkbox" class="mt-1 size-5" [checked]="user.retrainingConsent" (change)="auth.setConsent(!user.retrainingConsent)" />
+            <input type="checkbox" class="mt-1 size-5" [checked]="user.retrainingConsent" (change)="setConsent(!user.retrainingConsent, $event)" />
             <span class="text-sm">
               <strong class="block">{{ 'account.consent.title' | transloco }}</strong>
               {{ 'account.consent.body' | transloco }}
             </span>
           </label>
-          <button type="button" class="btn" (click)="auth.logout()">{{ 'account.logout' | transloco }}</button>
+          <button type="button" class="btn" (click)="logout()">{{ 'account.logout' | transloco }}</button>
         </div>
 
         <div class="card p-5 space-y-3 border-[var(--danger)]">
@@ -66,6 +67,7 @@ import { AuthStore } from '../../core/auth.store';
 })
 export class AccountPage {
   readonly auth = inject(AuthStore);
+  private readonly notices = inject(NoticeStore);
   readonly tab = signal<'login' | 'register'>('login');
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
@@ -89,8 +91,33 @@ export class AccountPage {
     }
   }
 
+  async setConsent(value: boolean, event: Event) {
+    try {
+      await this.auth.setConsent(value);
+    } catch (err) {
+      // La casilla vuelve a reflejar lo que dice el servidor.
+      (event.target as HTMLInputElement).checked = !value;
+      this.notices.error(err, 'errors.consent');
+    }
+  }
+
+  async logout() {
+    try {
+      await this.auth.logout();
+    } catch (err) {
+      this.notices.error(err, 'errors.generic');
+    }
+  }
+
   async deleteAccount() {
-    this.deleted.set(await this.auth.deleteAccount());
-    this.confirmDelete.set(false);
+    this.busy.set(true);
+    try {
+      this.deleted.set(await this.auth.deleteAccount());
+      this.confirmDelete.set(false);
+    } catch (err) {
+      this.notices.error(err, 'errors.deleteAccount');
+    } finally {
+      this.busy.set(false);
+    }
   }
 }

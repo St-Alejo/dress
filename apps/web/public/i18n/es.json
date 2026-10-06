@@ -7,11 +7,17 @@
     "account": "Mi cuenta",
     "signIn": "Entrar",
     "language": "Cambiar idioma a inglés",
-    "theme": { "system": "Tema: automático", "light": "Tema: claro", "dark": "Tema: oscuro" },
+    "theme": {
+      "system": "Tema: automático",
+      "light": "Tema: claro",
+      "dark": "Tema: oscuro"
+    },
     "privacy": "Privacidad",
     "admin": "Panel de administración"
   },
-  "footer": { "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo." },
+  "footer": {
+    "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo."
+  },
   "common": {
     "retry": "Reintentar",
     "notNow": "Ahora no",
@@ -32,7 +38,14 @@
     "showingOn": "Mostrando sobre:",
     "empty": "No hay prendas con esos filtros."
   },
-  "category": { "top": "Superiores", "bottom": "Inferiores", "dress": "Vestidos", "outerwear": "Abrigos", "footwear": "Calzado", "accessory": "Accesorios" },
+  "category": {
+    "top": "Superiores",
+    "bottom": "Inferiores",
+    "dress": "Vestidos",
+    "outerwear": "Abrigos",
+    "footwear": "Calzado",
+    "accessory": "Accesorios"
+  },
   "body": {
     "pick": "Elige un cuerpo parecido al tuyo",
     "pickHelp": "Por estatura y forma. Puedes cambiarlo cuando quieras; no hay uno correcto.",
@@ -62,7 +75,9 @@
       "photorealistic": "Imagen generada por IA a partir de tu foto. Es la más realista, pero la textura y el ajuste pueden no ser exactos."
     }
   },
-  "garment": { "stage": "Vista de la prenda" },
+  "garment": {
+    "stage": "Vista de la prenda"
+  },
   "live": {
     "intro": "Ve la prenda sobre ti en tiempo real. Todo ocurre en tu dispositivo.",
     "start": "Encender cámara",
@@ -133,6 +148,11 @@
       "tooBig": "La imagen es demasiado grande (máximo 15 MB).",
       "unreadable": "No pudimos leer esa imagen. Prueba con JPG o PNG.",
       "upload": "No pudimos subir la foto. Inténtalo de nuevo."
+    },
+    "deleted": "Foto borrada.",
+    "failed": {
+      "title": "La generación no terminó",
+      "body": "Algo se interrumpió en el servidor. Tu foto sigue disponible: puedes reintentar."
     }
   },
   "limitation": {
@@ -152,14 +172,21 @@
     "remember": "Recordar mis medidas en este dispositivo",
     "submit": "Ver mi talla",
     "recommended": "Recomendado:",
-    "confidence": { "high": "Confianza alta", "medium": "Confianza media", "low": "Confianza baja" },
+    "confidence": {
+      "high": "Confianza alta",
+      "medium": "Confianza media",
+      "low": "Confianza baja"
+    },
     "alternative": "Estás entre dos tallas; la {{size}} también podría servirte.",
     "yourSize": "Tu talla (tú decides)",
     "overridden": "Elegiste {{size}}. Tu elección nos ayuda a mejorar las recomendaciones de esta marca.",
     "forget": "Olvidar mis medidas",
     "sizeChart": "Ver tabla de tallas",
     "size": "Talla",
-    "error": { "height": "Escribe tu estatura en centímetros (entre 120 y 230).", "generic": "No pudimos calcular la talla. Inténtalo de nuevo." },
+    "error": {
+      "height": "Escribe tu estatura en centímetros (entre 120 y 230).",
+      "generic": "No pudimos calcular la talla. Inténtalo de nuevo."
+    },
     "basis": {
       "chestProvided": "Basado en tu medida de pecho",
       "waistProvided": "Basado en tu medida de cintura",
@@ -195,9 +222,20 @@
   "reviews": {
     "title": "Cómo le quedó a otras personas",
     "barLabel": "{{small}} dicen que queda pequeña, {{fit}} que es fiel a la talla, {{large}} que queda grande",
-    "feeling": { "runs-small": "Queda pequeña", "true-to-size": "Fiel a la talla", "runs-large": "Queda grande" },
+    "feeling": {
+      "runs-small": "Queda pequeña",
+      "true-to-size": "Fiel a la talla",
+      "runs-large": "Queda grande"
+    },
     "zonesMentioned": "Zonas más mencionadas:",
-    "zone": { "shoulders": "hombros", "chest": "pecho", "waist": "cintura", "hips": "cadera", "length": "largo", "sleeves": "mangas" },
+    "zone": {
+      "shoulders": "hombros",
+      "chest": "pecho",
+      "waist": "cintura",
+      "hips": "cadera",
+      "length": "largo",
+      "sleeves": "mangas"
+    },
     "empty": "Aún no hay reseñas de ajuste para esta prenda.",
     "fabric": "Tela y caída",
     "bought": "compró {{size}}",
@@ -221,7 +259,11 @@
     "size": "Talla",
     "noSize": "sin elegir",
     "keyboard": "Atajos: Ctrl+Z deshacer · Ctrl+Y rehacer.",
-    "cmd": { "add": "Agregar", "remove": "Quitar", "size": "Cambiar talla" }
+    "cmd": {
+      "add": "Agregar",
+      "remove": "Quitar",
+      "size": "Cambiar talla"
+    }
   },
   "account": {
     "eyebrow": "Opcional",
@@ -244,23 +286,52 @@
     "register": "Crear cuenta",
     "email": "Correo",
     "password": "Contraseña (mínimo 8 caracteres)",
-    "error": { "exists": "Ese correo ya tiene una cuenta.", "credentials": "Correo o contraseña incorrectos.", "generic": "Algo salió mal. Inténtalo de nuevo." }
+    "error": {
+      "exists": "Ese correo ya tiene una cuenta.",
+      "credentials": "Correo o contraseña incorrectos.",
+      "generic": "Algo salió mal. Inténtalo de nuevo."
+    }
   },
   "privacy": {
     "eyebrow": "Privacidad",
     "title": "Qué pasa con tus datos",
-    "similar": { "title": "Cuerpo similar", "body": "No pedimos nada: ni foto, ni cámara, ni medidas. Es el modo por defecto." },
-    "live": { "title": "Cámara en vivo", "body": "Todo el procesamiento ocurre en tu navegador. Solo pedimos video (nunca audio) y la cámara se apaga en cuanto sales. Ninguna imagen se envía a ningún servidor; el modelo de detección se descarga de nuestro propio sitio." },
-    "photo": { "title": "Tu foto", "body": "Antes de subirla puedes recortar o difuminar tu rostro, y quitamos los metadatos (como la ubicación). La foto y el resultado se borran solos en {{hours}} horas, salvo que guardes el resultado en tu cuenta. Puedes borrarla antes cuando quieras." },
-    "measurements": { "title": "Tus medidas", "body": "Solo la estatura es necesaria. No guardamos tus medidas en el servidor; en tu dispositivo solo si marcas «recordar»." },
-    "training": { "title": "Entrenamiento de modelos", "body": "Nunca usamos tus fotos para entrenar modelos sin un permiso aparte, que está desactivado por defecto." },
-    "deletion": { "title": "Borrado real", "body": "Borrar tu cuenta elimina tus archivos del almacenamiento, no solo una marca en la base de datos." },
-    "body": { "title": "Tu cuerpo, tal cual", "body": "No ofrecemos filtros ni ajustes para modificar tu silueta, ni comparamos cuerpos entre personas. Nuestro catálogo de cuerpos de referencia cubre de la XS a la 4XL." }
+    "similar": {
+      "title": "Cuerpo similar",
+      "body": "No pedimos nada: ni foto, ni cámara, ni medidas. Es el modo por defecto."
+    },
+    "live": {
+      "title": "Cámara en vivo",
+      "body": "Todo el procesamiento ocurre en tu navegador. Solo pedimos video (nunca audio) y la cámara se apaga en cuanto sales. Ninguna imagen se envía a ningún servidor; el modelo de detección se descarga de nuestro propio sitio."
+    },
+    "photo": {
+      "title": "Tu foto",
+      "body": "Antes de subirla puedes recortar o difuminar tu rostro, y quitamos los metadatos (como la ubicación). La foto y el resultado se borran solos en {{hours}} horas, salvo que guardes el resultado en tu cuenta. Puedes borrarla antes cuando quieras."
+    },
+    "measurements": {
+      "title": "Tus medidas",
+      "body": "Solo la estatura es necesaria. No guardamos tus medidas en el servidor; en tu dispositivo solo si marcas «recordar»."
+    },
+    "training": {
+      "title": "Entrenamiento de modelos",
+      "body": "Nunca usamos tus fotos para entrenar modelos sin un permiso aparte, que está desactivado por defecto."
+    },
+    "deletion": {
+      "title": "Borrado real",
+      "body": "Borrar tu cuenta elimina tus archivos del almacenamiento, no solo una marca en la base de datos."
+    },
+    "body": {
+      "title": "Tu cuerpo, tal cual",
+      "body": "No ofrecemos filtros ni ajustes para modificar tu silueta, ni comparamos cuerpos entre personas. Nuestro catálogo de cuerpos de referencia cubre de la XS a la 4XL."
+    }
   },
   "admin": {
     "eyebrow": "Administración",
     "title": "Panel",
-    "tab": { "metrics": "Métricas", "garments": "Prendas", "bodies": "Cuerpos" },
+    "tab": {
+      "metrics": "Métricas",
+      "garments": "Prendas",
+      "bodies": "Cuerpos"
+    },
     "days": "{{n}} días",
     "allTime": "Todo",
     "m": {
@@ -305,5 +376,26 @@
     "hair": "Cabello",
     "hairColor": "Color de cabello",
     "delete": "Borrar"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "network": "Sin conexión con el servidor. Revisa tu red e inténtalo de nuevo.",
+    "server": "El servidor tuvo un problema. Inténtalo en unos minutos.",
+    "rateLimited": "Demasiadas solicitudes seguidas. Espera un momento.",
+    "load": "No pudimos cargar los datos.",
+    "modeChange": "No se pudo cambiar el modo de prueba.",
+    "fitEstimate": "No pudimos calcular tu talla.",
+    "sizeOverride": "No se guardó la talla elegida.",
+    "generate": "No se pudo iniciar la generación.",
+    "generationTimeout": "La generación está tardando demasiado. Puedes reintentar o usar el modelo similar.",
+    "deletePhoto": "No se pudo borrar la foto. Vuelve a intentarlo.",
+    "saveResult": "No se pudo guardar el resultado.",
+    "reviewSubmit": "No se pudo enviar tu reseña.",
+    "consent": "No se guardó tu preferencia.",
+    "deleteAccount": "No se pudo borrar la cuenta. Vuelve a intentarlo."
+  },
+  "notice": {
+    "dismiss": "Cerrar aviso",
+    "ref": "Referencia"
   }
 }

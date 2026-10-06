@@ -23,12 +23,12 @@ import { PricePipe } from '../../shared/price.pipe';
         @for (c of categories; track c) {
           <button type="button" class="chip" [attr.aria-pressed]="category() === c" (click)="category.set(c)">{{ 'category.' + c | transloco }}</button>
         }
-        <select class="chip pr-8" [attr.aria-label]="'catalog.brand' | transloco" (change)="brandId.set($any($event.target).value || null)">
+        <select class="chip pr-8" [attr.aria-label]="'catalog.brand' | transloco" (change)="onBrand($event)">
           <option value="">{{ 'catalog.allBrands' | transloco }}</option>
           @for (b of brands(); track b.id) {<option [value]="b.id">{{ b.name }}</option>}
         </select>
         <input type="search" class="chip min-w-[180px] grow sm:grow-0" [placeholder]="'catalog.search' | transloco" [attr.aria-label]="'catalog.search' | transloco"
-          (input)="q.set($any($event.target).value)" />
+          (input)="onSearch($event)" />
       </div>
 
       @if (selectedBody(); as body) {
@@ -95,6 +95,14 @@ export class CatalogPage {
 
   constructor() {
     void this.load();
+  }
+
+  onBrand(ev: Event) {
+    this.brandId.set((ev.target as HTMLSelectElement).value || null);
+  }
+
+  onSearch(ev: Event) {
+    this.q.set((ev.target as HTMLInputElement).value);
   }
 
   /** Si la persona ya eligió un cuerpo parecido al suyo, el catálogo entero se muestra sobre ese cuerpo. */

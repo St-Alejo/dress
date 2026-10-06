@@ -7,11 +7,17 @@
     "account": "My account",
     "signIn": "Sign in",
     "language": "Switch language to Spanish",
-    "theme": { "system": "Theme: automatic", "light": "Theme: light", "dark": "Theme: dark" },
+    "theme": {
+      "system": "Theme: automatic",
+      "light": "Theme: light",
+      "dark": "Theme: dark"
+    },
     "privacy": "Privacy",
     "admin": "Admin panel"
   },
-  "footer": { "promise": "We never alter your silhouette. Your live camera never leaves your device." },
+  "footer": {
+    "promise": "We never alter your silhouette. Your live camera never leaves your device."
+  },
   "common": {
     "retry": "Try again",
     "notNow": "Not now",
@@ -32,7 +38,14 @@
     "showingOn": "Showing on:",
     "empty": "No garments match those filters."
   },
-  "category": { "top": "Tops", "bottom": "Bottoms", "dress": "Dresses", "outerwear": "Outerwear", "footwear": "Footwear", "accessory": "Accessories" },
+  "category": {
+    "top": "Tops",
+    "bottom": "Bottoms",
+    "dress": "Dresses",
+    "outerwear": "Outerwear",
+    "footwear": "Footwear",
+    "accessory": "Accessories"
+  },
   "body": {
     "pick": "Pick a body similar to yours",
     "pickHelp": "By height and shape. Change it any time; there's no right one.",
@@ -62,7 +75,9 @@
       "photorealistic": "AI-generated image from your photo. The most realistic option, but texture and fit may not be exact."
     }
   },
-  "garment": { "stage": "Garment view" },
+  "garment": {
+    "stage": "Garment view"
+  },
   "live": {
     "intro": "See the garment on you in real time. Everything happens on your device.",
     "start": "Turn on camera",
@@ -133,6 +148,11 @@
       "tooBig": "The image is too large (15 MB max).",
       "unreadable": "We couldn't read that image. Try JPG or PNG.",
       "upload": "We couldn't upload the photo. Please try again."
+    },
+    "deleted": "Photo deleted.",
+    "failed": {
+      "title": "Generation didn't finish",
+      "body": "Something was interrupted on the server. Your photo is still available: you can retry."
     }
   },
   "limitation": {
@@ -152,14 +172,21 @@
     "remember": "Remember my measurements on this device",
     "submit": "Find my size",
     "recommended": "Recommended:",
-    "confidence": { "high": "High confidence", "medium": "Medium confidence", "low": "Low confidence" },
+    "confidence": {
+      "high": "High confidence",
+      "medium": "Medium confidence",
+      "low": "Low confidence"
+    },
     "alternative": "You're between two sizes; {{size}} could also work.",
     "yourSize": "Your size (your call)",
     "overridden": "You chose {{size}}. Your choice helps us improve recommendations for this brand.",
     "forget": "Forget my measurements",
     "sizeChart": "See size chart",
     "size": "Size",
-    "error": { "height": "Enter your height in centimeters (120 to 230).", "generic": "We couldn't calculate the size. Please try again." },
+    "error": {
+      "height": "Enter your height in centimeters (120 to 230).",
+      "generic": "We couldn't calculate the size. Please try again."
+    },
     "basis": {
       "chestProvided": "Based on your chest measurement",
       "waistProvided": "Based on your waist measurement",
@@ -195,9 +222,20 @@
   "reviews": {
     "title": "How it fit other people",
     "barLabel": "{{small}} say it runs small, {{fit}} true to size, {{large}} runs large",
-    "feeling": { "runs-small": "Runs small", "true-to-size": "True to size", "runs-large": "Runs large" },
+    "feeling": {
+      "runs-small": "Runs small",
+      "true-to-size": "True to size",
+      "runs-large": "Runs large"
+    },
     "zonesMentioned": "Most mentioned areas:",
-    "zone": { "shoulders": "shoulders", "chest": "chest", "waist": "waist", "hips": "hips", "length": "length", "sleeves": "sleeves" },
+    "zone": {
+      "shoulders": "shoulders",
+      "chest": "chest",
+      "waist": "waist",
+      "hips": "hips",
+      "length": "length",
+      "sleeves": "sleeves"
+    },
     "empty": "No fit reviews for this garment yet.",
     "fabric": "Fabric and drape",
     "bought": "bought {{size}}",
@@ -221,7 +259,11 @@
     "size": "Size",
     "noSize": "not chosen",
     "keyboard": "Shortcuts: Ctrl+Z undo · Ctrl+Y redo.",
-    "cmd": { "add": "Add", "remove": "Remove", "size": "Change size" }
+    "cmd": {
+      "add": "Add",
+      "remove": "Remove",
+      "size": "Change size"
+    }
   },
   "account": {
     "eyebrow": "Optional",
@@ -244,23 +286,52 @@
     "register": "Create account",
     "email": "Email",
     "password": "Password (at least 8 characters)",
-    "error": { "exists": "That email already has an account.", "credentials": "Wrong email or password.", "generic": "Something went wrong. Please try again." }
+    "error": {
+      "exists": "That email already has an account.",
+      "credentials": "Wrong email or password.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "privacy": {
     "eyebrow": "Privacy",
     "title": "What happens to your data",
-    "similar": { "title": "Similar body", "body": "We ask for nothing: no photo, no camera, no measurements. It's the default mode." },
-    "live": { "title": "Live camera", "body": "All processing happens in your browser. We only ask for video (never audio) and the camera turns off as soon as you leave. No image is sent to any server; the detection model is downloaded from our own site." },
-    "photo": { "title": "Your photo", "body": "Before uploading you can crop or blur your face, and we strip metadata (such as location). The photo and result delete themselves in {{hours}} hours unless you save the result to your account. You can delete it sooner whenever you want." },
-    "measurements": { "title": "Your measurements", "body": "Only height is required. We don't store your measurements on the server; on your device only if you tick “remember”." },
-    "training": { "title": "Model training", "body": "We never use your photos to train models without separate permission, which is off by default." },
-    "deletion": { "title": "Real deletion", "body": "Deleting your account removes your files from storage, not just a flag in the database." },
-    "body": { "title": "Your body, as it is", "body": "We offer no filters or tweaks to alter your silhouette, and we never compare bodies between people. Our reference body catalog covers XS to 4XL." }
+    "similar": {
+      "title": "Similar body",
+      "body": "We ask for nothing: no photo, no camera, no measurements. It's the default mode."
+    },
+    "live": {
+      "title": "Live camera",
+      "body": "All processing happens in your browser. We only ask for video (never audio) and the camera turns off as soon as you leave. No image is sent to any server; the detection model is downloaded from our own site."
+    },
+    "photo": {
+      "title": "Your photo",
+      "body": "Before uploading you can crop or blur your face, and we strip metadata (such as location). The photo and result delete themselves in {{hours}} hours unless you save the result to your account. You can delete it sooner whenever you want."
+    },
+    "measurements": {
+      "title": "Your measurements",
+      "body": "Only height is required. We don't store your measurements on the server; on your device only if you tick “remember”."
+    },
+    "training": {
+      "title": "Model training",
+      "body": "We never use your photos to train models without separate permission, which is off by default."
+    },
+    "deletion": {
+      "title": "Real deletion",
+      "body": "Deleting your account removes your files from storage, not just a flag in the database."
+    },
+    "body": {
+      "title": "Your body, as it is",
+      "body": "We offer no filters or tweaks to alter your silhouette, and we never compare bodies between people. Our reference body catalog covers XS to 4XL."
+    }
   },
   "admin": {
     "eyebrow": "Administration",
     "title": "Dashboard",
-    "tab": { "metrics": "Metrics", "garments": "Garments", "bodies": "Bodies" },
+    "tab": {
+      "metrics": "Metrics",
+      "garments": "Garments",
+      "bodies": "Bodies"
+    },
     "days": "{{n}} days",
     "allTime": "All",
     "m": {
@@ -305,5 +376,26 @@
     "hair": "Hair",
     "hairColor": "Hair color",
     "delete": "Delete"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Can't reach the server. Check your connection and try again.",
+    "server": "The server had a problem. Try again in a few minutes.",
+    "rateLimited": "Too many requests in a row. Please wait a moment.",
+    "load": "We couldn't load the data.",
+    "modeChange": "Couldn't switch the try-on mode.",
+    "fitEstimate": "We couldn't calculate your size.",
+    "sizeOverride": "Your chosen size wasn't saved.",
+    "generate": "Couldn't start the generation.",
+    "generationTimeout": "Generation is taking too long. You can retry or use the similar model.",
+    "deletePhoto": "Couldn't delete the photo. Please try again.",
+    "saveResult": "Couldn't save the result.",
+    "reviewSubmit": "Couldn't send your review.",
+    "consent": "Your preference wasn't saved.",
+    "deleteAccount": "Couldn't delete the account. Please try again."
+  },
+  "notice": {
+    "dismiss": "Dismiss",
+    "ref": "Reference"
   }
 }
