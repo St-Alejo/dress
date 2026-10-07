@@ -101,6 +101,7 @@ export class PrismaCatalogRepository extends CatalogRepository {
       typicalSize: b.typicalSize as LetterSize,
       skinTone: b.skinTone,
       avatarUrl: mediaUrl(b.avatarKey),
+      ...(b.photoKey ? { photoUrl: mediaUrl(b.photoKey) } : {}),
       previewImages: Object.fromEntries(b.previews.map((p) => [p.garmentId, mediaUrl(p.imageKey)])),
     }));
   }

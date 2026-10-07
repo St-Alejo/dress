@@ -42,6 +42,8 @@ export interface SimilarBodyModel {
   typicalSize: LetterSize;
   skinTone: string;
   avatarUrl: string;
+  /** Foto real de una persona con esta complexión, si existe. */
+  photoUrl?: string;
   /** garmentId -> imagen del modelo con esa prenda puesta. */
   previewImages: Record<string, string>;
 }

@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { S3ObjectStorage } from '../src/common/storage';
 import { fitIntentFor } from '../src/modules/catalog/domain/garment-grading';
@@ -13,6 +15,17 @@ import { BODIES, BRANDS, GARMENTS, type SeedGarment } from '../src/seed/seed-dat
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
 const storage = new S3ObjectStorage(new ConfigService(process.env));
 const publisher = new IllustrationPublisher(storage);
+
+/** Fotos reales con licencia libre (créditos en seed/photos/*/credits.json). Si falta una, queda la ilustración. */
+const PHOTOS_DIR = join(__dirname, '../../../seed/photos');
+
+async function publishPhoto(kind: 'garments' | 'bodies', key: string): Promise<string | undefined> {
+  const file = join(PHOTOS_DIR, kind, `${key}.jpg`);
+  if (!existsSync(file)) return undefined;
+  const objectKey = `catalog/${kind}/${key}/photo.jpg`;
+  await storage.put(objectKey, readFileSync(file), 'image/jpeg');
+  return objectKey;
+}
 
 const artOf = (g: SeedGarment): GarmentArt => ({ id: g.key, style: g.style, color: g.color, pattern: g.pattern });
 
@@ -54,6 +67,7 @@ async function main() {
         imageFrontKey: keys.front,
         imageFlatKey: keys.flat,
         imageOverlayKey: keys.overlay,
+        photoKey: await publishPhoto('garments', g.key),
         fabricNotes: g.fabricNotes,
         stretch: g.stretch,
         knownLimitations: g.knownLimitations ?? [],
@@ -75,6 +89,7 @@ async function main() {
         skinTone: b.skinTone,
         shape: { ...b.shape, hair: b.hair, hairColor: b.hairColor },
         avatarKey: await publisher.publishAvatar(b.key, spec),
+        photoKey: await publishPhoto('bodies', b.key),
         sortOrder: i,
       },
     });

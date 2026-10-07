@@ -137,6 +137,8 @@ model BodyModel {
   /// Parámetros del avatar ilustrado (anchos de hombro, cintura, cadera...).
   shape       Json
   avatarKey   String
+  /// Foto real de referencia (banco con licencia libre). La ilustración sigue usándose para los previews a escala.
+  photoKey    String?
   sortOrder   Int                @default(0)
   previews    BodyModelPreview[]
 }
