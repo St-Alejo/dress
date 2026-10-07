@@ -16,7 +16,7 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: proc
 const storage = new S3ObjectStorage(new ConfigService(process.env));
 const publisher = new IllustrationPublisher(storage);
 
-/** Fotos reales con licencia libre (créditos en seed/photos/*/credits.json). Si falta una, queda la ilustración. */
+/** Fotos reales con licencia libre (créditos en seed/photos/{garments,bodies}/credits.json). Si falta una, queda la ilustración. */
 const PHOTOS_DIR = join(__dirname, '../../../seed/photos');
 
 async function publishPhoto(kind: 'garments' | 'bodies', key: string): Promise<string | undefined> {
