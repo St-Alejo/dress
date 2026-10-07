@@ -98,6 +98,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
           <p class="label-xs mb-3">{{ 'footer.help' | transloco }}</p>
           <ul class="space-y-2 text-[13px]">
             <li><a routerLink="/privacidad" class="hover:underline">{{ 'nav.privacy' | transloco }}</a></li>
+            <li><a routerLink="/creditos" class="hover:underline">{{ 'nav.credits' | transloco }}</a></li>
             <li><a routerLink="/cuenta" class="hover:underline">{{ (auth.user() ? 'nav.account' : 'nav.signIn') | transloco }}</a></li>
           </ul>
         </nav>

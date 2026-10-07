@@ -33,6 +33,7 @@ export interface AdminBodyModel {
   heightMax: number;
   skinTone: string;
   avatarKey: string;
+  photoKey?: string | null;
 }
 
 type Range = [number, number];

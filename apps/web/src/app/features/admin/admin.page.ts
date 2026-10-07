@@ -102,7 +102,7 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
           <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @for (g of garments(); track g.id) {
               <li class="card p-3 flex gap-3" [class.opacity-60]="!g.active">
-                <img [src]="g.images.flat" alt="" class="h-20 w-16 object-contain bg-surface-2" />
+                <img [src]="g.images.photo ?? g.images.flat" alt="" class="h-20 w-16 bg-surface-2" [class.object-cover]="!!g.images.photo" [class.object-contain]="!g.images.photo" />
                 <div class="min-w-0 flex-1">
                   <p class="font-medium truncate">{{ g.name }}</p>
                   <p class="text-xs text-muted">{{ g.brandName }} · {{ g.priceCents | price }} · {{ g.sizeChart.length }} {{ 'admin.sizes' | transloco }}</p>
@@ -132,7 +132,7 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
           <ul class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             @for (b of bodies(); track b.id) {
               <li class="card p-2 text-center text-xs">
-                <img [src]="'/api/media/' + b.avatarKey" alt="" class="h-28 w-full object-contain" />
+                <img [src]="'/api/media/' + (b.photoKey ?? b.avatarKey)" alt="" class="h-28 w-full" [class.object-cover]="!!b.photoKey" [class.object-contain]="!b.photoKey" />
                 <p class="mt-1">{{ 'body.tag.' + b.bodyTypeTag | transloco }}</p>
                 <p class="text-muted">{{ b.typicalSize }} · {{ b.heightMin }}–{{ b.heightMax }}</p>
                 <button type="button" class="mt-1 underline" (click)="deleteBody(b)">{{ 'admin.delete' | transloco }}</button>

@@ -76,7 +76,11 @@ import { SkeletonComponent } from '../../shared/ui/skeleton.component';
             <li class="bg-paper">
               <a [routerLink]="['/prenda', g.id]" class="group block pb-5">
                 <div class="aspect-[3/4] overflow-hidden bg-surface-2">
-                  <img [src]="imageFor(g)" [alt]="g.name" loading="lazy" class="h-full w-full object-contain p-6 transition-transform duration-300 group-hover:scale-[1.03]" />
+                  @if (showsPhoto(g)) {
+                    <img [src]="g.images.photo" [alt]="g.name" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                  } @else {
+                    <img [src]="imageFor(g)" [alt]="g.name" loading="lazy" class="h-full w-full object-contain p-6 transition-transform duration-300 group-hover:scale-[1.03]" />
+                  }
                 </div>
                 <div class="mt-3 space-y-0.5 px-3">
                   <p class="label-xs">{{ g.brandName }}</p>
@@ -147,6 +151,11 @@ export class CatalogPage {
 
   onSearch(ev: Event) {
     this.q.set((ev.target as HTMLInputElement).value);
+  }
+
+  /** Sin cuerpo elegido se muestra la foto real de producto; con cuerpo, la ilustración a escala de ese cuerpo. */
+  showsPhoto(g: GarmentItem) {
+    return !!g.images.photo && !this.selectedBody()?.previewImages[g.id];
   }
 
   /** Si la persona ya eligió un cuerpo parecido al suyo, el catálogo entero se muestra sobre ese cuerpo. */

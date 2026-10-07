@@ -63,7 +63,7 @@ export class TryOnSessionStore {
     const g = this.garment();
     const body = this.selectedBody();
     if (!g) return null;
-    return (body && body.previewImages[g.id]) || g.images.front;
+    return (body && body.previewImages[g.id]) || g.images.photo || g.images.front;
   });
   readonly chosenSize = computed(() => {
     const f = this.fit();

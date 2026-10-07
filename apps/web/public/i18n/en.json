@@ -14,7 +14,8 @@
     },
     "privacy": "Privacy",
     "admin": "Admin panel",
-    "menu": "Menu"
+    "menu": "Menu",
+    "credits": "Photo credits"
   },
   "footer": {
     "promise": "We never alter your silhouette. Your live camera never leaves your device.",
@@ -66,7 +67,9 @@
       "plus-round": "Plus size, rounded figure",
       "plus-tall": "Plus size, tall",
       "mid-soft": "Average, soft build"
-    }
+    },
+    "realReference": "Real person with this build",
+    "scaleIllustration": "To-scale illustration of this body"
   },
   "mode": {
     "similar-model": "Similar body",
@@ -397,5 +400,12 @@
   "notice": {
     "dismiss": "Dismiss",
     "ref": "Reference"
+  },
+  "credits": {
+    "title": "Photo credits",
+    "lead": "Garment and people photos come from openly licensed sources (Creative Commons or public domain). Thanks to their authors.",
+    "garments": "Garments",
+    "bodies": "Reference bodies",
+    "by": "by"
   }
 }

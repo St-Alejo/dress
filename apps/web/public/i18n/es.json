@@ -14,7 +14,8 @@
     },
     "privacy": "Privacidad",
     "admin": "Panel de administración",
-    "menu": "Menú"
+    "menu": "Menú",
+    "credits": "Créditos de fotos"
   },
   "footer": {
     "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo.",
@@ -66,7 +67,9 @@
       "plus-round": "Talla grande, figura redondeada",
       "plus-tall": "Talla grande, alta",
       "mid-soft": "Media, complexión suave"
-    }
+    },
+    "realReference": "Persona real con esta complexión",
+    "scaleIllustration": "Ilustración a escala de este cuerpo"
   },
   "mode": {
     "similar-model": "Cuerpo similar",
@@ -397,5 +400,12 @@
   "notice": {
     "dismiss": "Cerrar aviso",
     "ref": "Referencia"
+  },
+  "credits": {
+    "title": "Créditos de fotos",
+    "lead": "Las fotos de prendas y personas son de bancos con licencia libre (Creative Commons o dominio público). Gracias a sus autores.",
+    "garments": "Prendas",
+    "bodies": "Cuerpos de referencia",
+    "by": "por"
   }
 }

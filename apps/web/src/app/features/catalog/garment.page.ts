@@ -48,7 +48,18 @@ import { BodyPickerComponent } from './body-picker.component';
               @switch (store.mode()) {
                 @case ('similar-model') {
                   <div class="relative h-[min(70vh,640px)] overflow-hidden bg-surface-2">
-                    <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain p-6" />
+                    @if (store.selectedBody(); as body) {
+                      <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain p-6" />
+                      @if (body.photoUrl) {
+                        <figure class="absolute bottom-3 left-3 w-24 bg-paper p-1 shadow-sm md:w-28">
+                          <img [src]="body.photoUrl" alt="" class="aspect-[3/4] w-full object-cover" />
+                          <figcaption class="px-0.5 pt-1 text-[10px] leading-tight text-muted">{{ 'body.realReference' | transloco }}</figcaption>
+                        </figure>
+                      }
+                      <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.scaleIllustration' | transloco }}</p>
+                    } @else {
+                      <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full" [class.object-cover]="!!g.images.photo" [class.object-contain]="!g.images.photo" [class.p-6]="!g.images.photo" />
+                    }
                   </div>
                   @if (!store.selectedBody()) {
                     <p class="mt-3 text-[13px] text-ink-2">{{ 'body.chooseToSee' | transloco }}</p>

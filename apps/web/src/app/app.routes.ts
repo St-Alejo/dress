@@ -15,6 +15,7 @@ export const routes: Routes = [
   { path: 'comparar', loadComponent: () => import('./features/comparison/comparison.page').then((m) => m.ComparisonPage), title: 'Comparar · Vestirse' },
   { path: 'cuenta', loadComponent: () => import('./features/account/account.page').then((m) => m.AccountPage), title: 'Cuenta · Vestirse' },
   { path: 'privacidad', loadComponent: () => import('./features/privacy/privacy.page').then((m) => m.PrivacyPage), title: 'Privacidad · Vestirse' },
+  { path: 'creditos', loadComponent: () => import('./features/credits/credits.page').then((m) => m.CreditsPage), title: 'Créditos de fotos · Vestirse' },
   { path: 'admin', canMatch: [adminOnly], loadComponent: () => import('./features/admin/admin.page').then((m) => m.AdminPage), title: 'Admin · Vestirse' },
   { path: '**', redirectTo: '' },
 ];
