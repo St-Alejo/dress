@@ -13,10 +13,13 @@
       "dark": "Theme: dark"
     },
     "privacy": "Privacy",
-    "admin": "Admin panel"
+    "admin": "Admin panel",
+    "menu": "Menu"
   },
   "footer": {
-    "promise": "We never alter your silhouette. Your live camera never leaves your device."
+    "promise": "We never alter your silhouette. Your live camera never leaves your device.",
+    "explore": "Explore",
+    "help": "Help"
   },
   "common": {
     "retry": "Try again",
@@ -27,7 +30,6 @@
     "loadError": "We couldn't load this. Check your connection and try again."
   },
   "catalog": {
-    "eyebrow": "Virtual fitting room",
     "title": "See clothes on a body like yours",
     "lead": "No photos or camera to start. Pick a body similar to yours, try the garment live if you like, and find your size with an honest recommendation.",
     "filters": "Catalog filters",
@@ -36,7 +38,8 @@
     "allBrands": "All brands",
     "search": "Search garments",
     "showingOn": "Showing on:",
-    "empty": "No garments match those filters."
+    "empty": "No garments match those filters.",
+    "count": "{{n}} items"
   },
   "category": {
     "top": "Tops",
@@ -76,7 +79,8 @@
     }
   },
   "garment": {
-    "stage": "Garment view"
+    "stage": "Garment view",
+    "breadcrumb": "Breadcrumb"
   },
   "live": {
     "intro": "See the garment on you in real time. Everything happens on your device.",
@@ -248,7 +252,6 @@
     "thanks": "Thanks! Your review helps others choose their size."
   },
   "compare": {
-    "eyebrow": "Step 8",
     "title": "Compare garments",
     "add": "Save to compare",
     "remove": "Remove",
@@ -266,7 +269,6 @@
     }
   },
   "account": {
-    "eyebrow": "Optional",
     "title": "Your account",
     "optional": "You don't need an account to try on clothes. It's only for saving results.",
     "signedInAs": "Signed in as",
@@ -293,7 +295,6 @@
     }
   },
   "privacy": {
-    "eyebrow": "Privacy",
     "title": "What happens to your data",
     "similar": {
       "title": "Similar body",
@@ -325,7 +326,6 @@
     }
   },
   "admin": {
-    "eyebrow": "Administration",
     "title": "Dashboard",
     "tab": {
       "metrics": "Metrics",

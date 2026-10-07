@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { Brand, GarmentCategory, GarmentItem, TryOnMode } from '@vestirse/shared-types';
 import { ApiService, type AdminBodyModel, type AdminGarment, type AdminMetrics } from '../../core/api.service';
 import { AppError } from '../../core/http/app-error';
 import { NoticeStore } from '../../core/notice.store';
 import { PricePipe } from '../../shared/price.pipe';
+import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 
 type Tab = 'metrics' | 'garments' | 'bodies';
 
@@ -22,22 +24,13 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
 
 @Component({
   selector: 'app-admin-page',
-  imports: [FormsModule, TranslocoPipe, PricePipe],
+  imports: [FormsModule, TranslocoPipe, PricePipe, TabsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="mx-auto max-w-6xl px-4 pt-8 pb-16 space-y-6">
-      <header class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p class="eyebrow">{{ 'admin.eyebrow' | transloco }}</p>
-          <h1 class="mt-2 text-3xl">{{ 'admin.title' | transloco }}</h1>
-        </div>
-        <div class="flex gap-1 rounded-full bg-[var(--surface-2)] p-1" role="tablist">
-          @for (t of tabs; track t) {
-            <button type="button" role="tab" class="rounded-full px-4 py-2 text-sm min-h-[44px]" [class.bg-[var(--surface)]]="tab() === t" [attr.aria-selected]="tab() === t" (click)="tab.set(t)">
-              {{ 'admin.tab.' + t | transloco }}
-            </button>
-          }
-        </div>
+    <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 space-y-6 md:px-8">
+      <header class="space-y-6">
+        <h1 class="text-[28px] md:text-[32px]">{{ 'admin.title' | transloco }}</h1>
+        <ui-tabs #adminTabs [items]="tabItems()" [(active)]="tab" [label]="'admin.title' | transloco" />
       </header>
 
       @if (message()) {<p class="card p-3 text-sm" role="status">{{ message() }}</p>}
@@ -51,10 +44,10 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
               }
             </div>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.recommendations' | transloco }}</p><p class="mt-2 text-3xl font-display">{{ m.recommendations }}</p></div>
-              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.overrideRate' | transloco }}</p><p class="mt-2 text-3xl font-display">{{ (m.overrideRate * 100).toFixed(0) }}%</p><p class="text-xs text-[var(--muted)]">{{ 'admin.m.overrideHelp' | transloco }}</p></div>
-              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.genTime' | transloco }}</p><p class="mt-2 text-3xl font-display">{{ secs(m.avgGenerationMs) }}</p><p class="text-xs text-[var(--muted)]">{{ 'admin.m.perceived' | transloco }}: {{ secs(m.avgPerceivedMs) }}</p></div>
-              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.failures' | transloco }}</p><p class="mt-2 text-3xl font-display">{{ m.generationFailures }}</p><p class="text-xs text-[var(--muted)]">{{ 'admin.m.fallbackHelp' | transloco }}</p></div>
+              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.recommendations' | transloco }}</p><p class="text-[28px] md:text-[32px]">{{ m.recommendations }}</p></div>
+              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.overrideRate' | transloco }}</p><p class="text-[28px] md:text-[32px]">{{ (m.overrideRate * 100).toFixed(0) }}%</p><p class="text-xs text-muted">{{ 'admin.m.overrideHelp' | transloco }}</p></div>
+              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.genTime' | transloco }}</p><p class="text-[28px] md:text-[32px]">{{ secs(m.avgGenerationMs) }}</p><p class="text-xs text-muted">{{ 'admin.m.perceived' | transloco }}: {{ secs(m.avgPerceivedMs) }}</p></div>
+              <div class="card p-4"><p class="eyebrow">{{ 'admin.m.failures' | transloco }}</p><p class="text-[28px] md:text-[32px]">{{ m.generationFailures }}</p><p class="text-xs text-muted">{{ 'admin.m.fallbackHelp' | transloco }}</p></div>
             </div>
             <div class="card p-5">
               <h2 class="text-lg">{{ 'admin.m.modes' | transloco }}</h2>
@@ -62,20 +55,20 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
                 @for (mode of modeKeys; track mode) {
                   <li class="grid grid-cols-[140px_1fr_48px] items-center gap-3 text-sm">
                     <span>{{ 'mode.' + mode | transloco }}</span>
-                    <span class="h-3 rounded-full bg-[var(--surface-2)] overflow-hidden"><span class="block h-full bg-[var(--accent)]" [style.width.%]="modePct(mode)"></span></span>
+                    <span class="h-3 bg-surface-2 overflow-hidden"><span class="block h-full bg-accent" [style.width.%]="modePct(mode)"></span></span>
                     <span class="text-right tabular-nums">{{ m.modeDistribution[mode] }}</span>
                   </li>
                 }
               </ul>
-              <p class="mt-3 text-xs text-[var(--muted)]">{{ 'admin.m.noBodyTime' | transloco }}</p>
+              <p class="mt-3 text-xs text-muted">{{ 'admin.m.noBodyTime' | transloco }}</p>
             </div>
             <div class="card p-5 overflow-x-auto">
               <h2 class="text-lg">{{ 'admin.m.calibration' | transloco }}</h2>
               <table class="mt-3 w-full text-sm">
-                <thead class="text-left text-[var(--muted)]"><tr><th class="py-1">{{ 'admin.brand' | transloco }}</th><th>{{ 'admin.category' | transloco }}</th><th>{{ 'admin.samples' | transloco }}</th><th>{{ 'admin.shift' | transloco }}</th></tr></thead>
+                <thead class="text-left text-muted"><tr><th class="py-1">{{ 'admin.brand' | transloco }}</th><th>{{ 'admin.category' | transloco }}</th><th>{{ 'admin.samples' | transloco }}</th><th>{{ 'admin.shift' | transloco }}</th></tr></thead>
                 <tbody>
                   @for (c of m.calibrations; track c.brand + c.category) {
-                    <tr class="border-t border-[var(--line)]">
+                    <tr class="border-t border-line">
                       <td class="py-1.5">{{ c.brand }}</td><td>{{ 'category.' + c.category | transloco }}</td><td class="tabular-nums">{{ c.sampleSize }}</td>
                       <td class="tabular-nums">{{ c.meanShift > 0 ? '+' : '' }}{{ c.meanShift.toFixed(2) }} {{ (c.sampleSize >= 20 && (c.meanShift >= 0.5 || c.meanShift <= -0.5) ? 'admin.applied' : 'admin.notApplied') | transloco }}</td>
                     </tr>
@@ -103,16 +96,16 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
             <label class="field">{{ 'admin.stretch' | transloco }}
               <select name="stretch" [(ngModel)]="draft.stretch">@for (s of ['none', 'low', 'medium', 'high']; track s) {<option [value]="s">{{ s }}</option>}</select>
             </label>
-            <p class="text-xs text-[var(--muted)] sm:col-span-3">{{ 'admin.chartNote' | transloco }}</p>
+            <p class="text-xs text-muted sm:col-span-3">{{ 'admin.chartNote' | transloco }}</p>
             <button type="submit" class="btn btn-primary sm:col-span-3 justify-self-start" [disabled]="busy()">{{ 'admin.create' | transloco }}</button>
           </form>
           <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @for (g of garments(); track g.id) {
               <li class="card p-3 flex gap-3" [class.opacity-60]="!g.active">
-                <img [src]="g.images.flat" alt="" class="h-20 w-16 object-contain bg-[var(--surface-2)] rounded-lg" />
+                <img [src]="g.images.flat" alt="" class="h-20 w-16 object-contain bg-surface-2" />
                 <div class="min-w-0 flex-1">
                   <p class="font-medium truncate">{{ g.name }}</p>
-                  <p class="text-xs text-[var(--muted)]">{{ g.brandName }} · {{ g.priceCents | price }} · {{ g.sizeChart.length }} {{ 'admin.sizes' | transloco }}</p>
+                  <p class="text-xs text-muted">{{ g.brandName }} · {{ g.priceCents | price }} · {{ g.sizeChart.length }} {{ 'admin.sizes' | transloco }}</p>
                   <button type="button" class="mt-2 text-xs underline" (click)="toggleActive(g)">{{ (g.active ? 'admin.deactivate' : 'admin.activate') | transloco }}</button>
                 </div>
               </li>
@@ -120,7 +113,7 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
           </ul>
         }
         @case ('bodies') {
-          <p class="text-sm text-[var(--ink-2)]">{{ 'admin.bodiesRule' | transloco }}</p>
+          <p class="text-sm text-ink-2">{{ 'admin.bodiesRule' | transloco }}</p>
           <form class="card p-5 grid gap-3 sm:grid-cols-4" (ngSubmit)="createBody()">
             <h2 class="text-lg sm:col-span-4">{{ 'admin.newBody' | transloco }}</h2>
             <label class="field">{{ 'admin.tag' | transloco }}<input name="tag" required [(ngModel)]="body.bodyTypeTag" /></label>
@@ -141,7 +134,7 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
               <li class="card p-2 text-center text-xs">
                 <img [src]="'/api/media/' + b.avatarKey" alt="" class="h-28 w-full object-contain" />
                 <p class="mt-1">{{ 'body.tag.' + b.bodyTypeTag | transloco }}</p>
-                <p class="text-[var(--muted)]">{{ b.typicalSize }} · {{ b.heightMin }}–{{ b.heightMax }}</p>
+                <p class="text-muted">{{ b.typicalSize }} · {{ b.heightMin }}–{{ b.heightMax }}</p>
                 <button type="button" class="mt-1 underline" (click)="deleteBody(b)">{{ 'admin.delete' | transloco }}</button>
               </li>
             }
@@ -156,6 +149,12 @@ export class AdminPage {
   private readonly notices = inject(NoticeStore);
   readonly tabs: Tab[] = ['metrics', 'garments', 'bodies'];
   readonly tab = signal<Tab>('metrics');
+  private readonly transloco = inject(TranslocoService);
+  private readonly dictionary = toSignal(this.transloco.selectTranslation());
+  readonly tabItems = computed<TabItem<Tab>[]>(() => {
+    this.dictionary();
+    return this.tabs.map((t) => ({ id: t, label: this.transloco.translate('admin.tab.' + t) }));
+  });
   readonly styles = STYLES;
   readonly letters = LETTERS;
   readonly modeKeys: TryOnMode[] = ['similar-model', 'live-overlay', 'photorealistic'];

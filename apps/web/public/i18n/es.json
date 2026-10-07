@@ -13,10 +13,13 @@
       "dark": "Tema: oscuro"
     },
     "privacy": "Privacidad",
-    "admin": "Panel de administración"
+    "admin": "Panel de administración",
+    "menu": "Menú"
   },
   "footer": {
-    "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo."
+    "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo.",
+    "explore": "Explorar",
+    "help": "Ayuda"
   },
   "common": {
     "retry": "Reintentar",
@@ -27,7 +30,6 @@
     "loadError": "No pudimos cargar esto. Revisa tu conexión e inténtalo de nuevo."
   },
   "catalog": {
-    "eyebrow": "Probador virtual",
     "title": "Mira la ropa en un cuerpo como el tuyo",
     "lead": "Sin fotos ni cámara para empezar. Elige un cuerpo parecido al tuyo, pruébate la prenda en vivo si quieres y encuentra tu talla con una recomendación honesta.",
     "filters": "Filtros del catálogo",
@@ -36,7 +38,8 @@
     "allBrands": "Todas las marcas",
     "search": "Buscar prenda",
     "showingOn": "Mostrando sobre:",
-    "empty": "No hay prendas con esos filtros."
+    "empty": "No hay prendas con esos filtros.",
+    "count": "{{n}} prendas"
   },
   "category": {
     "top": "Superiores",
@@ -76,7 +79,8 @@
     }
   },
   "garment": {
-    "stage": "Vista de la prenda"
+    "stage": "Vista de la prenda",
+    "breadcrumb": "Ruta de navegación"
   },
   "live": {
     "intro": "Ve la prenda sobre ti en tiempo real. Todo ocurre en tu dispositivo.",
@@ -248,7 +252,6 @@
     "thanks": "¡Gracias! Tu reseña ayuda a otras personas a elegir su talla."
   },
   "compare": {
-    "eyebrow": "Paso 8",
     "title": "Comparar prendas",
     "add": "Guardar para comparar",
     "remove": "Quitar",
@@ -266,7 +269,6 @@
     }
   },
   "account": {
-    "eyebrow": "Opcional",
     "title": "Tu cuenta",
     "optional": "No necesitas cuenta para probarte ropa. Solo sirve para guardar resultados.",
     "signedInAs": "Sesión iniciada como",
@@ -293,7 +295,6 @@
     }
   },
   "privacy": {
-    "eyebrow": "Privacidad",
     "title": "Qué pasa con tus datos",
     "similar": {
       "title": "Cuerpo similar",
@@ -325,7 +326,6 @@
     }
   },
   "admin": {
-    "eyebrow": "Administración",
     "title": "Panel",
     "tab": {
       "metrics": "Métricas",

@@ -1,11 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { PoseRatios, TryOnMode } from '@vestirse/shared-types';
 import { ComparisonStore } from '../../core/comparison/comparison.store';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
 import { PricePipe } from '../../shared/price.pipe';
+import { IconComponent } from '../../shared/ui/icon.component';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
+import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 import { FitPanelComponent } from '../fit-engine/fit-panel.component';
 import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
 import { PhotoTryOnComponent } from '../photo-upload/photo-tryon.component';
@@ -18,67 +22,67 @@ import { BodyPickerComponent } from './body-picker.component';
  */
 @Component({
   selector: 'app-garment-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, BodyPickerComponent, FitPanelComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, BodyPickerComponent, FitPanelComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="mx-auto max-w-6xl px-4 pt-4 pb-16">
-      <a routerLink="/" class="btn btn-ghost -ml-3 text-sm">← {{ 'nav.catalog' | transloco }}</a>
+    <div class="mx-auto max-w-screen-2xl px-4 pt-4 pb-16 md:px-8">
+      <nav [attr.aria-label]="'garment.breadcrumb' | transloco" class="flex min-h-11 items-center gap-2 text-[12px] uppercase tracking-[0.08em] text-muted">
+        <a routerLink="/" class="inline-flex items-center gap-2 hover:text-ink"><ui-icon name="arrow-left" [size]="16" />{{ 'nav.catalog' | transloco }}</a>
+        @if (store.garment(); as g) {
+          <span aria-hidden="true">/</span><span>{{ 'category.' + g.category | transloco }}</span>
+        }
+      </nav>
 
       @if (store.error()) {
-        <div class="card p-5 mt-4 space-y-3" role="alert">
+        <div class="mt-4 border border-line p-8 text-center" role="alert">
           <p>{{ 'common.loadError' | transloco }}</p>
-          <button type="button" class="btn" (click)="load(id())">{{ 'common.retry' | transloco }}</button>
+          <button type="button" class="btn mt-4" (click)="load(id())">{{ 'common.retry' | transloco }}</button>
         </div>
       } @else if (store.garment(); as g) {
-        <div class="mt-2 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+        <div class="mt-2 grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
           <!-- Escenario visual -->
-          <section class="space-y-4" [attr.aria-label]="'garment.stage' | transloco">
-            <div class="flex gap-1 rounded-full bg-[var(--surface-2)] p-1" role="tablist">
-              @for (m of modes; track m) {
-                <button type="button" role="tab" class="flex-1 rounded-full px-3 py-2 text-sm font-medium transition min-h-[44px]"
-                  [class.bg-[var(--surface)]]="store.mode() === m" [class.shadow]="store.mode() === m"
-                  [attr.aria-selected]="store.mode() === m" (click)="setMode(m)">
-                  {{ 'mode.' + m | transloco }}
-                </button>
-              }
-            </div>
+          <section class="min-w-0 space-y-4" [attr.aria-label]="'garment.stage' | transloco">
+            <ui-tabs #tabs [items]="modeTabs()" [active]="store.mode()" (activeChange)="setMode($event)" [label]="'garment.stage' | transloco" [stretch]="true" />
 
-            @switch (store.mode()) {
-              @case ('similar-model') {
-                <div class="card overflow-hidden">
-                  <div class="h-[min(68vh,600px)] bg-[var(--surface-2)] grid place-items-center">
-                    <img [src]="store.previewImage()" [alt]="g.name" class="h-full w-full object-contain p-4" />
+            <div role="tabpanel" [id]="tabs.panelId(store.mode())" [attr.aria-labelledby]="tabs.tabId(store.mode())">
+              @switch (store.mode()) {
+                @case ('similar-model') {
+                  <div class="relative h-[min(70vh,640px)] overflow-hidden bg-surface-2">
+                    <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain p-6" />
                   </div>
                   @if (!store.selectedBody()) {
-                    <p class="px-4 pt-3 text-sm text-[var(--ink-2)]">{{ 'body.chooseToSee' | transloco }}</p>
+                    <p class="mt-3 text-[13px] text-ink-2">{{ 'body.chooseToSee' | transloco }}</p>
                   }
-                  <div class="p-4">
+                  <div class="mt-4">
                     <app-body-picker />
                   </div>
-                </div>
+                }
+                @case ('live-overlay') {
+                  <app-live-tryon [garment]="g" (poseRatios)="onPoseRatios($event)" />
+                }
+                @case ('photorealistic') {
+                  <app-photo-tryon (fallbackTo)="setMode($event)" />
+                }
               }
-              @case ('live-overlay') {
-                <app-live-tryon [garment]="g" (poseRatios)="onPoseRatios($event)" />
-              }
-              @case ('photorealistic') {
-                <app-photo-tryon (fallbackTo)="setMode($event)" />
-              }
-            }
-            <p class="text-xs text-[var(--muted)]">{{ 'mode.note.' + store.mode() | transloco }}</p>
+            </div>
+            <p class="text-[12px] text-muted">{{ 'mode.note.' + store.mode() | transloco }}</p>
           </section>
 
           <!-- Información, talla y contexto -->
-          <section class="space-y-4">
-            <header>
-              <p class="text-sm text-[var(--muted)]">{{ g.brandName }} · {{ 'category.' + g.category | transloco }}</p>
-              <h1 class="mt-1 text-3xl">{{ g.name }}</h1>
-              <p class="mt-2 text-lg">{{ g.priceCents | price }}</p>
+          <section class="min-w-0 lg:sticky lg:top-20 lg:self-start">
+            <header class="border-b border-line pb-6">
+              <p class="label-xs">{{ g.brandName }}</p>
+              <h1 class="mt-2 text-[24px] md:text-[28px]">{{ g.name }}</h1>
+              <p class="mt-3 text-[16px] tabular">{{ g.priceCents | price }}</p>
             </header>
 
-            <app-fit-panel />
+            <div class="border-b border-line py-6">
+              <app-fit-panel />
+            </div>
 
-            <div class="flex flex-wrap gap-2">
-              <button type="button" class="btn" (click)="toggleCompare()">
+            <div class="flex flex-wrap items-center gap-4 border-b border-line py-6">
+              <button type="button" class="btn" [class.btn-primary]="inComparison()" [attr.aria-pressed]="inComparison()" (click)="toggleCompare()">
+                @if (inComparison()) {<ui-icon name="check" [size]="16" />}
                 {{ (inComparison() ? 'compare.remove' : 'compare.add') | transloco }}
               </button>
               @if (comparison.count() > 0) {
@@ -86,11 +90,17 @@ import { BodyPickerComponent } from './body-picker.component';
               }
             </div>
 
-            <app-reviews-panel [garment]="g" />
+            <div class="py-6">
+              <app-reviews-panel [garment]="g" />
+            </div>
           </section>
         </div>
       } @else {
-        <p class="mt-10 text-[var(--muted)]" role="status">{{ 'common.loading' | transloco }}</p>
+        <p class="sr-only" role="status">{{ 'common.loading' | transloco }}</p>
+        <div class="mt-2 grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12" aria-hidden="true">
+          <ui-skeleton class="h-[min(70vh,640px)]" />
+          <div class="space-y-4"><ui-skeleton class="h-3 w-24" /><ui-skeleton class="h-7 w-2/3" /><ui-skeleton class="h-4 w-20" /><ui-skeleton class="mt-8 h-40" /></div>
+        </div>
       }
     </div>
   `,
@@ -101,6 +111,14 @@ export class GarmentPage {
   readonly store = inject(TryOnSessionStore);
   readonly comparison = inject(ComparisonStore);
   readonly modes: TryOnMode[] = ['similar-model', 'live-overlay', 'photorealistic'];
+
+  private readonly transloco = inject(TranslocoService);
+  /** Emite cuando el diccionario del idioma activo está cargado (también al cambiar de idioma). */
+  private readonly dictionary = toSignal(this.transloco.selectTranslation());
+  readonly modeTabs = computed<TabItem<TryOnMode>[]>(() => {
+    this.dictionary();
+    return this.modes.map((m) => ({ id: m, label: this.transloco.translate('mode.' + m) }));
+  });
 
   readonly inComparison = computed(() => {
     const g = this.store.garment();

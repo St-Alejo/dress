@@ -30,7 +30,7 @@ const HINT_INTERVAL_MS = 300;
   providers: [CameraService, PoseService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="relative mx-auto overflow-hidden rounded-[var(--radius)] bg-black aspect-[3/4] w-full max-w-[min(100%,51vh)]">
+    <div class="relative mx-auto overflow-hidden bg-black aspect-[3/4] w-full max-w-[min(100%,51vh)]">
       <!-- Espejo en video y lienzo por igual, para que el overlay quede alineado. -->
       <div class="absolute inset-0 -scale-x-100">
         <video #video class="absolute inset-0 h-full w-full object-cover" playsinline muted></video>
@@ -40,12 +40,12 @@ const HINT_INTERVAL_MS = 300;
       @if (state() === 'running') {
         <!-- Silueta guía: no es un recuadro de detección, es una pista de encuadre. -->
         <svg class="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 300 400" aria-hidden="true">
-          <ellipse cx="150" cy="200" rx="92" ry="170" fill="none" [attr.stroke]="hint() === 'good' ? '#7cc4a0' : 'rgba(255,255,255,.55)'" stroke-width="2" stroke-dasharray="6 6" />
+          <ellipse cx="150" cy="200" rx="92" ry="170" fill="none" stroke="white" [attr.stroke-opacity]="hint() === 'good' ? 1 : 0.55" stroke-width="2" [attr.stroke-dasharray]="hint() === 'good' ? null : '6 6'" />
         </svg>
-        <p class="absolute inset-x-3 top-3 rounded-full bg-black/60 px-4 py-2 text-center text-sm text-white" role="status" aria-live="polite">
+        <p class="absolute inset-x-3 top-3 bg-black/60 px-4 py-2 text-center text-sm text-white" role="status" aria-live="polite">
           {{ 'live.hint.' + hint() | transloco }}
         </p>
-        <p class="absolute inset-x-3 bottom-3 rounded-lg bg-black/60 px-3 py-2 text-center text-xs text-white/90">
+        <p class="absolute inset-x-3 bottom-3 bg-black/60 px-3 py-2 text-center text-xs text-white/90">
           {{ 'live.quickPreview' | transloco }}
         </p>
       } @else {
@@ -76,7 +76,7 @@ const HINT_INTERVAL_MS = 300;
       <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
         <button type="button" class="btn" (click)="stop()">{{ 'live.stop' | transloco }}</button>
         @if (ratios()) {
-          <span class="text-xs text-[var(--muted)]">{{ 'live.ratiosReady' | transloco }}</span>
+          <span class="text-xs text-muted">{{ 'live.ratiosReady' | transloco }}</span>
         }
       </div>
     }

@@ -8,17 +8,18 @@ import { ApiService } from '../../core/api.service';
   imports: [TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <article class="mx-auto max-w-2xl px-4 pt-8 pb-16 space-y-6">
+    <article class="mx-auto max-w-2xl px-4 pt-10 pb-16">
       <header>
-        <p class="eyebrow">{{ 'privacy.eyebrow' | transloco }}</p>
-        <h1 class="mt-2 text-3xl">{{ 'privacy.title' | transloco }}</h1>
+        <h1 class="text-[28px] md:text-[32px]">{{ 'privacy.title' | transloco }}</h1>
       </header>
-      @for (s of sections; track s) {
-        <section class="card p-5">
-          <h2 class="text-lg">{{ 'privacy.' + s + '.title' | transloco }}</h2>
-          <p class="mt-2 text-sm text-[var(--ink-2)]">{{ 'privacy.' + s + '.body' | transloco: { hours: ttl() } }}</p>
-        </section>
-      }
+      <div class="mt-8 divide-y divide-line border-y border-line">
+        @for (s of sections; track s) {
+          <section class="grid gap-2 py-6 md:grid-cols-[200px_1fr] md:gap-8">
+            <h2 class="text-[15px] font-medium">{{ 'privacy.' + s + '.title' | transloco }}</h2>
+            <p class="text-[14px] text-ink-2">{{ 'privacy.' + s + '.body' | transloco: { hours: ttl() } }}</p>
+          </section>
+        }
+      </div>
     </article>
   `,
 })

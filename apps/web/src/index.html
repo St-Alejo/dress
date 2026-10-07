@@ -6,16 +6,20 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Probador de ropa virtual: mira la prenda en un cuerpo como el tuyo, pruébala con tu cámara y encuentra tu talla con honestidad." />
-    <meta name="theme-color" content="#f7f4ef" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#141312" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400..700&display=swap"
-      rel="stylesheet"
-    />
+    <script>
+      // Tema resuelto antes de pintar (evita el destello claro en modo oscuro). Ver core/theme.ts.
+      (function () {
+        try {
+          var pref = JSON.parse(localStorage.getItem('vestirse:theme') || '"system"');
+          var dark = pref === 'dark' || (pref !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>

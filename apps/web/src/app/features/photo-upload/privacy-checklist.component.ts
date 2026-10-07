@@ -18,14 +18,14 @@ import { TranslocoPipe } from '@jsverse/transloco';
       <ul class="space-y-2">
         @for (item of items; track item; let i = $index) {
           <li>
-            <label class="flex items-start gap-3 rounded-xl border border-[var(--line)] p-3 cursor-pointer">
+            <label class="flex items-start gap-3 border border-line p-3 cursor-pointer">
               <input type="checkbox" class="mt-1 size-5 accent-[var(--accent)]" [checked]="checked()[i]" (change)="toggle(i)" />
               <span class="text-sm">{{ 'photo.checklist.' + item | transloco }}</span>
             </label>
           </li>
         }
       </ul>
-      <div class="rounded-xl bg-[var(--surface-2)] p-4 text-sm space-y-1.5 text-[var(--ink-2)]">
+      <div class="bg-surface-2 p-4 text-sm space-y-1.5 text-ink-2">
         <p>{{ 'photo.checklist.ttl' | transloco: { hours: ttlHours() } }}</p>
         <p>{{ 'photo.checklist.noTraining' | transloco }}</p>
         <p>{{ 'photo.checklist.deleteAnytime' | transloco }}</p>

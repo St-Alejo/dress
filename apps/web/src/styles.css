@@ -1,79 +1,65 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/hanken-grotesk';
 
 /*
- * Tokens de diseño. Tono editorial y sereno: papel cálido, tinta profunda y un
- * solo acento terracota. Nada en la interfaz juzga cuerpos: los colores de
- * confianza describen la calidad del dato, nunca a la persona.
+ * Sistema visual de tienda sobria: blanco, tinta casi negra y un único acento
+ * azul tinta para enlaces y estado activo. Esquinas rectas, sin sombras: la
+ * estructura se marca con líneas finas (hairlines) y con la tipografía.
+ * Nada en la interfaz juzga cuerpos: los tonos de "confianza" describen la
+ * calidad del dato, nunca a la persona.
+ *
+ * Los nombres de variables se mantienen (--paper, --ink...) para que todas las
+ * pantallas cambien a la vez; las clases utilitarias equivalentes son
+ * bg-paper, text-ink, border-line, etc.
  */
 :root {
-  --paper: #f7f4ef;
+  --paper: #ffffff;
   --surface: #ffffff;
-  --surface-2: #efeae2;
-  --ink: #1d1b19;
-  --ink-2: #4a4540;
-  --muted: #6b655e;
-  --line: #e2dcd2;
-  --accent: #a84a24;
+  --surface-2: #f5f5f3;
+  --ink: #111111;
+  --ink-2: #444444;
+  --muted: #767676;
+  --line: #e5e5e5;
+  --line-strong: #111111;
+  --accent: #1f3a5f;
   --accent-ink: #ffffff;
-  --accent-soft: #f4e4d9;
-  --conf-high: #2f6b4f;
-  --conf-high-soft: #e1efe7;
-  --conf-medium: #8a5a0b;
-  --conf-medium-soft: #f6ead2;
-  --conf-low: #6b655e;
-  --conf-low-soft: #ebe7e1;
-  --danger: #a2332b;
-  --focus: #1f5fbf;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgb(29 27 25 / 6%), 0 8px 24px rgb(29 27 25 / 6%);
+  --accent-soft: #eef2f7;
+  /* Confianza del dato: escala de grises, el nivel alto en tinta. */
+  --conf-high: #111111;
+  --conf-high-soft: #f0f0ee;
+  --conf-medium: #555555;
+  --conf-medium-soft: #f0f0ee;
+  --conf-low: #767676;
+  --conf-low-soft: #f5f5f3;
+  --danger: #b42318;
+  --focus: #111111;
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --paper: #141312;
-    --surface: #1d1b19;
-    --surface-2: #26231f;
-    --ink: #f2eee8;
-    --ink-2: #d2ccc3;
-    --muted: #a39c92;
-    --line: #34302b;
-    --accent: #e0825a;
-    --accent-ink: #1d1b19;
-    --accent-soft: #3a2519;
-    --conf-high: #7cc4a0;
-    --conf-high-soft: #1e3329;
-    --conf-medium: #e2b560;
-    --conf-medium-soft: #372b15;
-    --conf-low: #a39c92;
-    --conf-low-soft: #2a2724;
-    --danger: #ef8a80;
-    --focus: #8ab4ff;
-    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
-    color-scheme: dark;
-  }
-}
+/* Paleta oscura definida una sola vez y aplicada por preferencia del sistema o por elección explícita. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
+/* Sin @layer a propósito: una regla en capa perdería contra el :root claro (sin capa). */
 :root[data-theme='dark'] {
-  --paper: #141312;
-  --surface: #1d1b19;
-  --surface-2: #26231f;
-  --ink: #f2eee8;
-  --ink-2: #d2ccc3;
-  --muted: #a39c92;
-  --line: #34302b;
-  --accent: #e0825a;
-  --accent-ink: #1d1b19;
-  --accent-soft: #3a2519;
-  --conf-high: #7cc4a0;
-  --conf-high-soft: #1e3329;
-  --conf-medium: #e2b560;
-  --conf-medium-soft: #372b15;
-  --conf-low: #a39c92;
-  --conf-low-soft: #2a2724;
-  --danger: #ef8a80;
-  --focus: #8ab4ff;
-  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
+  --paper: #0f0f0f;
+  --surface: #141414;
+  --surface-2: #1a1a1a;
+  --ink: #f2f2f2;
+  --ink-2: #c4c4c4;
+  --muted: #8f8f8f;
+  --line: #2a2a2a;
+  --line-strong: #f2f2f2;
+  --accent: #9db4d6;
+  --accent-ink: #0f0f0f;
+  --accent-soft: #1b2430;
+  --conf-high: #f2f2f2;
+  --conf-high-soft: #1f1f1f;
+  --conf-medium: #b0b0b0;
+  --conf-medium-soft: #1f1f1f;
+  --conf-low: #8f8f8f;
+  --conf-low-soft: #1a1a1a;
+  --danger: #f08a80;
+  --focus: #f2f2f2;
   color-scheme: dark;
 }
 
@@ -85,12 +71,21 @@
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-sans);
+  /* Escala tipográfica corta: 11 / 12 / 14 / 16 / 20 / 28 / 40. */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.35;
+  --radius-xs: 2px;
+}
+
+html {
+  font-size: 16px;
 }
 
 html,
@@ -99,121 +94,189 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'tnum' 0;
 }
 
 body {
   min-height: 100dvh;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
-  font-weight: 560;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   text-wrap: balance;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+/* Precios y medidas alineados en columna. */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 6px;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 @layer components {
+  /* Etiqueta pequeña en mayúsculas: navegación, encabezados de sección, nombres de campo. */
+  .label-xs,
+  .eyebrow {
+    font-size: 11px;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  /* Bloque con borde fino, sin radio ni sombra. */
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
   }
+
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     min-height: 44px;
-    padding: 0.55rem 1.1rem;
-    border-radius: 999px;
-    font-weight: 560;
-    font-size: 0.95rem;
-    border: 1px solid var(--line);
-    background: var(--surface);
+    padding: 0 1.25rem;
+    border: 1px solid var(--line-strong);
+    background: transparent;
     color: var(--ink);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, transform 0.05s;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
   .btn:hover {
-    border-color: var(--ink-2);
-  }
-  .btn:active {
-    transform: translateY(1px);
+    background: var(--ink);
+    color: var(--paper);
   }
   .btn:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+    background: transparent;
+    color: var(--ink);
   }
   .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--accent-ink);
+    background: var(--ink);
+    color: var(--paper);
   }
   .btn-primary:hover {
-    border-color: var(--accent);
-    filter: brightness(1.05);
+    background: var(--ink-2);
+    border-color: var(--ink-2);
   }
+  .btn-primary:disabled {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  /* Acción secundaria como enlace de texto. */
   .btn-ghost {
-    background: transparent;
+    min-height: 44px;
+    padding: 0 0.25rem;
     border-color: transparent;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
   }
   .btn-ghost:hover {
-    background: var(--surface-2);
-    border-color: transparent;
+    background: transparent;
+    color: var(--ink);
+    text-decoration-thickness: 2px;
   }
+
+  /* Opción seleccionable (filtros, tallas, zonas): caja recta; activa = tinta. */
   .chip {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     min-height: 40px;
     min-width: 44px;
-    justify-content: center;
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
+    padding: 0 0.875rem;
     border: 1px solid var(--line);
     background: var(--surface);
-    font-size: 0.9rem;
-    font-weight: 540;
+    color: var(--ink);
+    font-size: 13px;
     cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .chip:hover:not(:disabled) {
+    border-color: var(--line-strong);
+  }
+  .chip:disabled {
+    color: var(--muted);
+    cursor: not-allowed;
+    text-decoration: line-through;
   }
   .chip[aria-pressed='true'],
-  .chip[aria-selected='true'] {
+  .chip[aria-selected='true'],
+  .chip[aria-checked='true'] {
     background: var(--ink);
     border-color: var(--ink);
     color: var(--paper);
   }
+
   .field {
     display: grid;
-    gap: 0.35rem;
-    font-size: 0.9rem;
-    color: var(--ink-2);
+    gap: 0.375rem;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--muted);
   }
-  .field input,
+  .field input:not([type='checkbox']):not([type='radio']):not([type='range']),
   .field select,
   .field textarea {
     min-height: 44px;
     padding: 0.5rem 0.75rem;
-    border-radius: 10px;
     border: 1px solid var(--line);
     background: var(--surface);
     color: var(--ink);
-    font-size: 1rem;
+    font-size: 15px;
+    letter-spacing: normal;
+    text-transform: none;
+    font-weight: 400;
   }
-  .eyebrow {
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--line-strong);
+    outline: none;
   }
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .field textarea:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 0;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'] {
+    accent-color: var(--ink);
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;

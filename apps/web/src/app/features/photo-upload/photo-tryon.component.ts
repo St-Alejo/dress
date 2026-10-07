@@ -11,10 +11,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
+import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-group.component';
 import { PrivacyChecklistComponent } from './privacy-checklist.component';
 import { canvasToJpeg, detectFace, loadBitmap, renderPrepared, type FaceBox, type FaceTreatment } from './photo-prep';
 
@@ -25,7 +27,7 @@ const EXPECTED_SECONDS = 20;
 
 @Component({
   selector: 'app-photo-tryon',
-  imports: [TranslocoPipe, PrivacyChecklistComponent, RouterLink],
+  imports: [TranslocoPipe, PrivacyChecklistComponent, RouterLink, ChoiceGroupComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let gen = store.generation();
@@ -35,25 +37,25 @@ const EXPECTED_SECONDS = 20;
         @if (gen.status === 'done' && store.resultImageUrl()) {
           <figure class="card overflow-hidden">
             <img [src]="store.resultImageUrl()" [alt]="'photo.resultAlt' | transloco" class="w-full" />
-            <figcaption class="p-4 text-sm text-[var(--ink-2)] space-y-1">
+            <figcaption class="p-4 text-sm text-ink-2 space-y-1">
               <p>{{ 'photo.resultNote' | transloco }}</p>
               @for (l of store.garment()?.knownLimitations ?? []; track l) {
-                <p class="text-[var(--muted)]">· {{ l | transloco }}</p>
+                <p class="text-muted">· {{ l | transloco }}</p>
               }
             </figcaption>
           </figure>
         } @else if (gen.status === 'queued' || gen.status === 'processing') {
           <div class="card p-5 space-y-3" role="status" aria-live="polite">
             <p class="font-medium">{{ 'photo.generating' | transloco }}</p>
-            <div class="h-2 rounded-full bg-[var(--surface-2)] overflow-hidden">
-              <div class="h-full bg-[var(--accent)] transition-[width] duration-500" [style.width.%]="shownProgress() * 100"></div>
+            <div class="h-0.5 bg-line overflow-hidden">
+              <div class="h-full bg-ink transition-[width] duration-500" [style.width.%]="shownProgress() * 100"></div>
             </div>
-            <p class="text-xs text-[var(--muted)]">{{ 'photo.generatingHint' | transloco }}</p>
+            <p class="text-xs text-muted">{{ 'photo.generatingHint' | transloco }}</p>
           </div>
         } @else if (gen.status === 'failed') {
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.failed.title' | transloco }}</p>
-            <p class="text-sm text-[var(--ink-2)]">{{ 'photo.failed.body' | transloco }}</p>
+            <p class="text-sm text-ink-2">{{ 'photo.failed.body' | transloco }}</p>
             <div class="flex flex-wrap gap-2">
               <button type="button" class="btn btn-primary" (click)="generate()">{{ 'common.retry' | transloco }}</button>
               <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
@@ -62,7 +64,7 @@ const EXPECTED_SECONDS = 20;
         } @else if (gen.status === 'fallback') {
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.fallback.title' | transloco }}</p>
-            <p class="text-sm text-[var(--ink-2)]">{{ 'photo.fallback.body' | transloco }}</p>
+            <p class="text-sm text-ink-2">{{ 'photo.fallback.body' | transloco }}</p>
             <div class="flex flex-wrap gap-2">
               <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
               <button type="button" class="btn" (click)="fallbackTo.emit('live-overlay')">{{ 'photo.fallback.live' | transloco }}</button>
@@ -71,7 +73,7 @@ const EXPECTED_SECONDS = 20;
           </div>
         } @else {
           <div class="card p-4 flex gap-4 items-center">
-            <img [src]="store.session()?.uploadedPhotoUrl" alt="" class="h-28 w-20 rounded-lg object-cover bg-[var(--surface-2)]" />
+            <img [src]="store.session()?.uploadedPhotoUrl" alt="" class="h-28 w-20 object-cover bg-surface-2" />
             <div class="space-y-2">
               <p class="text-sm">{{ 'photo.readyToGenerate' | transloco }}</p>
               <button type="button" class="btn btn-primary" (click)="generate()">{{ 'photo.generate' | transloco }}</button>
@@ -91,7 +93,7 @@ const EXPECTED_SECONDS = 20;
           }
           <button type="button" class="btn btn-ghost" (click)="deletePhoto()">{{ 'photo.delete' | transloco }}</button>
           @if (expiresAt(); as exp) {
-            <span class="text-xs text-[var(--muted)]">{{ 'photo.expires' | transloco: { time: exp } }}</span>
+            <span class="text-xs text-muted">{{ 'photo.expires' | transloco: { time: exp } }}</span>
           }
         </div>
       </div>
@@ -99,7 +101,7 @@ const EXPECTED_SECONDS = 20;
       @switch (step()) {
         @case ('intro') {
           <div class="card p-5 space-y-3">
-            <p class="text-sm text-[var(--ink-2)]">{{ 'photo.intro' | transloco }}</p>
+            <p class="text-sm text-ink-2">{{ 'photo.intro' | transloco }}</p>
             <button type="button" class="btn btn-primary" (click)="step.set('checklist')">{{ 'photo.start' | transloco }}</button>
           </div>
         }
@@ -119,22 +121,15 @@ const EXPECTED_SECONDS = 20;
               </label>
             </div>
 
-            <canvas #preview class="w-full max-h-[420px] object-contain rounded-xl bg-[var(--surface-2)]" [class.hidden]="!hasImage()"></canvas>
+            <canvas #preview class="w-full max-h-[420px] object-contain bg-surface-2" [class.hidden]="!hasImage()"></canvas>
 
             @if (hasImage()) {
               <fieldset class="space-y-2">
                 <legend class="text-sm font-medium">{{ 'photo.face.legend' | transloco }}</legend>
                 @if (!face()) {
-                  <p class="text-xs text-[var(--muted)]">{{ 'photo.face.notFound' | transloco }}</p>
+                  <p class="text-xs text-muted">{{ 'photo.face.notFound' | transloco }}</p>
                 }
-                <div class="flex flex-wrap gap-2" role="radiogroup">
-                  @for (t of treatments; track t) {
-                    <button type="button" class="chip" role="radio" [attr.aria-checked]="treatment() === t" [attr.aria-pressed]="treatment() === t"
-                      [disabled]="!face() && t !== 'keep'" (click)="treatment.set(t)">
-                      {{ 'photo.face.' + t | transloco }}
-                    </button>
-                  }
-                </div>
+                <ui-choice-group [options]="treatmentOptions()" [value]="treatment()" (valueChange)="treatment.set($event ?? 'keep')" [label]="'photo.face.legend' | transloco" />
               </fieldset>
               <label class="field">
                 {{ 'photo.manualCrop' | transloco }}
@@ -146,7 +141,7 @@ const EXPECTED_SECONDS = 20;
               </div>
             }
             @if (error()) {
-              <p class="text-sm text-[var(--danger)]" role="alert">{{ error()! | transloco }}</p>
+              <p class="text-sm text-danger" role="alert">{{ error()! | transloco }}</p>
             }
           </div>
         }
@@ -172,6 +167,14 @@ export class PhotoTryOnComponent {
   readonly hasImage = signal(false);
   readonly error = signal<string | null>(null);
   readonly now = signal(Date.now());
+
+  private readonly transloco = inject(TranslocoService);
+  private readonly dictionary = toSignal(this.transloco.selectTranslation());
+  /** Sin rostro detectado solo se puede "mantener" (no hay nada que recortar ni difuminar). */
+  readonly treatmentOptions = computed<ChoiceOption<FaceTreatment>[]>(() => {
+    this.dictionary();
+    return this.treatments.map((t) => ({ value: t, label: this.transloco.translate('photo.face.' + t), disabled: !this.face() && t !== 'keep' }));
+  });
 
   readonly saved = computed(() => !!this.store.session()?.resultSaved);
   readonly expiresAt = computed(() => {

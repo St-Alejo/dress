@@ -1,20 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth.store';
 import { NoticeStore } from '../../core/notice.store';
+import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 
 @Component({
   selector: 'app-account-page',
-  imports: [FormsModule, TranslocoPipe, RouterLink],
+  imports: [FormsModule, TranslocoPipe, RouterLink, TabsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="mx-auto max-w-lg px-4 pt-8 pb-16 space-y-6">
+    <section class="mx-auto max-w-md px-4 pt-10 pb-16 space-y-8">
       <header>
-        <p class="eyebrow">{{ 'account.eyebrow' | transloco }}</p>
-        <h1 class="mt-2 text-3xl">{{ 'account.title' | transloco }}</h1>
-        <p class="mt-2 text-sm text-[var(--ink-2)]">{{ 'account.optional' | transloco }}</p>
+        <h1 class="text-[28px] md:text-[32px]">{{ 'account.title' | transloco }}</h1>
+        <p class="mt-3 text-[14px] text-ink-2">{{ 'account.optional' | transloco }}</p>
       </header>
 
       @if (auth.user(); as user) {
@@ -23,7 +24,7 @@ import { NoticeStore } from '../../core/notice.store';
           @if (auth.isAdmin()) {
             <a routerLink="/admin" class="btn">{{ 'nav.admin' | transloco }}</a>
           }
-          <label class="flex items-start gap-3 rounded-xl border border-[var(--line)] p-3">
+          <label class="flex items-start gap-3 border-y border-line py-4">
             <input type="checkbox" class="mt-1 size-5" [checked]="user.retrainingConsent" (change)="setConsent(!user.retrainingConsent, $event)" />
             <span class="text-sm">
               <strong class="block">{{ 'account.consent.title' | transloco }}</strong>
@@ -33,9 +34,9 @@ import { NoticeStore } from '../../core/notice.store';
           <button type="button" class="btn" (click)="logout()">{{ 'account.logout' | transloco }}</button>
         </div>
 
-        <div class="card p-5 space-y-3 border-[var(--danger)]">
+        <div class="card p-5 space-y-3 border-danger">
           <h2 class="text-lg">{{ 'account.delete.title' | transloco }}</h2>
-          <p class="text-sm text-[var(--ink-2)]">{{ 'account.delete.body' | transloco }}</p>
+          <p class="text-sm text-ink-2">{{ 'account.delete.body' | transloco }}</p>
           @if (!confirmDelete()) {
             <button type="button" class="btn" (click)="confirmDelete.set(true)">{{ 'account.delete.cta' | transloco }}</button>
           } @else {
@@ -50,15 +51,12 @@ import { NoticeStore } from '../../core/notice.store';
           <p class="card p-4 text-sm" role="status">{{ 'account.delete.done' | transloco: d }}</p>
         }
         <form class="card p-5 space-y-3" (ngSubmit)="submit()">
-          <div class="flex gap-1 rounded-full bg-[var(--surface-2)] p-1" role="tablist">
-            <button type="button" role="tab" class="flex-1 rounded-full py-2 text-sm min-h-[44px]" [class.bg-[var(--surface)]]="tab() === 'login'" [attr.aria-selected]="tab() === 'login'" (click)="tab.set('login')">{{ 'account.login' | transloco }}</button>
-            <button type="button" role="tab" class="flex-1 rounded-full py-2 text-sm min-h-[44px]" [class.bg-[var(--surface)]]="tab() === 'register'" [attr.aria-selected]="tab() === 'register'" (click)="tab.set('register')">{{ 'account.register' | transloco }}</button>
-          </div>
+          <ui-tabs [items]="authTabs()" [(active)]="tab" [stretch]="true" />
           <label class="field">{{ 'account.email' | transloco }}<input type="email" name="email" autocomplete="email" required [(ngModel)]="email" /></label>
           <label class="field">{{ 'account.password' | transloco }}
             <input type="password" name="password" minlength="8" required [(ngModel)]="password" [autocomplete]="tab() === 'login' ? 'current-password' : 'new-password'" />
           </label>
-          @if (error()) {<p class="text-sm text-[var(--danger)]" role="alert">{{ error()! | transloco }}</p>}
+          @if (error()) {<p class="text-sm text-danger" role="alert">{{ error()! | transloco }}</p>}
           <button type="submit" class="btn btn-primary w-full" [disabled]="busy()">{{ 'account.' + tab() | transloco }}</button>
         </form>
       }
@@ -69,6 +67,12 @@ export class AccountPage {
   readonly auth = inject(AuthStore);
   private readonly notices = inject(NoticeStore);
   readonly tab = signal<'login' | 'register'>('login');
+  private readonly transloco = inject(TranslocoService);
+  private readonly dictionary = toSignal(this.transloco.selectTranslation());
+  readonly authTabs = computed<TabItem<'login' | 'register'>[]>(() => {
+    this.dictionary();
+    return (['login', 'register'] as const).map((t) => ({ id: t, label: this.transloco.translate('account.' + t) }));
+  });
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly confirmDelete = signal(false);
