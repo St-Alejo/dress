@@ -17,3 +17,5 @@ apps/web/public/mediapipe/
 # Material local que no se publica
 docs/imagenes/
 seed/photos/_raw/
+# Capturas con la foto de prueba de iStock: se quedan en local (no es de licencia libre)
+docs/capturas/04-camiseta-*.png
