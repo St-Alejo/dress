@@ -39,7 +39,8 @@ def generate_form(*categories: str, person: bytes | None = None, images: int | N
 @pytest.fixture
 def make_client():
     def _make(**settings):
-        app.dependency_overrides[get_settings] = lambda: Settings(mock_delay_seconds=0, **settings)
+        # Sin .env: los tests no deben usar claves reales ni salir a la red.
+        app.dependency_overrides[get_settings] = lambda: Settings(_env_file=None, mock_delay_seconds=0, **settings)
         return TestClient(app)
 
     yield _make

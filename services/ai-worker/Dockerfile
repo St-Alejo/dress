@@ -1,6 +1,7 @@
 FROM python:3.12-slim
 WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+# HOME escribible: el usuario del servicio no tiene directorio propio y gradio_client guarda caché ahí.
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 HOME=/tmp
 
 # Única fuente de verdad de las dependencias: pyproject.toml.
 COPY pyproject.toml ./

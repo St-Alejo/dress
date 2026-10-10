@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from .config import Settings
 from .contract import CONTRACT_VERSION, Manifest, WorkerError, worker_error_handler
 from .providers import Credentials, GarmentInput, ProviderRegistry, TransferRequest, TryOnProvider, default_registry
+from .vision import GroqVision, VisionUnavailable
 
 app = FastAPI(title="Vestirse AI worker", version="1.0.0")
 app.add_exception_handler(WorkerError, worker_error_handler)
@@ -33,6 +34,16 @@ def get_settings() -> Settings:
 @lru_cache
 def get_registry() -> ProviderRegistry:
     return default_registry()
+
+
+@lru_cache
+def _vision(api_key: str, model: str) -> GroqVision:
+    # Una instancia por configuración: su caché y su límite de llamadas viven entre peticiones.
+    return GroqVision(api_key, model)
+
+
+def get_vision(settings: Annotated[Settings, Depends(get_settings)]) -> GroqVision:
+    return _vision(settings.groq_api_key, settings.groq_vision_model)
 
 
 def require_token(
@@ -129,3 +140,31 @@ async def generate(
 @app.post("/v1/providers/test", dependencies=[Depends(require_token)])
 async def test_provider(provider: Annotated[TryOnProvider, Depends(get_provider)]) -> dict:
     return {"ok": True, "provider": provider.name, "detail": await provider.test()}
+
+
+@app.post("/v1/photo/inspect", dependencies=[Depends(require_token)])
+async def inspect_photo(
+    image: Annotated[UploadFile, File()],
+    vision: Annotated[GroqVision, Depends(get_vision)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict:
+    """Control de calidad de la foto. `checked: false` = no se pudo analizar; nunca es motivo para rechazarla."""
+    data = await _read_limited(image, settings.max_upload_bytes, "foto")
+    try:
+        return {"checked": True, **await vision.inspect_photo(data)}
+    except VisionUnavailable:
+        return {"checked": False, "ok": True, "reason": None}
+
+
+@app.post("/v1/garment/describe", dependencies=[Depends(require_token)])
+async def describe_garment(
+    image: Annotated[UploadFile, File()],
+    vision: Annotated[GroqVision, Depends(get_vision)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict:
+    """Sugerencias de etiquetado para el alta de una prenda. Sin análisis, la lista viene vacía."""
+    data = await _read_limited(image, settings.max_upload_bytes, "prenda")
+    try:
+        return {"checked": True, "suggestion": await vision.describe_garment(data)}
+    except VisionUnavailable:
+        return {"checked": False, "suggestion": {}}
