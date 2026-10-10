@@ -1,303 +1,537 @@
 {
   "garments": {
     "g01": {
-      "title": "Ringflash Tshirt Blank Template",
-      "creator": "geishaboy500",
-      "creator_url": "https://www.flickr.com/photos/49503154413@N01",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://www.flickr.com/photos/49503154413@N01/3214240974",
-      "provider": "flickr"
+      "title": "Camiseta básica blanca",
+      "creator": "Mr. Mockup",
+      "creator_url": "https://www.pexels.com/@mr-mockup-2312788/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/12025472/",
+      "provider": "pexels"
     },
     "g02": {
-      "title": "mariniere-pauline-lin",
-      "creator": "Ville_De_Caudry",
-      "creator_url": "https://www.flickr.com/photos/92247352@N03",
-      "license": "Public Domain Mark 1.0",
-      "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "source_url": "https://www.flickr.com/photos/92247352@N03/51855028260",
-      "provider": "flickr"
+      "title": "Camiseta oversize rosa",
+      "creator": "MART PRODUCTION",
+      "creator_url": "https://www.pexels.com/@mart-production/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/9558761/",
+      "provider": "pexels"
     },
     "g03": {
-      "title": "$15 - Daniel Cremieux Classics Long Sleeve Collared Shirt (picture 2 of 2)",
-      "creator": "jenelleconner",
-      "creator_url": "https://www.flickr.com/photos/85720386@N03",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://www.flickr.com/photos/85720386@N03/7852959538",
-      "provider": "flickr"
+      "title": "Camiseta amarillo mantequilla",
+      "creator": "Marina Podrez",
+      "creator_url": "https://www.pexels.com/@marina-podrez-3269296/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/11671275/",
+      "provider": "pexels"
     },
     "g04": {
-      "title": "Back man",
-      "creator": "rawpixel",
-      "creator_url": "",
-      "license": "CC0 1.0",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "source_url": "https://www.rawpixel.com/image/6016996/back-man-free-public-domain-cc0-photo",
-      "provider": "rawpixel"
+      "title": "Camiseta corta naranja",
+      "creator": "Vie Studio",
+      "creator_url": "https://www.pexels.com/@vie-studio/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/8148577/",
+      "provider": "pexels"
     },
     "g05": {
-      "title": "Young woman in yellow sweater poses confidently in park during sunny afternoon with serene walkway and trees in background",
-      "creator": "Shixart1985",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Shixart1985",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=196010984",
-      "provider": "wikimedia"
+      "title": "Camiseta blanca de corte recto",
+      "creator": "dayong tien",
+      "creator_url": "https://www.pexels.com/@dayong-tien-681073045/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/18257675/",
+      "provider": "pexels"
     },
     "g06": {
-      "title": "A person standing with their back to the camera, wearing a dark green hoodie and light gray sweatpants.",
-      "creator": "Tilak Bahadur Karki",
-      "creator_url": "https://tilakbahadurkarki.com.np/",
-      "license": "CC0 1.0",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "source_url": "https://wordpress.org/photos/photo/1506966513/",
-      "provider": "wordpress"
+      "title": "Camiseta corta blanca",
+      "creator": "Vie Studio",
+      "creator_url": "https://www.pexels.com/@vie-studio/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/8148576/",
+      "provider": "pexels"
     },
     "g07": {
-      "title": "Denim Jacket (51079649933)",
-      "creator": "ajay_suresh",
-      "creator_url": "https://www.flickr.com/people/83136374@N05",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=104519018",
-      "provider": "wikimedia"
+      "title": "Camisa de lino cuello mao",
+      "creator": "dayong tien",
+      "creator_url": "https://www.pexels.com/@dayong-tien-681073045/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/22441292/",
+      "provider": "pexels"
     },
     "g08": {
-      "title": "Overcoat",
-      "creator": "wikimedia",
-      "creator_url": "",
-      "license": "CC0 1.0",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en/",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=59658651",
-      "provider": "wikimedia"
+      "title": "Camisa Oxford celeste",
+      "creator": "MART PRODUCTION",
+      "creator_url": "https://www.pexels.com/@mart-production/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/9558723/",
+      "provider": "pexels"
     },
     "g09": {
-      "title": "Vintage Polo Ralph Lauren jacket, safari pockets",
-      "creator": "Menswear Market",
-      "creator_url": "",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=118273624",
-      "provider": "wikimedia"
+      "title": "Camisa de flores rojas",
+      "creator": "F1 Digitals",
+      "creator_url": "https://www.pexels.com/@f1-digitals-384723076/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/14941607/",
+      "provider": "pexels"
     },
     "g10": {
-      "title": "02123jfClothes shirts pants in Philippinesfvf 10",
-      "creator": "Judgefloro",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Judgefloro",
-      "license": "CC0 1.0",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=57170228",
-      "provider": "wikimedia"
+      "title": "Blusa de leopardo",
+      "creator": "Andrea Musto",
+      "creator_url": "https://www.pexels.com/@andrea-musto-135941147/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/32428176/",
+      "provider": "pexels"
     },
     "g11": {
-      "title": "Trousers",
-      "creator": "wikimedia",
-      "creator_url": "",
-      "license": "CC BY 4.0",
-      "license_url": "https://creativecommons.org/licenses/by/4.0/",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=82982586",
-      "provider": "wikimedia"
+      "title": "Camiseta de rayas pastel",
+      "creator": "Ali Drabo",
+      "creator_url": "https://www.pexels.com/@ali-drabo-10956272/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/29824678/",
+      "provider": "pexels"
     },
     "g12": {
-      "title": "Pants",
-      "creator": "Menswear Market",
-      "creator_url": "https://www.flickr.com/photos/85546319@N04",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://www.flickr.com/photos/85546319@N04/11299668233",
-      "provider": "flickr"
+      "title": "Cárdigan rojo de punto",
+      "creator": "Polina Chistyakova",
+      "creator_url": "https://www.pexels.com/@polinachistyakova/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/36129313/",
+      "provider": "pexels"
     },
     "g13": {
-      "title": "Red Shorts",
-      "creator": "Marcus Q",
-      "creator_url": "https://www.flickr.com/photos/41896843@N00",
-      "license": "CC BY-SA 2.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
-      "source_url": "https://www.flickr.com/photos/41896843@N00/3167708033",
-      "provider": "flickr"
+      "title": "Suéter verde de cuello alto",
+      "creator": "Grigore Scar",
+      "creator_url": "https://www.pexels.com/@grigore-scar-2153317134/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/35495788/",
+      "provider": "pexels"
     },
     "g14": {
-      "title": "violet, lavender, lilac prom skirt, robert clergerie platform heels, quay sunglasses, alley girl new york blogger, betul yildiz",
-      "creator": "Betül Yıldız",
-      "creator_url": "https://www.flickr.com/photos/46053585@N02",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://www.flickr.com/photos/46053585@N02/40107694884",
-      "provider": "flickr"
+      "title": "Buzo con capucha rosa palo",
+      "creator": "Artem Podrez",
+      "creator_url": "https://www.pexels.com/@artempodrez/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/6786666/",
+      "provider": "pexels"
     },
     "g15": {
-      "title": "Sateen dress with polka dots, 1959",
-      "creator": "KingaNBM",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:KingaNBM",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=45644423",
-      "provider": "wikimedia"
+      "title": "Buzo con capucha blanco",
+      "creator": "MART PRODUCTION",
+      "creator_url": "https://www.pexels.com/@mart-production/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/8217416/",
+      "provider": "pexels"
     },
     "g16": {
-      "title": "Green wrap dress",
-      "creator": "lighttrailrail",
-      "creator_url": "https://www.flickr.com/photos/63930607@N02",
-      "license": "CC BY-SA 2.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
-      "source_url": "https://www.flickr.com/photos/63930607@N02/29601691812",
-      "provider": "flickr"
+      "title": "Blazer beige",
+      "creator": "Alexander Mass",
+      "creator_url": "https://www.pexels.com/@rebornfilmes/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/32427323/",
+      "provider": "pexels"
     },
     "g17": {
-      "title": "Superga Cotu Classic Sneaker 2750 Canvas weiß (1)",
-      "creator": "SPERA.de Designerschuhe, Taschen und Accessoires",
-      "creator_url": "",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://commons.wikimedia.org/w/index.php?curid=136705379",
-      "provider": "wikimedia"
+      "title": "Blazer blanco cruzado",
+      "creator": "Brunxs",
+      "creator_url": "https://www.pexels.com/@brunxs/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39483049/",
+      "provider": "pexels"
     },
     "g18": {
-      "title": "Blackstone Ankle Boot / Stiefelette Kalbsleder Lammfell gefüttert braun (brown) (2)",
-      "creator": "spera.de",
-      "creator_url": "https://www.flickr.com/photos/130010866@N02",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://www.flickr.com/photos/130010866@N02/31245954225",
-      "provider": "flickr"
+      "title": "Blazer verde menta",
+      "creator": "Alexander Mass",
+      "creator_url": "https://www.pexels.com/@rebornfilmes/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/37524688/",
+      "provider": "pexels"
     },
     "g19": {
-      "title": "Another triangle!",
-      "creator": "Breibeest",
-      "creator_url": "https://www.flickr.com/photos/81876892@N00",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://www.flickr.com/photos/81876892@N00/3493234045",
-      "provider": "flickr"
+      "title": "Sobrecamisa oliva",
+      "creator": "Ivan S",
+      "creator_url": "https://www.pexels.com/@ivan-s/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/7671168/",
+      "provider": "pexels"
     },
     "g20": {
-      "title": "Navy baseball cap from the 2018 Stacey Abrams Georgia gubernatorial campaign",
-      "creator": "Stacey Abrams for Governor, American, founded 2018",
-      "creator_url": "",
-      "license": "CC0 1.0",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "source_url": "https://nmaahc.si.edu/object/nmaahc_2019.43.2",
-      "provider": "smithsonian"
+      "title": "Chaqueta acolchada negra",
+      "creator": "Skylar Kang",
+      "creator_url": "https://www.pexels.com/@skylar-kang/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/6044973/",
+      "provider": "pexels"
     },
     "g21": {
-      "title": "Brown leather bag",
-      "creator": "rawpixel",
-      "creator_url": "",
-      "license": "CC0 1.0",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "source_url": "https://www.rawpixel.com/image/3305481/free-photo-image-briefcase-leather-bag",
-      "provider": "rawpixel"
+      "title": "Chaqueta de mezclilla",
+      "creator": "Sora Shimazaki",
+      "creator_url": "https://www.pexels.com/@sora-shimazaki/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/5926344/",
+      "provider": "pexels"
+    },
+    "g22": {
+      "title": "Chaqueta cortaviento negra",
+      "creator": "keen",
+      "creator_url": "https://www.pexels.com/@keen-61828480/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/9286986/",
+      "provider": "pexels"
+    },
+    "g23": {
+      "title": "Blazer marrón",
+      "creator": "Tran Nhu Tuan",
+      "creator_url": "https://www.pexels.com/@kooldark/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/7368063/",
+      "provider": "pexels"
+    },
+    "g24": {
+      "title": "Jean pitillo oscuro",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457757/",
+      "provider": "pexels"
+    },
+    "g25": {
+      "title": "Jean ancho claro",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457728/",
+      "provider": "pexels"
+    },
+    "g26": {
+      "title": "Jean pitillo rasgado",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457662/",
+      "provider": "pexels"
+    },
+    "g27": {
+      "title": "Jean mom con lazo",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457820/",
+      "provider": "pexels"
+    },
+    "g28": {
+      "title": "Pantalón pitillo amarillo",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457559/",
+      "provider": "pexels"
+    },
+    "g29": {
+      "title": "Pantalón palazzo estampado",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457561/",
+      "provider": "pexels"
+    },
+    "g30": {
+      "title": "Pantalón de pana oliva",
+      "creator": "cottonbro studio",
+      "creator_url": "https://www.pexels.com/@cottonbro/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/7716960/",
+      "provider": "pexels"
+    },
+    "g31": {
+      "title": "Jogger negro",
+      "creator": "Youssef Mahmoud",
+      "creator_url": "https://www.pexels.com/@youssef-mahmoud-2154095663/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/33055598/",
+      "provider": "pexels"
+    },
+    "g32": {
+      "title": "Short de mezclilla",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457544/",
+      "provider": "pexels"
+    },
+    "g33": {
+      "title": "Falda corta blanca con botones",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457537/",
+      "provider": "pexels"
+    },
+    "g34": {
+      "title": "Falda midi roja de lunares",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457516/",
+      "provider": "pexels"
+    },
+    "g35": {
+      "title": "Falda lápiz blanca",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/39457750/",
+      "provider": "pexels"
+    },
+    "g36": {
+      "title": "Vestido rojo plisado",
+      "creator": "Marcelo Verfe",
+      "creator_url": "https://www.pexels.com/@marceloverfe/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/19895956/",
+      "provider": "pexels"
+    },
+    "g37": {
+      "title": "Vestido floral de manga ancha",
+      "creator": "Marcelo Verfe",
+      "creator_url": "https://www.pexels.com/@marceloverfe/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/19895949/",
+      "provider": "pexels"
+    },
+    "g38": {
+      "title": "Vestido túnica de cachemira",
+      "creator": "Marcelo Verfe",
+      "creator_url": "https://www.pexels.com/@marceloverfe/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/19895963/",
+      "provider": "pexels"
+    },
+    "g39": {
+      "title": "Vestido halter estampado",
+      "creator": "Marcelo Verfe",
+      "creator_url": "https://www.pexels.com/@marceloverfe/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/14513896/",
+      "provider": "pexels"
+    },
+    "g40": {
+      "title": "Vestido negro de flores",
+      "creator": "Marcelo Verfe",
+      "creator_url": "https://www.pexels.com/@marceloverfe/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/19895953/",
+      "provider": "pexels"
+    },
+    "g41": {
+      "title": "Tenis blancos de cuero",
+      "creator": "Ana Vieira",
+      "creator_url": "https://www.pexels.com/@ana-vieira-1110685065/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/21419626/",
+      "provider": "pexels"
+    },
+    "g42": {
+      "title": "Botines negros con hebilla",
+      "creator": "José Martin Segura Benites",
+      "creator_url": "https://www.pexels.com/@jose-martin-segura-benites-1422456152/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/26851199/",
+      "provider": "pexels"
+    },
+    "g43": {
+      "title": "Botines camel de tacón",
+      "creator": "José Martin Segura Benites",
+      "creator_url": "https://www.pexels.com/@jose-martin-segura-benites-1422456152/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/26851193/",
+      "provider": "pexels"
+    },
+    "g44": {
+      "title": "Bufanda tejida marrón",
+      "creator": "Engin Akyurt",
+      "creator_url": "https://www.pexels.com/@enginakyurt/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/3605077/",
+      "provider": "pexels"
+    },
+    "g45": {
+      "title": "Gorra negra",
+      "creator": "Nidhin S",
+      "creator_url": "https://www.pexels.com/@nidhin-s-2148118190/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/32028599/",
+      "provider": "pexels"
+    },
+    "g46": {
+      "title": "Bolso de mano rojo",
+      "creator": "Muneeb Malhotra",
+      "creator_url": "https://www.pexels.com/@dhanno/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/22434764/",
+      "provider": "pexels"
+    },
+    "g47": {
+      "title": "Bolso satchel beige",
+      "creator": "Muneeb Malhotra",
+      "creator_url": "https://www.pexels.com/@dhanno/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/22434782/",
+      "provider": "pexels"
     }
   },
   "bodies": {
     "b01": {
-      "title": "OIKN Deputi 202411749 (1)",
-      "creator": "M Iqbal Ramli",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:M_Iqbal_Ramli",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:OIKN_Deputi_202411749_(1).jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla XS",
+      "creator": "Andrea Musto",
+      "creator_url": "https://www.pexels.com/@andrea-musto-135941147/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/30381008/",
+      "provider": "pexels"
     },
     "b02": {
-      "title": "Ariana SAJNANI",
-      "creator": "Christophe DELORME",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Christophe_DELORME",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Ariana_SAJNANI.jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla M",
+      "creator": "MODEL Tulip",
+      "creator_url": "https://www.pexels.com/@modeltulip143/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/29651110/",
+      "provider": "pexels"
     },
     "b03": {
-      "title": "Blonde Girl Photographic Portrait (full length)",
-      "creator": "Photogman Shares",
-      "creator_url": "https://www.flickr.com/people/77737188@N03",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Blonde_Girl_Photographic_Portrait_(full_length).jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla S",
+      "creator": "Andrea Musto",
+      "creator_url": "https://www.pexels.com/@andrea-musto-135941147/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/30246250/",
+      "provider": "pexels"
     },
     "b04": {
-      "title": "Plus Size Model",
-      "creator": "Michael Oh",
-      "creator_url": "https://flickr.com/people/10845359@N02",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Plus_Size_Model.jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla L",
+      "creator": "RDNE Stock project",
+      "creator_url": "https://www.pexels.com/@rdne/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/7020946/",
+      "provider": "pexels"
     },
     "b05": {
-      "title": "Lucas Oliveira Miranda",
-      "creator": "Hagataeu",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Hagataeu",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Lucas_Oliveira_Miranda.jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla M",
+      "creator": "MART PRODUCTION",
+      "creator_url": "https://www.pexels.com/@mart-production/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/8217535/",
+      "provider": "pexels"
     },
     "b06": {
-      "title": "Miguel Ramirez Headshot",
-      "creator": "Migu3l Ramir3zz",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Migu3l_Ramir3zz",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Miguel_Ramirez_Headshot.jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla L",
+      "creator": "Moisés Sánchez",
+      "creator_url": "https://www.pexels.com/@moises-sanchez-1849845482/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/28494855/",
+      "provider": "pexels"
     },
     "b07": {
-      "title": "240710 FC 서울 vs 대전 (Peniel Mlapa)",
-      "creator": "Explicit",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Explicit",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:240710_FC_%EC%84%9C%EC%9A%B8_vs_%EB%8C%80%EC%A0%84_(Peniel_Mlapa).jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla M",
+      "creator": "VAZHNIK",
+      "creator_url": "https://www.pexels.com/@vazhnik/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/7561443/",
+      "provider": "pexels"
     },
     "b08": {
-      "title": "240929 FC 서울 vs 수원 (Lachlan Jackson)",
-      "creator": "Explicit",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Explicit",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:240929_FC_%EC%84%9C%EC%9A%B8_vs_%EC%88%98%EC%9B%90_(Lachlan_Jackson).jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla XL",
+      "creator": "Bruno Curly",
+      "creator_url": "https://www.pexels.com/@brunocurly/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/26125921/",
+      "provider": "pexels"
     },
     "b09": {
-      "title": "SuperbStella1",
-      "creator": "SuperbStella",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:SuperbStella",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:SuperbStella1.jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla XXL",
+      "creator": "Darina Belonogova",
+      "creator_url": "https://www.pexels.com/@darina-belonogova/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/9164745/",
+      "provider": "pexels"
     },
     "b10": {
-      "title": "Monsta Baby",
-      "creator": "Monstababy",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Monstababy",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Monsta_Baby.jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla 3XL",
+      "creator": "Jumos Imagery",
+      "creator_url": "https://www.pexels.com/@jumos-imagery-2155183483/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/34202462/",
+      "provider": "pexels"
     },
     "b11": {
-      "title": "DR.Andi Afdal,MBA, AAK-017",
-      "creator": "Yusgani",
-      "creator_url": "https://commons.wikimedia.org/wiki/User:Yusgani",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "source_url": "https://commons.wikimedia.org/wiki/File:DR.Andi_Afdal,MBA,_AAK-017.jpg",
-      "provider": "Wikimedia Commons"
+      "title": "Modelo de talla 4XL",
+      "creator": "Carmel Nsenga",
+      "creator_url": "https://www.pexels.com/@carmel-nsenga-735492/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/16962363/",
+      "provider": "pexels"
     },
     "b12": {
-      "title": "Happy Birthday to Me!",
-      "creator": "azizawubbles",
-      "creator_url": "https://www.flickr.com/photos/46471779@N04",
-      "license": "CC BY 2.0",
-      "license_url": "https://creativecommons.org/licenses/by/2.0/",
-      "source_url": "https://www.flickr.com/photos/46471779@N04/7796665752",
-      "provider": "Flickr (vía Openverse)"
+      "title": "Modelo de talla XL",
+      "creator": "Darina Belonogova",
+      "creator_url": "https://www.pexels.com/@darina-belonogova/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "source_url": "https://www.pexels.com/photo/9167337/",
+      "provider": "pexels"
     }
   }
 }
