@@ -41,6 +41,7 @@ ERROR_STATUS: dict[str, int] = {
 RETRYABLE: frozenset[str] = frozenset({"rate-limited", "provider-error", "timeout"})
 
 Category = Literal["top", "bottom", "dress", "outerwear", "footwear", "accessory"]
+PhotoType = Literal["flat-lay", "model"]
 
 
 class WorkerError(Exception):
@@ -68,6 +69,7 @@ class ManifestGarment(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=120)]
     color: Annotated[str, Field(max_length=40)]
     fit: Annotated[str, Field(max_length=400)]
+    photoType: PhotoType = "flat-lay"
 
 
 class Manifest(BaseModel):

@@ -1,0 +1,8 @@
+{
+  "contractVersion": "1",
+  "requestId": "req-on-model",
+  "garments": [
+    { "index": 0, "category": "bottom", "name": "Jean ancho claro", "color": "light blue", "fit": "regular fit", "photoType": "model" }
+  ],
+  "bodyBrief": "person as shown in the photo"
+}

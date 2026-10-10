@@ -102,6 +102,7 @@ async def generate(
             name=g.name,
             color=g.color,
             fit=g.fit,
+            photo_type=g.photoType,
         )
         for g in meta.garments
         if g.index < len(garment_images)
@@ -121,7 +122,7 @@ async def generate(
     return Response(
         content=result,
         media_type="image/png",
-        headers={"X-Engine": provider.name, "X-Duration-Ms": str(duration_ms), "X-Request-Id": meta.requestId},
+        headers={"X-Engine": getattr(provider, "last_used", None) or provider.name, "X-Duration-Ms": str(duration_ms), "X-Request-Id": meta.requestId},
     )
 
 

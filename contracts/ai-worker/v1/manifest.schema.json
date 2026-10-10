@@ -22,7 +22,11 @@
           "category": { "enum": ["top", "bottom", "dress", "outerwear", "footwear", "accessory"] },
           "name": { "type": "string", "minLength": 1, "maxLength": 120 },
           "color": { "type": "string", "maxLength": 40 },
-          "fit": { "type": "string", "maxLength": 400 }
+          "fit": { "type": "string", "maxLength": 400 },
+          "photoType": {
+            "description": "Cómo está fotografiada la prenda: sola (flat-lay) o puesta en una persona (model). Opcional: por defecto flat-lay.",
+            "enum": ["flat-lay", "model"]
+          }
         }
       }
     },

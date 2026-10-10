@@ -24,6 +24,8 @@ class GarmentInput:
     name: str = ""
     color: str = ""
     fit: str = "regular fit"
+    # Cómo está fotografiada la prenda: sola ("flat-lay") o puesta en una persona ("model").
+    photo_type: str = "flat-lay"
 
 
 @dataclass(frozen=True)

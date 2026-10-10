@@ -11,9 +11,9 @@ from collections.abc import Callable
 from ..config import Settings
 from ..contract import WorkerError
 from .base import Credentials, TryOnProvider
+from .hf_space import SPACES, HfSpaceProvider, chain
 from .legacy import FalCatVTONProvider, ReplicateProvider
 from .mock import MockProvider
-from .pending import PendingProvider
 
 Factory = Callable[[Credentials, Settings], TryOnProvider]
 
@@ -40,9 +40,9 @@ def default_registry() -> ProviderRegistry:
     r = ProviderRegistry()
     r.register("mock", lambda _c, s: MockProvider(s.mock_delay_seconds))
     # Mismos nombres que AiProvider en packages/shared-types.
-    r.register("fashn", lambda c, _s: PendingProvider("fashn", c))
-    r.register("fal-fashn", lambda c, _s: PendingProvider("fal-fashn", c))
-    r.register("gemini", lambda c, _s: PendingProvider("gemini", c))
+    r.register("hf-chain", lambda c, s: chain(c.api_key or s.hf_token))
+    for spec in SPACES.values():
+        r.register(spec.name, lambda c, s, spec=spec: HfSpaceProvider(spec, c.api_key or s.hf_token))
     r.register(
         "fal-catvton",
         lambda c, s: FalCatVTONProvider(c.api_key or s.fal_key, c.model or s.fal_model),

@@ -21,7 +21,7 @@ def test_health_lists_providers_and_contract(client):
     body = client.get("/health").json()
     assert body["status"] == "ok"
     assert body["contractVersion"] == "1"
-    assert {"mock", "fashn", "fal-fashn", "gemini"} <= set(body["providers"])
+    assert {"mock", "hf-chain", "hf-fashn", "hf-leffa", "hf-idm"} <= set(body["providers"])
 
 
 def test_generate_single_garment_returns_png(client):
@@ -69,7 +69,7 @@ def test_missing_multipart_field_uses_contract_shape(client):
 
 
 def test_provider_is_chosen_per_request(client):
-    res = client.post("/v1/generate", headers={"X-AI-Provider": "fashn"}, **generate_form("top"))
+    res = client.post("/v1/generate", headers={"X-AI-Provider": "fal-catvton"}, **generate_form("top"))
     assert res.status_code == 412
     assert res.json()["code"] == "not-configured"
 
@@ -90,9 +90,9 @@ def test_token_is_required_when_configured(make_client):
 
 def test_providers_test_endpoint(client):
     assert client.post("/v1/providers/test").json()["ok"] is True
-    res = client.post("/v1/providers/test", headers={"X-AI-Provider": "gemini"})
+    res = client.post("/v1/providers/test", headers={"X-AI-Provider": "fal-catvton"})
     assert res.status_code == 412
-    assert res.json()["detail"] == "falta la clave de gemini"
+    assert res.json()["code"] == "not-configured"
 
 
 def test_mock_output_has_no_exif():
