@@ -121,7 +121,7 @@ def classify(exc: Exception) -> WorkerError:
     if isinstance(exc, WorkerError):
         return exc
     text = f"{type(exc).__name__} {exc}".lower()
-    if any(k in text for k in ("quota", "zerogpu", "rate limit", "too many requests", "429")):
+    if any(k in text for k in ("quota", "zerogpu", "runs limit", "rate limit", "too many requests", "429")):
         return WorkerError("rate-limited", "cuota de GPU agotada en Hugging Face")
     if any(k in text for k in ("timeout", "timed out")):
         return WorkerError("timeout", "el motor tardó demasiado")
@@ -180,7 +180,11 @@ class HfSpaceProvider(TryOnProvider):
 
 
 class ChainProvider(TryOnProvider):
-    """Prueba los motores en orden; solo salta al siguiente ante fallos reintentables."""
+    """
+    Prueba los motores en orden y salta al siguiente cuando uno está caído o tarda demasiado.
+    La cuota de GPU es de la cuenta (o de la IP), no de cada Space: si un motor responde que
+    se agotó, los demás también fallarían, así que se informa de inmediato en vez de esperar.
+    """
 
     name = "hf-chain"
     max_garments = 1
@@ -204,7 +208,7 @@ class ChainProvider(TryOnProvider):
                 self.last_used = provider.name
                 return image
             except WorkerError as err:
-                if not err.retryable:
+                if not err.retryable or err.code == "rate-limited":
                     raise
                 last = err
         raise last or WorkerError("unsupported", f"categoría no soportada: {category}")

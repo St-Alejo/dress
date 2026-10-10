@@ -149,7 +149,8 @@
       "title": "No pudimos generar la imagen ahora",
       "body": "El servicio está lento o no disponible. Mientras tanto, puedes ver la prenda en un cuerpo similar o probártela en vivo.",
       "similar": "Ver en cuerpo similar",
-      "live": "Probar en vivo"
+      "live": "Probar en vivo",
+      "quota": "El motor gratuito agotó su cupo de hoy. Vuelve a intentarlo más tarde; mientras tanto puedes ver la prenda sobre un modelo."
     },
     "save": "Guardar en mi cuenta",
     "saved": "Guardado",

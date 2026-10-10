@@ -88,6 +88,7 @@ def test_idm_only_supports_upper_body():
     ("message", "code"),
     [
         ("You have exceeded your GPU quota (60s requested vs. 0s left)", "rate-limited"),
+        ("You have exceeded your ZeroGPU runs limit. Authenticate with a Hugging Face token", "rate-limited"),
         ("The read operation timed out", "timeout"),
         ("401 Client Error: Unauthorized", "not-configured"),
         ("something else broke", "provider-error"),
@@ -99,13 +100,22 @@ def test_space_failures_become_contract_codes(message, code):
     assert message not in error.detail
 
 
-def test_chain_falls_back_when_quota_is_exhausted():
+def test_chain_falls_back_when_an_engine_is_down():
     clients: list[FakeClient] = []
-    quota = {"fashn-ai/fashn-vton-1.5": RuntimeError("ZeroGPU quota exceeded")}
-    provider = chain("hf_x", factory(clients, quota))
+    down = {"fashn-ai/fashn-vton-1.5": RuntimeError("Space is paused")}
+    provider = chain("hf_x", factory(clients, down))
     assert asyncio.run(provider.generate(request("bottom")))
     assert [c.space for c in clients] == ["fashn-ai/fashn-vton-1.5", "franciszzj/Leffa"]
     assert provider.last_used == "hf-leffa"
+
+
+def test_chain_stops_at_once_when_the_gpu_quota_is_spent():
+    clients: list[FakeClient] = []
+    quota = {"fashn-ai/fashn-vton-1.5": RuntimeError("You have exceeded your ZeroGPU runs limit")}
+    with pytest.raises(WorkerError) as err:
+        asyncio.run(chain(None, factory(clients, quota)).generate(request("bottom")))
+    assert err.value.code == "rate-limited"
+    assert [c.space for c in clients] == ["fashn-ai/fashn-vton-1.5"]  # la cuota es compartida: no se insiste
 
 
 def test_chain_does_not_retry_on_bad_input():

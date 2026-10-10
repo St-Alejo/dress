@@ -149,7 +149,8 @@
       "title": "We couldn't generate the image right now",
       "body": "The service is slow or unavailable. Meanwhile, you can see the garment on a similar body or try it live.",
       "similar": "See on similar body",
-      "live": "Try it live"
+      "live": "Try it live",
+      "quota": "The free engine has used up today's quota. Try again later; meanwhile you can see the garment on a model."
     },
     "save": "Save to my account",
     "saved": "Saved",

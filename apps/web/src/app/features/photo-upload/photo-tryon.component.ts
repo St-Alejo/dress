@@ -74,7 +74,7 @@ const EXPECTED_SECONDS = 35;
         } @else if (gen.status === 'fallback') {
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.fallback.title' | transloco }}</p>
-            <p class="text-sm text-ink-2">{{ 'photo.fallback.body' | transloco }}</p>
+            <p class="text-sm text-ink-2">{{ (gen.fallbackReason === 'rate-limited' ? 'photo.fallback.quota' : 'photo.fallback.body') | transloco }}</p>
             <div class="flex flex-wrap gap-2">
               <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
               @if (liveAvailable()) {
