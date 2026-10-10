@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import { PHOTO_TTL_HOURS, type TryOnMode } from '@vestirse/shared-types';
 import type { Requester } from '../../../common/requester';
 import { ObjectStorage } from '../../../common/storage';
+import { AiWorkerClient } from '../../ai-settings/ai-settings.module';
 import { CatalogRepository } from '../../catalog/application/catalog.repository';
 import { MetricsService } from '../../metrics/metrics.module';
 import { DomainError, TryOnSession } from '../domain/tryon-session.entity';
@@ -43,6 +44,7 @@ export class TryOnService {
     private readonly catalog: CatalogRepository,
     private readonly storage: ObjectStorage,
     private readonly metrics: MetricsService,
+    private readonly worker: AiWorkerClient,
     @InjectQueue(GENERATION_QUEUE) private readonly queue: Queue<GenerationJob>,
     config: ConfigService,
   ) {
@@ -99,7 +101,9 @@ export class TryOnService {
     this.domain(() => session.attachPhoto(new Date(), this.ttlHours));
     await this.storage.put(session.photoKey!, clean, 'image/jpeg');
     await this.sessions.save(session);
-    return session.toDto();
+    // Aviso de encuadre (cuerpo entero, una persona, de frente, buena luz). Informa, no rechaza.
+    const photoCheck = await this.worker.inspectPhoto(clean);
+    return { ...session.toDto(), ...(photoCheck.checked ? { photoCheck } : {}) };
   }
 
   async requestGeneration(id: string, requester: Requester) {

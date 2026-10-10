@@ -1,4 +1,4 @@
-import type { Brand, GarmentCategory, GarmentItem, SimilarBodyModel } from '@vestirse/shared-types';
+import type { Brand, GarmentCategory, GarmentItem, GarmentPhotoType, SimilarBodyModel } from '@vestirse/shared-types';
 
 export interface GarmentFilter {
   category?: GarmentCategory;
@@ -14,6 +14,10 @@ export abstract class CatalogRepository {
   abstract listBrands(): Promise<Brand[]>;
   /** Modelos de cuerpo; si se pasa `garmentId`, `previewImages` trae solo esa prenda. */
   abstract listBodyModels(garmentId?: string): Promise<SimilarBodyModel[]>;
-  /** `photo` = foto real de producto, preferida para la IA cuando existe. */
-  abstract garmentImageKeys(id: string): Promise<{ flat: string; front: string; photo?: string } | null>;
+  /** Foto real de producto y cómo está tomada: lo que necesita el motor de prueba. */
+  abstract garmentPhoto(id: string): Promise<{ key: string; photoType: GarmentPhotoType } | null>;
+  /** Clave de la foto de un modelo de cuerpo. */
+  abstract bodyModelPhotoKey(id: string): Promise<string | null>;
+  abstract findPreviewKey(bodyModelId: string, garmentId: string): Promise<string | null>;
+  abstract savePreview(bodyModelId: string, garmentId: string, imageKey: string): Promise<void>;
 }

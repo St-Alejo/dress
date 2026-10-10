@@ -2,8 +2,10 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import type {
   BodyMeasurements,
   FitRecommendation,
+  GarmentCategory,
   GarmentItem,
   GenerationStatus,
+  PhotoCheck,
   PoseRatios,
   SimilarBodyModel,
   TryOnMode,
@@ -11,6 +13,7 @@ import type {
 } from '@vestirse/shared-types';
 import { ApiService } from './api.service';
 import { GenerationSocketService } from './generation-socket.service';
+import { AppError } from './http/app-error';
 import { backoffDelay, sleep } from './http/backoff';
 import { localPrefs, tabPrefs } from './local-prefs';
 import { NoticeStore } from './notice.store';
@@ -24,6 +27,7 @@ interface GenerationState {
 
 const REMEMBER_KEY = 'measurements';
 const SESSIONS_KEY = 'tryon-sessions';
+const WEARABLE: ReadonlySet<GarmentCategory> = new Set(['top', 'bottom', 'dress', 'outerwear']);
 /** Estados en los que la generación ya no avanza sola. */
 export const SETTLED: ReadonlySet<GenerationStatus> = new Set(['done', 'fallback', 'failed', 'idle']);
 /** Si ni el socket ni el sondeo traen novedades en este tiempo, se deja de esperar. */
@@ -59,18 +63,23 @@ export class TryOnSessionStore {
   readonly error = signal<string | null>(null);
 
   readonly selectedBody = computed(() => this.bodyModels().find((b) => b.id === this.selectedBodyId()) ?? null);
-  readonly previewImage = computed(() => {
+  /** Prueba real (generada por IA) de la prenda sobre el modelo elegido, si ya existe. */
+  readonly modelPreview = computed(() => {
     const g = this.garment();
-    const body = this.selectedBody();
-    if (!g) return null;
-    return (body && body.previewImages[g.id]) || g.images.photo || g.images.front;
+    return (g && this.selectedBody()?.previewImages[g.id]) || null;
   });
+  readonly previewImage = computed(() => this.modelPreview() ?? this.garment()?.images.photo ?? null);
+  /** Calzado y accesorios no se pueden poner sobre una persona con los motores actuales. */
+  readonly wearable = computed(() => WEARABLE.has(this.garment()?.category ?? 'accessory'));
+  readonly modelPreviewState = signal<'idle' | 'generating' | 'busy' | 'failed'>('idle');
   readonly chosenSize = computed(() => {
     const f = this.fit();
     return f ? (f.userOverride ?? f.recommendedSize) : null;
   });
   readonly resultImageUrl = computed(() => this.session()?.resultImageUrl ?? null);
   readonly hasPhoto = computed(() => !!this.session()?.uploadedPhotoUrl);
+  /** Aviso de encuadre de la última foto subida (si se pudo revisar). */
+  readonly photoCheck = signal<PhotoCheck | null>(null);
 
   private stopWatching?: () => void;
   /** Prenda → sesión. Vive en sessionStorage: recargar la página no pierde la prueba en curso. */
@@ -82,6 +91,8 @@ export class TryOnSessionStore {
     this.fit.set(null);
     this.session.set(null);
     this.mode.set('similar-model');
+    this.modelPreviewState.set('idle');
+    this.photoCheck.set(null);
     this.generation.set({ status: 'idle', progress: 0 });
     const [garment, bodies] = await Promise.all([this.api.garment(id), this.api.bodyModels(id)]);
     this.garment.set(garment);
@@ -106,7 +117,24 @@ export class TryOnSessionStore {
 
   selectBody(id: string) {
     this.selectedBodyId.set(id);
+    this.modelPreviewState.set('idle');
     localPrefs.write('bodyModel', id);
+  }
+
+  /** Pide al servidor la prueba de la prenda sobre el modelo elegido. Se genera una vez y queda para todos. */
+  async generateModelPreview() {
+    const g = this.garment();
+    const body = this.selectedBody();
+    if (!g || !body || this.modelPreviewState() === 'generating') return;
+    this.modelPreviewState.set('generating');
+    try {
+      const { imageUrl } = await this.api.modelPreview(body.id, g.id);
+      this.bodyModels.update((all) => all.map((b) => (b.id === body.id ? { ...b, previewImages: { ...b.previewImages, [g.id]: imageUrl } } : b)));
+      this.modelPreviewState.set('idle');
+    } catch (err) {
+      // 503 = el motor gratuito está sin cuota o caído: se puede reintentar más tarde.
+      this.modelPreviewState.set(AppError.from(err).status === 503 ? 'busy' : 'failed');
+    }
   }
 
   async setMode(mode: TryOnMode) {
@@ -183,7 +211,9 @@ export class TryOnSessionStore {
 
   async uploadPhoto(photo: Blob) {
     const s = await this.ensureSession();
-    this.adoptSession(await this.api.uploadPhoto(s.id, photo));
+    const updated = await this.api.uploadPhoto(s.id, photo);
+    this.photoCheck.set(updated.photoCheck ?? null);
+    this.adoptSession(updated);
   }
 
   async generate() {

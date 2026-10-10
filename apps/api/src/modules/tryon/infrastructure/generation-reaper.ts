@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { MetricsService } from '../../metrics/metrics.module';
 import { TryOnSessionRepository } from '../application/tryon-session.repository';
+import { DEFAULT_GENERATION_TIMEOUT_SECONDS } from './ai-worker.adapter';
 import { TryOnGateway } from './tryon.gateway';
 
 /**
@@ -22,7 +23,7 @@ export class GenerationReaper {
     config: ConfigService,
   ) {
     // Por defecto: el timeout de generación más un margen holgado para reintentos y cola.
-    const timeoutS = Number(config.get('GENERATION_TIMEOUT_SECONDS', 90));
+    const timeoutS = Number(config.get('GENERATION_TIMEOUT_SECONDS', DEFAULT_GENERATION_TIMEOUT_SECONDS));
     this.maxMs = Number(config.get('GENERATION_STUCK_SECONDS', timeoutS * 2 + 120)) * 1000;
   }
 

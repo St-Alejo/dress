@@ -59,8 +59,8 @@ export class MediaController {
     res.setHeader('Content-Type', obj.contentType ?? 'application/octet-stream');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    // Los SVG del catálogo no deben ejecutar scripts aunque se abran directo.
-    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'");
+    // Solo se sirven imágenes: nada de lo que hay aquí debe poder ejecutar scripts.
+    res.setHeader('Content-Security-Policy', "default-src 'none'");
     obj.body.pipe(res);
   }
 }

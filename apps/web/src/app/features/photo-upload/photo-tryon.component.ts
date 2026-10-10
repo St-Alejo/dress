@@ -17,13 +17,14 @@ import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
 import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-group.component';
+import { canOverlay } from '../live-overlay/overlay-geometry';
 import { PrivacyChecklistComponent } from './privacy-checklist.component';
 import { canvasToJpeg, detectFace, loadBitmap, renderPrepared, type FaceBox, type FaceTreatment } from './photo-prep';
 
 type Step = 'intro' | 'checklist' | 'prepare' | 'uploading' | 'ready';
 
 /** Tiempo típico de generación (s), solo para animar el progreso percibido con honestidad. */
-const EXPECTED_SECONDS = 20;
+const EXPECTED_SECONDS = 35;
 
 @Component({
   selector: 'app-photo-tryon',
@@ -36,7 +37,16 @@ const EXPECTED_SECONDS = 20;
       <div class="space-y-4">
         @if (gen.status === 'done' && store.resultImageUrl()) {
           <figure class="card overflow-hidden">
-            <img [src]="store.resultImageUrl()" [alt]="'photo.resultAlt' | transloco" class="w-full" />
+            <div class="grid grid-cols-2 gap-px bg-line">
+              <div class="bg-paper">
+                <p class="label-xs px-3 py-2">{{ 'photo.before' | transloco }}</p>
+                <img [src]="store.session()?.uploadedPhotoUrl" [alt]="'photo.before' | transloco" class="aspect-[2/3] w-full object-contain bg-surface-2" />
+              </div>
+              <div class="bg-paper">
+                <p class="label-xs px-3 py-2">{{ 'photo.after' | transloco }}</p>
+                <img [src]="store.resultImageUrl()" [alt]="'photo.resultAlt' | transloco" class="aspect-[2/3] w-full object-contain bg-surface-2" />
+              </div>
+            </div>
             <figcaption class="p-4 text-sm text-ink-2 space-y-1">
               <p>{{ 'photo.resultNote' | transloco }}</p>
               @for (l of store.garment()?.knownLimitations ?? []; track l) {
@@ -67,16 +77,30 @@ const EXPECTED_SECONDS = 20;
             <p class="text-sm text-ink-2">{{ 'photo.fallback.body' | transloco }}</p>
             <div class="flex flex-wrap gap-2">
               <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
-              <button type="button" class="btn" (click)="fallbackTo.emit('live-overlay')">{{ 'photo.fallback.live' | transloco }}</button>
+              @if (liveAvailable()) {
+                <button type="button" class="btn" (click)="fallbackTo.emit('live-overlay')">{{ 'photo.fallback.live' | transloco }}</button>
+              }
               <button type="button" class="btn btn-ghost" (click)="generate()">{{ 'common.retry' | transloco }}</button>
             </div>
           </div>
         } @else {
+          @let check = store.photoCheck();
           <div class="card p-4 flex gap-4 items-center">
             <img [src]="store.session()?.uploadedPhotoUrl" alt="" class="h-28 w-20 object-cover bg-surface-2" />
             <div class="space-y-2">
-              <p class="text-sm">{{ 'photo.readyToGenerate' | transloco }}</p>
-              <button type="button" class="btn btn-primary" (click)="generate()">{{ 'photo.generate' | transloco }}</button>
+              @if (check && !check.ok && check.reason) {
+                <div role="status">
+                  <p class="text-sm font-medium">{{ 'photo.check.title' | transloco }}</p>
+                  <p class="text-sm text-ink-2">{{ 'photo.check.' + check.reason | transloco }}</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" class="btn btn-primary" (click)="step.set('prepare')">{{ 'photo.check.another' | transloco }}</button>
+                  <button type="button" class="btn" (click)="generate()">{{ 'photo.check.anyway' | transloco }}</button>
+                </div>
+              } @else {
+                <p class="text-sm">{{ 'photo.readyToGenerate' | transloco }}</p>
+                <button type="button" class="btn btn-primary" (click)="generate()">{{ 'photo.generate' | transloco }}</button>
+              }
             </div>
           </div>
         }
@@ -160,8 +184,13 @@ export class PhotoTryOnComponent {
 
   readonly step = signal<Step>('intro');
   readonly ttlHours = signal(24);
-  readonly treatments: FaceTreatment[] = ['crop', 'blur', 'keep'];
-  readonly treatment = signal<FaceTreatment>('crop');
+  /** La foto entera va primero y es el valor por defecto: sin la cabeza, el motor de prueba deforma el resultado. */
+  readonly liveAvailable = computed(() => {
+    const g = this.store.garment();
+    return !!g && canOverlay(g);
+  });
+  readonly treatments: FaceTreatment[] = ['keep', 'blur', 'crop'];
+  readonly treatment = signal<FaceTreatment>('keep');
   readonly face = signal<FaceBox | null>(null);
   readonly manualCrop = signal(0);
   readonly hasImage = signal(false);
@@ -227,7 +256,7 @@ export class PhotoTryOnComponent {
     }
     const face = await detectFace(this.bitmap);
     this.face.set(face);
-    this.treatment.set(face ? 'crop' : 'keep');
+    this.treatment.set('keep');
     this.manualCrop.set(0);
     this.hasImage.set(true);
   }

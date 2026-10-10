@@ -13,6 +13,9 @@ import {
 import { workerHeaders } from '../../ai-settings/ai-settings.module';
 import { GarmentTransferPort, TransferUnavailableError, type TransferRequest, type TransferResult } from '../application/garment-transfer.port';
 
+/** Los Spaces gratuitos hacen cola de GPU y la cadena puede probar varios motores: 90 s no alcanzaban. */
+export const DEFAULT_GENERATION_TIMEOUT_SECONDS = 240;
+
 /** Respuesta de error del worker ya interpretada según el contrato v1. */
 export class WorkerCallError extends Error {
   constructor(
@@ -36,14 +39,21 @@ export function buildManifest(req: TransferRequest): WorkerManifest {
   return {
     contractVersion: WORKER_CONTRACT_VERSION,
     requestId: req.requestId,
-    garments: req.garments.map(({ category, name, color, fit }, index) => ({ index, category, name, color, fit })),
+    garments: req.garments.map(({ category, name, color, fit, photoType }, index) => ({
+      index,
+      category,
+      name,
+      color,
+      fit,
+      ...(photoType ? { photoType } : {}),
+    })),
     bodyBrief: req.bodyBrief,
   };
 }
 
 /**
  * Adapter HTTP al microservicio Python, con un Circuit Breaker POR PROVEEDOR:
- * si FASHN se cae, Gemini (o el mock) sigue funcionando. Si el proveedor tarda o
+ * si un motor se cae, los demás (o el mock) siguen funcionando. Si el proveedor tarda o
  * falla repetidamente, se abre su circuito y se responde de inmediato con
  * fallback en vez de dejar a la persona esperando.
  */
@@ -59,7 +69,7 @@ export class AiWorkerAdapter extends GarmentTransferPort {
     super();
     this.baseUrl = config.getOrThrow<string>('AI_WORKER_URL');
     this.token = config.get<string>('WORKER_TOKEN') || undefined;
-    this.timeoutMs = Number(config.get('GENERATION_TIMEOUT_SECONDS', 90)) * 1000;
+    this.timeoutMs = Number(config.get('GENERATION_TIMEOUT_SECONDS', DEFAULT_GENERATION_TIMEOUT_SECONDS)) * 1000;
   }
 
   async generate(req: TransferRequest): Promise<TransferResult> {

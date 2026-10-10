@@ -11,7 +11,7 @@ import { AdminController } from './modules/admin/admin.module';
 import { AuthController } from './modules/auth/auth.module';
 import { coverageViolations } from './modules/catalog/domain/body-coverage';
 import { CatalogController, MediaController } from './modules/catalog/interface/catalog.controller';
-import { BodyGeometry, REFERENCE_SHAPE } from './modules/catalog/infrastructure/illustration/body-geometry';
+import { BodyGeometry, REFERENCE_SHAPE } from './modules/catalog/domain/body-geometry';
 import { FitController } from './modules/fit/fit.module';
 import { MetricsController } from './modules/metrics/metrics.module';
 import { PrivacyController } from './modules/privacy/privacy.module';

@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Brand, FitIntent, GarmentDims, GarmentItem, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
+import type { Brand, FitIntent, GarmentDims, GarmentItem, GarmentPhotoType, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
 import { mediaUrl } from '../../../common/mappers';
 import { PrismaService } from '../../../common/prisma.service';
 import type { Prisma } from '../../../generated/prisma/client';
 import { CatalogRepository, type GarmentFilter } from '../application/catalog.repository';
-import { VIEW_H, VIEW_W } from './illustration/body-geometry';
-import { overlayAnchors } from './illustration/renderer';
 
 const garmentInclude = {
   brand: true,
@@ -26,14 +24,11 @@ export function toGarmentItem(row: GarmentRow): GarmentItem {
     color: row.color,
     priceCents: row.priceCents,
     images: {
-      front: mediaUrl(row.imageFrontKey),
-      flat: mediaUrl(row.imageFlatKey),
-      overlay: mediaUrl(row.imageOverlayKey),
-      ...(row.photoKey ? { photo: mediaUrl(row.photoKey) } : {}),
+      photo: mediaUrl(row.photoKey),
+      ...(row.cutoutKey ? { cutout: mediaUrl(row.cutoutKey) } : {}),
     },
+    photoType: row.photoType as GarmentPhotoType,
     fitIntent: (row.fitIntent as FitIntent | null) ?? undefined,
-    overlayAnchors: overlayAnchors(),
-    overlaySize: [VIEW_W, VIEW_H],
     fabricNotes: row.fabricNotes ?? undefined,
     stretch: row.stretch,
     knownLimitations: row.knownLimitations,
@@ -100,14 +95,31 @@ export class PrismaCatalogRepository extends CatalogRepository {
       bodyTypeTag: b.bodyTypeTag,
       typicalSize: b.typicalSize as LetterSize,
       skinTone: b.skinTone,
-      avatarUrl: mediaUrl(b.avatarKey),
-      ...(b.photoKey ? { photoUrl: mediaUrl(b.photoKey) } : {}),
+      photoUrl: mediaUrl(b.photoKey),
       previewImages: Object.fromEntries(b.previews.map((p) => [p.garmentId, mediaUrl(p.imageKey)])),
     }));
   }
 
-  async garmentImageKeys(id: string) {
-    const row = await this.prisma.garment.findUnique({ where: { id }, select: { imageFlatKey: true, imageFrontKey: true, photoKey: true } });
-    return row ? { flat: row.imageFlatKey, front: row.imageFrontKey, photo: row.photoKey ?? undefined } : null;
+  async garmentPhoto(id: string) {
+    const row = await this.prisma.garment.findUnique({ where: { id }, select: { photoKey: true, photoType: true } });
+    return row ? { key: row.photoKey, photoType: row.photoType as GarmentPhotoType } : null;
+  }
+
+  async bodyModelPhotoKey(id: string) {
+    const row = await this.prisma.bodyModel.findUnique({ where: { id }, select: { photoKey: true } });
+    return row?.photoKey ?? null;
+  }
+
+  async findPreviewKey(bodyModelId: string, garmentId: string) {
+    const row = await this.prisma.bodyModelPreview.findUnique({ where: { bodyModelId_garmentId: { bodyModelId, garmentId } } });
+    return row?.imageKey ?? null;
+  }
+
+  async savePreview(bodyModelId: string, garmentId: string, imageKey: string) {
+    await this.prisma.bodyModelPreview.upsert({
+      where: { bodyModelId_garmentId: { bodyModelId, garmentId } },
+      create: { bodyModelId, garmentId, imageKey },
+      update: { imageKey },
+    });
   }
 }

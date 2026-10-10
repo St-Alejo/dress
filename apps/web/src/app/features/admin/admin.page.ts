@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import type { Brand, GarmentCategory, GarmentItem, TryOnMode } from '@vestirse/shared-types';
+import type { Brand, GarmentCategory, GarmentItem, GarmentPhotoType, GarmentSuggestion, TryOnMode } from '@vestirse/shared-types';
 import { ApiService, type AdminBodyModel, type AdminGarment, type AdminMetrics } from '../../core/api.service';
 import { AppError } from '../../core/http/app-error';
 import { NoticeStore } from '../../core/notice.store';
@@ -89,8 +89,15 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
               <select name="style" [(ngModel)]="draft.style">@for (s of styles; track s) {<option [value]="s">{{ s }}</option>}</select>
             </label>
             <label class="field">{{ 'admin.color' | transloco }}<input type="color" name="color" [(ngModel)]="draft.color" /></label>
-            <label class="field">{{ 'admin.pattern' | transloco }}
-              <select name="pattern" [(ngModel)]="draft.pattern">@for (p of ['solid', 'stripes', 'dots', 'check']; track p) {<option [value]="p">{{ p }}</option>}</select>
+            <label class="field sm:col-span-2">{{ 'admin.photo' | transloco }}
+              <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required (change)="onGarmentPhoto($event)" />
+              @if (suggested()) {<span class="text-xs text-muted">{{ 'admin.suggested' | transloco }}</span>}
+            </label>
+            <label class="field">{{ 'admin.photoType' | transloco }}
+              <select name="photoType" [(ngModel)]="draft.photoType">
+                <option value="flat-lay">{{ 'admin.photoTypeFlat' | transloco }}</option>
+                <option value="model">{{ 'admin.photoTypeModel' | transloco }}</option>
+              </select>
             </label>
             <label class="field">{{ 'admin.price' | transloco }}<input type="number" name="price" min="0" required [(ngModel)]="draft.priceCents" /></label>
             <label class="field">{{ 'admin.stretch' | transloco }}
@@ -102,7 +109,7 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
           <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @for (g of garments(); track g.id) {
               <li class="card p-3 flex gap-3" [class.opacity-60]="!g.active">
-                <img [src]="g.images.photo ?? g.images.flat" alt="" class="h-20 w-16 bg-surface-2" [class.object-cover]="!!g.images.photo" [class.object-contain]="!g.images.photo" />
+                <img [src]="g.images.photo" alt="" class="h-20 w-16 bg-surface-2 object-cover" />
                 <div class="min-w-0 flex-1">
                   <p class="font-medium truncate">{{ g.name }}</p>
                   <p class="text-xs text-muted">{{ g.brandName }} · {{ g.priceCents | price }} · {{ g.sizeChart.length }} {{ 'admin.sizes' | transloco }}</p>
@@ -125,14 +132,15 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
             <label class="field">{{ 'fit.hip' | transloco }}<input type="number" name="hip" [(ngModel)]="body.hipCm" /></label>
             <label class="field">{{ 'admin.shoulders' | transloco }}<input type="number" name="sh" [(ngModel)]="body.shoulderCm" /></label>
             <label class="field">{{ 'admin.skin' | transloco }}<input type="color" name="skin" [(ngModel)]="body.skinTone" /></label>
-            <label class="field">{{ 'admin.hair' | transloco }}<select name="hair" [(ngModel)]="body.hair">@for (h of ['short', 'long', 'bun', 'curly', 'none']; track h) {<option>{{ h }}</option>}</select></label>
-            <label class="field">{{ 'admin.hairColor' | transloco }}<input type="color" name="hairColor" [(ngModel)]="body.hairColor" /></label>
+            <label class="field sm:col-span-2">{{ 'admin.bodyPhoto' | transloco }}
+              <input type="file" name="bodyPhoto" accept="image/jpeg,image/png,image/webp" required (change)="bodyPhoto = fileOf($event)" />
+            </label>
             <button type="submit" class="btn btn-primary self-end" [disabled]="busy()">{{ 'admin.create' | transloco }}</button>
           </form>
           <ul class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             @for (b of bodies(); track b.id) {
               <li class="card p-2 text-center text-xs">
-                <img [src]="'/api/media/' + (b.photoKey ?? b.avatarKey)" alt="" class="h-28 w-full" [class.object-cover]="!!b.photoKey" [class.object-contain]="!b.photoKey" />
+                <img [src]="'/api/media/' + b.photoKey" alt="" class="h-28 w-full object-cover" />
                 <p class="mt-1">{{ 'body.tag.' + b.bodyTypeTag | transloco }}</p>
                 <p class="text-muted">{{ b.typicalSize }} · {{ b.heightMin }}–{{ b.heightMax }}</p>
                 <button type="button" class="mt-1 underline" (click)="deleteBody(b)">{{ 'admin.delete' | transloco }}</button>
@@ -167,8 +175,35 @@ export class AdminPage {
   readonly busy = signal(false);
   readonly message = signal<string | null>(null);
 
-  draft = { name: '', brandId: '', style: 'tshirt', color: '#3f5f86', pattern: 'solid', priceCents: 2999, stretch: 'low' as GarmentItem['stretch'] };
-  body = { bodyTypeTag: '', typicalSize: 'M', heightMin: 165, heightMax: 175, chestCm: 98, waistCm: 82, hipCm: 102, shoulderCm: 43, skinTone: '#c99a74', hair: 'short', hairColor: '#2b1b12' };
+  draft = { name: '', brandId: '', style: 'tshirt', color: '#3f5f86', photoType: 'flat-lay' as GarmentPhotoType, priceCents: 2999, stretch: 'low' as GarmentItem['stretch'] };
+  body = { bodyTypeTag: '', typicalSize: 'M', heightMin: 165, heightMax: 175, chestCm: 98, waistCm: 82, hipCm: 102, shoulderCm: 43, skinTone: '#c99a74' };
+  /** La foto es obligatoria: la tienda no tiene imagen de respaldo. */
+  garmentPhoto: File | null = null;
+  bodyPhoto: File | null = null;
+
+  /** true = la IA rellenó campos del formulario a partir de la foto; hay que revisarlos. */
+  readonly suggested = signal(false);
+
+  /** Al elegir la foto se piden sugerencias de etiquetado. Si no llegan, el formulario queda como estaba. */
+  async onGarmentPhoto(ev: Event) {
+    this.garmentPhoto = this.fileOf(ev);
+    this.suggested.set(false);
+    if (!this.garmentPhoto) return;
+    const s = await this.api.adminDescribeGarment(this.garmentPhoto).catch(() => ({}) as GarmentSuggestion);
+    if (!s.style && !s.color && !s.photoType && !s.name) return;
+    this.draft = {
+      ...this.draft,
+      style: s.style ?? this.draft.style,
+      color: s.color ?? this.draft.color,
+      photoType: s.photoType ?? this.draft.photoType,
+      name: this.draft.name || s.name || '',
+    };
+    this.suggested.set(true);
+  }
+
+  fileOf(ev: Event): File | null {
+    return (ev.target as HTMLInputElement).files?.[0] ?? null;
+  }
 
   private readonly modeTotal = computed(() => {
     const d = this.metrics()?.modeDistribution;
@@ -213,7 +248,9 @@ export class AdminPage {
     const category = STYLE_CATEGORY[this.draft.style];
     // Tabla estándar por pecho para prendas superiores; genérica para el resto (se puede editar luego vía API).
     const sizeChart = LETTERS.map((size) => (category === 'top' || category === 'outerwear' || category === 'dress' ? { size, chest: STANDARD_CHEST[size] } : { size }));
-    await this.run(() => this.api.adminCreateGarment({ ...this.draft, priceCents: Number(this.draft.priceCents), category, sizeChart }), 'admin.created');
+    const photo = this.garmentPhoto;
+    if (!photo) return this.message.set(this.transloco.translate('admin.photoRequired'));
+    await this.run(() => this.api.adminCreateGarment({ ...this.draft, priceCents: Number(this.draft.priceCents), category, sizeChart }, photo), 'admin.created');
   }
 
   async toggleActive(g: AdminGarment) {
@@ -222,13 +259,18 @@ export class AdminPage {
 
   async createBody() {
     const b = this.body;
+    const photo = this.bodyPhoto;
+    if (!photo) return this.message.set(this.transloco.translate('admin.photoRequired'));
     await this.run(
       () =>
-        this.api.adminCreateBodyModel({
-          ...b,
-          heightMin: Number(b.heightMin), heightMax: Number(b.heightMax), chestCm: Number(b.chestCm),
-          waistCm: Number(b.waistCm), hipCm: Number(b.hipCm), shoulderCm: Number(b.shoulderCm),
-        }),
+        this.api.adminCreateBodyModel(
+          {
+            ...b,
+            heightMin: Number(b.heightMin), heightMax: Number(b.heightMax), chestCm: Number(b.chestCm),
+            waistCm: Number(b.waistCm), hipCm: Number(b.hipCm), shoulderCm: Number(b.shoulderCm),
+          },
+          photo,
+        ),
       'admin.created',
     );
   }

@@ -11,6 +11,8 @@ import type {
   FitZone,
   GarmentCategory,
   GarmentItem,
+  GarmentPhotoType,
+  GarmentSuggestion,
   MetricsSummary,
   PoseRatios,
   SimilarBodyModel,
@@ -21,7 +23,6 @@ import { firstValueFrom } from 'rxjs';
 
 export interface AdminGarment extends GarmentItem {
   style: string;
-  pattern: string;
   active: boolean;
 }
 
@@ -32,8 +33,7 @@ export interface AdminBodyModel {
   heightMin: number;
   heightMax: number;
   skinTone: string;
-  avatarKey: string;
-  photoKey?: string | null;
+  photoKey: string;
 }
 
 type Range = [number, number];
@@ -45,14 +45,14 @@ export interface AdminGarmentInput {
   category: GarmentCategory;
   style: string;
   color: string;
-  pattern: string;
+  photoType: GarmentPhotoType;
   priceCents: number;
   stretch: GarmentItem['stretch'];
   fabricNotes?: string;
   sizeChart: { size: string; chest?: Range; waist?: Range; hip?: Range; height?: Range }[];
 }
 
-export type AdminGarmentPatch = Partial<Pick<AdminGarmentInput, 'name' | 'priceCents' | 'color' | 'pattern' | 'fabricNotes' | 'sizeChart'>> & { active?: boolean };
+export type AdminGarmentPatch = Partial<Pick<AdminGarmentInput, 'name' | 'priceCents' | 'color' | 'fabricNotes' | 'sizeChart'>> & { active?: boolean };
 
 /** Cuerpo de alta de modelo de cuerpo (refleja BodyModelDto de la API). */
 export interface AdminBodyModelInput {
@@ -61,8 +61,6 @@ export interface AdminBodyModelInput {
   heightMin: number;
   heightMax: number;
   skinTone: string;
-  hair: string;
-  hairColor: string;
   shoulderCm: number;
   chestCm: number;
   waistCm: number;
@@ -87,6 +85,13 @@ export class ApiService {
   private send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown) {
     return firstValueFrom(this.http.request<T>(method, this.base + path, { body }));
   }
+  /** Alta con foto: los campos viajan como JSON en `data` junto al archivo. */
+  private sendWithPhoto<T>(path: string, data: unknown, photo: File) {
+    const form = new FormData();
+    form.append('data', JSON.stringify(data));
+    form.append('photo', photo);
+    return this.send<T>('POST', path, form);
+  }
 
   // Catálogo
   garments(filter: { category?: GarmentCategory; brandId?: string; q?: string } = {}) {
@@ -100,6 +105,10 @@ export class ApiService {
   }
   bodyModels(garmentId?: string) {
     return this.get<SimilarBodyModel[]>('/catalog/body-models', { garmentId });
+  }
+  /** Prueba real de la prenda sobre un modelo del catálogo; si no existe, el servidor la genera (tarda). */
+  modelPreview(bodyModelId: string, garmentId: string) {
+    return this.send<{ imageUrl: string; cached: boolean }>('POST', '/tryon/model-previews', { bodyModelId, garmentId });
   }
 
   // Track C
@@ -182,8 +191,14 @@ export class ApiService {
   adminGarments() {
     return this.get<AdminGarment[]>('/admin/garments');
   }
-  adminCreateGarment(body: AdminGarmentInput) {
-    return this.send<{ id: string }>('POST', '/admin/garments', body);
+  adminCreateGarment(body: AdminGarmentInput, photo: File) {
+    return this.sendWithPhoto<{ id: string }>('/admin/garments', body, photo);
+  }
+  /** Etiquetado automático: propone estilo, color y tipo de foto a partir de la imagen. */
+  adminDescribeGarment(photo: File) {
+    const form = new FormData();
+    form.append('photo', photo);
+    return this.send<GarmentSuggestion>('POST', '/admin/garments/describe', form);
   }
   adminUpdateGarment(id: string, body: AdminGarmentPatch) {
     return this.send<{ id: string }>('PATCH', `/admin/garments/${id}`, body);
@@ -197,8 +212,8 @@ export class ApiService {
   adminBodyModels() {
     return this.get<AdminBodyModel[]>('/admin/body-models');
   }
-  adminCreateBodyModel(body: AdminBodyModelInput) {
-    return this.send<{ id: string }>('POST', '/admin/body-models', body);
+  adminCreateBodyModel(body: AdminBodyModelInput, photo: File) {
+    return this.sendWithPhoto<{ id: string }>('/admin/body-models', body, photo);
   }
   adminDeleteBodyModel(id: string) {
     return this.send<{ id: string }>('DELETE', `/admin/body-models/${id}`);

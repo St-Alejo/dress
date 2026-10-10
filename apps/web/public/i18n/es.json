@@ -32,15 +32,15 @@
   },
   "catalog": {
     "title": "Mira la ropa en un cuerpo como el tuyo",
-    "lead": "Sin fotos ni cámara para empezar. Elige un cuerpo parecido al tuyo, pruébate la prenda en vivo si quieres y encuentra tu talla con una recomendación honesta.",
+    "lead": "Todas las prendas con foto real. Elige un modelo parecido a ti, pruébate la prenda con tu foto o en vivo y encuentra tu talla con una recomendación honesta.",
     "filters": "Filtros del catálogo",
     "all": "Todo",
     "brand": "Marca",
     "allBrands": "Todas las marcas",
     "search": "Buscar prenda",
-    "showingOn": "Mostrando sobre:",
     "empty": "No hay prendas con esos filtros.",
-    "count": "{{n}} prendas"
+    "count": "{{n}} prendas",
+    "showingOn": "Modelo elegido:"
   },
   "category": {
     "top": "Superiores",
@@ -51,9 +51,9 @@
     "accessory": "Accesorios"
   },
   "body": {
-    "pick": "Elige un cuerpo parecido al tuyo",
+    "pick": "Elige un modelo parecido a ti",
     "pickHelp": "Por estatura y forma. Puedes cambiarlo cuando quieras; no hay uno correcto.",
-    "chooseToSee": "Elige un cuerpo abajo para ver la prenda puesta en él.",
+    "chooseToSee": "Elige un modelo abajo para ver la prenda puesta en una persona real.",
     "tag": {
       "petite-slim": "Baja, complexión delgada",
       "petite-curvy": "Baja, con curvas",
@@ -68,16 +68,21 @@
       "plus-tall": "Talla grande, alta",
       "mid-soft": "Media, complexión suave"
     },
-    "realReference": "Persona real con esta complexión",
-    "scaleIllustration": "Ilustración a escala de este cuerpo"
+    "aiPreview": "Prueba generada con IA sobre un modelo real",
+    "generate": "Ver la prenda en este modelo",
+    "generateHelp": "Aún no hay una prueba de esta prenda sobre este modelo. Generarla tarda hasta un minuto.",
+    "generating": "Vistiendo al modelo… puede tardar hasta un minuto.",
+    "generateBusy": "El motor de prueba está ocupado o sin cupo por hoy. Inténtalo de nuevo más tarde.",
+    "generateFailed": "No se pudo generar la prueba. Inténtalo de nuevo.",
+    "notWearable": "Esta prenda no se prueba sobre un modelo: mira la foto del producto."
   },
   "mode": {
     "similar-model": "Cuerpo similar",
     "live-overlay": "Cámara en vivo",
     "photorealistic": "Con tu foto",
     "note": {
-      "similar-model": "Ilustración sobre un cuerpo de referencia: muestra cómo se ve, no garantiza cómo te ajusta. Para eso está la recomendación de talla.",
-      "live-overlay": "Vista previa rápida: la prenda se superpone sobre tu imagen, pero no predice el ajuste real.",
+      "similar-model": "Foto real del producto. Sobre un modelo, la imagen la genera una IA: muestra cómo se ve, no garantiza cómo te ajusta. Para eso está la recomendación de talla.",
+      "live-overlay": "Vista previa rápida: la foto de la prenda se superpone sobre tu imagen, pero no predice el ajuste real.",
       "photorealistic": "Imagen generada por IA a partir de tu foto. Es la más realista, pero la textura y el ajuste pueden no ser exactos."
     }
   },
@@ -129,12 +134,12 @@
       "notFound": "No detectamos un rostro. Puedes recortar manualmente desde arriba.",
       "crop": "Recortarlo",
       "blur": "Difuminarlo",
-      "keep": "Dejarlo"
+      "keep": "Dejarlo (mejor resultado)"
     },
     "manualCrop": "Recortar desde arriba",
     "upload": "Subir foto preparada",
     "uploading": "Subiendo tu foto…",
-    "readyToGenerate": "Tu foto está lista. La generación toma entre 10 y 70 segundos.",
+    "readyToGenerate": "Tu foto está lista. La generación toma entre 20 y 90 segundos.",
     "generate": "Generar imagen",
     "generating": "Generando tu imagen…",
     "generatingHint": "Puedes seguir mirando la talla y las reseñas mientras tanto.",
@@ -160,6 +165,18 @@
     "failed": {
       "title": "La generación no terminó",
       "body": "Algo se interrumpió en el servidor. Tu foto sigue disponible: puedes reintentar."
+    },
+    "before": "Tu foto",
+    "after": "Con la prenda",
+    "check": {
+      "title": "Esta foto puede no dar un buen resultado",
+      "no-person": "No vemos a una persona en la foto.",
+      "multiple-people": "Aparece más de una persona. Funciona mejor con una sola.",
+      "not-full-body": "No se ve el cuerpo entero. Funciona mejor de la cabeza a las rodillas o más.",
+      "not-frontal": "Funciona mejor de pie y de frente a la cámara.",
+      "too-dark": "La foto está oscura o borrosa. Prueba con más luz.",
+      "another": "Usar otra foto",
+      "anyway": "Generar de todos modos"
     }
   },
   "limitation": {
@@ -359,10 +376,9 @@
     "name": "Nombre",
     "style": "Estilo",
     "color": "Color",
-    "pattern": "Estampado",
     "price": "Precio (centavos USD)",
     "stretch": "Elasticidad",
-    "chartNote": "Se crea con la tabla de tallas estándar XS–4XL. La ilustración y los previews en los 12 cuerpos se generan solos.",
+    "chartNote": "Se crea con la tabla de tallas estándar XS–4XL. La foto es obligatoria: la tienda no muestra prendas sin foto real.",
     "create": "Crear",
     "created": "Creado",
     "sizes": "tallas",
@@ -376,9 +392,14 @@
     "heightMax": "Estatura máx.",
     "shoulders": "Hombros",
     "skin": "Tono de piel",
-    "hair": "Cabello",
-    "hairColor": "Color de cabello",
-    "delete": "Borrar"
+    "delete": "Borrar",
+    "photo": "Foto de la prenda",
+    "photoType": "Cómo está fotografiada",
+    "photoTypeFlat": "Sola (extendida o en percha)",
+    "photoTypeModel": "Puesta en una persona",
+    "bodyPhoto": "Foto de cuerpo entero",
+    "photoRequired": "Falta la foto.",
+    "suggested": "Estilo, color y tipo de foto sugeridos por IA a partir de la imagen. Revísalos."
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo.",
@@ -403,7 +424,7 @@
   },
   "credits": {
     "title": "Créditos de fotos",
-    "lead": "Las fotos de prendas y personas son de bancos con licencia libre (Creative Commons o dominio público). Gracias a sus autores. Algunas se recortaron; las versiones adaptadas de obras CC BY-SA se publican bajo la misma licencia.",
+    "lead": "Las fotos de prendas y personas son de Pexels, bajo su licencia libre. Gracias a sus autores. Se recortaron y se les cambió el fondo para la tienda.",
     "garments": "Prendas",
     "bodies": "Cuerpos de referencia",
     "by": "por"

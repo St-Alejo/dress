@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { plainToInstance, Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, IsUrl, Max, Min, MinLength, validateSync } from 'class-validator';
-import { PHOTO_TTL_HOURS } from '@vestirse/shared-types';
+import { AI_PROVIDERS, PHOTO_TTL_HOURS } from '@vestirse/shared-types';
 
 const url = { require_tld: false, require_protocol: true };
 
@@ -29,7 +29,7 @@ export class EnvironmentVariables {
 
   @IsUrl(url) AI_WORKER_URL!: string;
   @IsOptional() @IsString() WORKER_TOKEN?: string;
-  @IsOptional() @IsIn(['mock', 'gemini', 'fashn', 'fal-fashn']) AI_PROVIDER?: string;
+  @IsOptional() @IsIn(AI_PROVIDERS as string[]) AI_PROVIDER?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(5) @Max(600) GENERATION_TIMEOUT_SECONDS?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(60) GENERATION_STUCK_SECONDS?: number;
 

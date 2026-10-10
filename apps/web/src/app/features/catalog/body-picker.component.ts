@@ -22,11 +22,7 @@ import { TryOnSessionStore } from '../../core/tryon-session.store';
             [attr.aria-checked]="store.selectedBodyId() === b.id"
             [attr.aria-label]="('body.tag.' + b.bodyTypeTag | transloco) + ', ' + b.heightRangeCm[0] + '–' + b.heightRangeCm[1] + ' cm'"
             (click)="store.selectBody(b.id)">
-            @if (b.photoUrl) {
-              <img [src]="b.photoUrl" alt="" class="aspect-[3/4] w-full object-cover" loading="lazy" />
-            } @else {
-              <img [src]="b.avatarUrl" alt="" class="aspect-[3/4] w-full object-contain" loading="lazy" />
-            }
+            <img [src]="b.photoUrl" alt="" class="aspect-[3/4] w-full object-cover" loading="lazy" />
             <span class="mt-2 block text-[11px] leading-tight">{{ 'body.tag.' + b.bodyTypeTag | transloco }}</span>
             <span class="block text-[11px] text-muted tabular">{{ b.heightRangeCm[0] }}–{{ b.heightRangeCm[1] }} cm</span>
           </button>

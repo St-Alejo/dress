@@ -41,10 +41,9 @@ export interface SimilarBodyModel {
   /** Talla alfabética de referencia que suele usar este cuerpo. */
   typicalSize: LetterSize;
   skinTone: string;
-  avatarUrl: string;
-  /** Foto real de una persona con esta complexión, si existe. */
-  photoUrl?: string;
-  /** garmentId -> imagen del modelo con esa prenda puesta. */
+  /** Foto real de una persona con esta complexión. */
+  photoUrl: string;
+  /** garmentId -> prueba real generada por IA: el modelo con esa prenda puesta. Puede faltar. */
   previewImages: Record<string, string>;
 }
 
@@ -128,7 +127,12 @@ export interface OutfitItem {
   size: string;
 }
 
-export type AiProvider = 'mock' | 'gemini' | 'fashn' | 'fal-fashn';
+/**
+ * Motores de prueba virtual. `hf-*` son Spaces gratuitos de Hugging Face (`hf-chain` los
+ * prueba en orden); `fal-catvton` y `replicate` son APIs de pago; `mock` no usa IA.
+ */
+export type AiProvider = 'mock' | 'hf-chain' | 'hf-fashn' | 'hf-leffa' | 'hf-idm' | 'fal-catvton' | 'replicate';
+export const AI_PROVIDERS: readonly AiProvider[] = ['mock', 'hf-chain', 'hf-fashn', 'hf-leffa', 'hf-idm', 'fal-catvton', 'replicate'];
 
 /** Configuración de IA visible para el admin. La clave nunca viaja completa al cliente. */
 export interface AiProviderSettings {
@@ -154,6 +158,9 @@ export interface OverlayAnchors {
   rightHip: [number, number];
 }
 
+/** Cómo está fotografiada una prenda: sola (flat-lay) o puesta en una persona (model). */
+export type GarmentPhotoType = 'flat-lay' | 'model';
+
 export interface GarmentItem {
   id: string;
   name: string;
@@ -162,12 +169,10 @@ export interface GarmentItem {
   category: GarmentCategory;
   color: string;
   priceCents: number;
-  /** `photo` = foto real de producto (subida o generada); se prefiere cuando existe. */
-  images: { front: string; flat: string; overlay: string; photo?: string };
+  /** `photo` = foto real de producto; `cutout` = su recorte con transparencia (cámara en vivo). */
+  images: { photo: string; cutout?: string };
+  photoType: GarmentPhotoType;
   fitIntent?: FitIntent;
-  /** Anclas (px en la imagen de overlay) para alinearla con los keypoints de Track A. */
-  overlayAnchors: OverlayAnchors;
-  overlaySize: [number, number];
   sizeChart: SizeChartEntry[];
   /** "cae holgado", "tela con poco stretch" — contexto no visual. */
   fabricNotes?: string;
@@ -187,6 +192,27 @@ export interface FitRecommendation {
 }
 
 export type GenerationStatus = 'idle' | 'queued' | 'processing' | 'done' | 'failed' | 'fallback';
+
+export type PhotoCheckReason = 'no-person' | 'multiple-people' | 'not-full-body' | 'not-frontal' | 'too-dark';
+
+/**
+ * Revisión automática del encuadre de la foto. Es un aviso, nunca un rechazo: la
+ * persona decide si usa otra foto. `checked: false` = no se pudo analizar.
+ */
+export interface PhotoCheck {
+  checked: boolean;
+  ok: boolean;
+  reason?: PhotoCheckReason | null;
+}
+
+/** Sugerencias de etiquetado de una prenda a partir de su foto (panel de admin). */
+export interface GarmentSuggestion {
+  style?: string;
+  category?: GarmentCategory;
+  photoType?: GarmentPhotoType;
+  color?: string;
+  name?: string;
+}
 
 export interface TryOnSession {
   id: string;
@@ -209,6 +235,8 @@ export interface TryOnSession {
   /** Conjunto a probar sobre la foto (varias prendas con su talla). */
   outfit?: OutfitItem[];
   createdAt: string;
+  /** Solo en la respuesta de subir la foto, y solo si se pudo revisar. */
+  photoCheck?: PhotoCheck;
 }
 
 export type FitFeeling = 'runs-small' | 'true-to-size' | 'runs-large';

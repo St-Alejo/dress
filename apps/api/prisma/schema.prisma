@@ -78,16 +78,16 @@ model Garment {
   brandId          String
   brand            Brand             @relation(fields: [brandId], references: [id])
   category         GarmentCategory
-  /// Estilo de la ilustración (tshirt, jeans, dress-a...) usado por el renderer de previews.
+  /// Tipo de prenda (tshirt, jeans, dress-a...): decide el patronaje de las tallas.
   style            String
-  pattern          String            @default("solid")
   color            String
   priceCents       Int
-  imageFrontKey    String
-  imageFlatKey     String
-  imageOverlayKey  String
-  /// Foto real de producto (subida por el admin o generada con IA). Se prefiere sobre la ilustración.
-  photoKey         String?
+  /// Foto real de producto: la única imagen de la prenda en la tienda.
+  photoKey         String
+  /// Cómo está fotografiada: sola (flat-lay) o puesta en una persona (model).
+  photoType        String            @default("flat-lay")
+  /// Recorte con transparencia para la cámara en vivo; sin él la prenda no la ofrece.
+  cutoutKey        String?
   /// Holgura de diseño { chestEaseCm, waistEaseCm, hipEaseCm }.
   fitIntent        Json?
   fabricNotes      String?
@@ -134,11 +134,10 @@ model BodyModel {
   heightMin   Int
   heightMax   Int
   skinTone    String
-  /// Parámetros del avatar ilustrado (anchos de hombro, cintura, cadera...).
+  /// Medidas de referencia (hombro, pecho, cintura, cadera, altura) en cm.
   shape       Json
-  avatarKey   String
-  /// Foto real de referencia (banco con licencia libre). La ilustración sigue usándose para los previews a escala.
-  photoKey    String?
+  /// Foto real de una persona con esta complexión (banco con licencia libre).
+  photoKey    String
   sortOrder   Int                @default(0)
   previews    BodyModelPreview[]
 }
@@ -148,6 +147,7 @@ model BodyModelPreview {
   bodyModel   BodyModel @relation(fields: [bodyModelId], references: [id], onDelete: Cascade)
   garmentId   String
   garment     Garment   @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  /// Prueba real generada por el motor de IA: esta prenda sobre la foto de este modelo.
   imageKey    String
 
   @@id([bodyModelId, garmentId])

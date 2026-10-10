@@ -46,6 +46,10 @@ services:
       MOCK_DELAY_SECONDS: ${MOCK_DELAY_SECONDS:-4}
       REPLICATE_API_TOKEN: ${REPLICATE_API_TOKEN:-}
       FAL_KEY: ${FAL_KEY:-}
+      # Motores gratuitos (Spaces de Hugging Face) y visión con Groq. Vacíos = anónimo / sin control de calidad.
+      HF_TOKEN: ${HF_TOKEN:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_VISION_MODEL: ${GROQ_VISION_MODEL:-qwen/qwen3.8-27b}
     ports: ["${AI_WORKER_PORT:-8000}:8000"]
     # El healthcheck vive en el Dockerfile del worker.
 
@@ -63,6 +67,7 @@ services:
       S3_ACCESS_KEY: vestirse
       S3_SECRET_KEY: vestirse-secret
       AI_WORKER_URL: http://ai-worker:8000
+      AI_PROVIDER: ${AI_PROVIDER:-hf-chain}
       WORKER_TOKEN: ${WORKER_TOKEN:-}
       JWT_SECRET: ${JWT_SECRET:-solo-desarrollo-jwt-secret-cambiar}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-solo-desarrollo-cifrado-cambiar}

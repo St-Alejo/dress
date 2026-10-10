@@ -12,6 +12,7 @@ import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 import { FitPanelComponent } from '../fit-engine/fit-panel.component';
 import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
+import { canOverlay } from '../live-overlay/overlay-geometry';
 import { PhotoTryOnComponent } from '../photo-upload/photo-tryon.component';
 import { ReviewsPanelComponent } from '../reviews/reviews-panel.component';
 import { BodyPickerComponent } from './body-picker.component';
@@ -24,6 +25,12 @@ import { BodyPickerComponent } from './body-picker.component';
   selector: 'app-garment-page',
   imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, BodyPickerComponent, FitPanelComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: `
+    /* Mismo fondo que el lienzo de las fotos de catálogo: la foto no se ve "pegada". */
+    .stage {
+      background: #f6f5f2;
+    }
+  `,
   template: `
     <div class="mx-auto max-w-screen-2xl px-4 pt-4 pb-16 md:px-8">
       <nav [attr.aria-label]="'garment.breadcrumb' | transloco" class="flex min-h-11 items-center gap-2 text-[12px] uppercase tracking-[0.08em] text-muted">
@@ -47,22 +54,34 @@ import { BodyPickerComponent } from './body-picker.component';
             <div role="tabpanel" [id]="tabs.panelId(store.mode())" [attr.aria-labelledby]="tabs.tabId(store.mode())">
               @switch (store.mode()) {
                 @case ('similar-model') {
-                  <div class="relative h-[min(70vh,640px)] overflow-hidden bg-surface-2">
-                    @if (store.selectedBody(); as body) {
-                      <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain p-6" />
-                      @if (body.photoUrl) {
-                        <figure class="absolute bottom-3 left-3 w-24 bg-paper p-1 shadow-sm md:w-28">
-                          <img [src]="body.photoUrl" alt="" class="aspect-[3/4] w-full object-cover" />
-                          <figcaption class="px-0.5 pt-1 text-[10px] leading-tight text-muted">{{ 'body.realReference' | transloco }}</figcaption>
-                        </figure>
-                      }
-                      <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.scaleIllustration' | transloco }}</p>
-                    } @else {
-                      <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full" [class.object-cover]="!!g.images.photo" [class.object-contain]="!g.images.photo" [class.p-6]="!g.images.photo" />
+                  <div class="stage relative h-[min(70vh,640px)] overflow-hidden">
+                    <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain" />
+                    @if (store.modelPreview()) {
+                      <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.aiPreview' | transloco }}</p>
+                    }
+                    @if (store.modelPreviewState() === 'generating') {
+                      <div class="absolute inset-0 flex items-center justify-center bg-paper/70" role="status">
+                        <p class="bg-paper px-4 py-3 text-[13px] shadow-sm">{{ 'body.generating' | transloco }}</p>
+                      </div>
                     }
                   </div>
                   @if (!store.selectedBody()) {
                     <p class="mt-3 text-[13px] text-ink-2">{{ 'body.chooseToSee' | transloco }}</p>
+                  } @else if (!store.wearable()) {
+                    <p class="mt-3 text-[13px] text-ink-2">{{ 'body.notWearable' | transloco }}</p>
+                  } @else if (!store.modelPreview()) {
+                    <div class="mt-3 flex flex-wrap items-center gap-3">
+                      <button type="button" class="btn btn-primary" [disabled]="store.modelPreviewState() === 'generating'" (click)="store.generateModelPreview()">
+                        {{ 'body.generate' | transloco }}
+                      </button>
+                      <p class="min-w-0 flex-1 text-[13px] text-ink-2" aria-live="polite">
+                        @switch (store.modelPreviewState()) {
+                          @case ('busy') {{{ 'body.generateBusy' | transloco }}}
+                          @case ('failed') {{{ 'body.generateFailed' | transloco }}}
+                          @default {{{ 'body.generateHelp' | transloco }}}
+                        }
+                      </p>
+                    </div>
                   }
                   <div class="mt-4">
                     <app-body-picker />
@@ -126,9 +145,19 @@ export class GarmentPage {
   private readonly transloco = inject(TranslocoService);
   /** Emite cuando el diccionario del idioma activo está cargado (también al cambiar de idioma). */
   private readonly dictionary = toSignal(this.transloco.selectTranslation());
+  /** Solo se ofrecen los modos que esta prenda admite: sin recorte no hay cámara; calzado y accesorios no se visten con IA. */
+  readonly availableModes = computed<TryOnMode[]>(() => {
+    const g = this.store.garment();
+    if (!g) return ['similar-model'];
+    return this.modes.filter((m) => {
+      if (m === 'live-overlay') return canOverlay(g);
+      if (m === 'photorealistic') return this.store.wearable();
+      return true;
+    });
+  });
   readonly modeTabs = computed<TabItem<TryOnMode>[]>(() => {
     this.dictionary();
-    return this.modes.map((m) => ({ id: m, label: this.transloco.translate('mode.' + m) }));
+    return this.availableModes().map((m) => ({ id: m, label: this.transloco.translate('mode.' + m) }));
   });
 
   readonly inComparison = computed(() => {
@@ -173,7 +202,7 @@ export class GarmentPage {
       garmentId: g.id,
       name: g.name,
       brandName: g.brandName,
-      imageUrl: this.store.previewImage() ?? g.images.front,
+      imageUrl: this.store.previewImage() ?? g.images.photo,
       size: this.store.chosenSize(),
       sessionId: this.store.session()?.id,
     });

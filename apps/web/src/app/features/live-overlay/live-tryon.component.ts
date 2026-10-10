@@ -13,7 +13,7 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { GarmentItem, PoseRatios } from '@vestirse/shared-types';
 import { CameraService, type CameraError } from './camera.service';
-import { fitHintFor, overlayTransform, poseRatiosFrom, supportsLiveOverlay, type FitHint } from './overlay-geometry';
+import { canOverlay, cutoutAnchors, fitHintFor, overlayTransform, poseRatiosFrom, type FitHint } from './overlay-geometry';
 import { PoseService } from './pose.service';
 
 const HINT_INTERVAL_MS = 300;
@@ -95,7 +95,7 @@ export class LiveTryOnComponent implements OnDestroy {
   readonly state = signal<'idle' | 'loading' | 'running' | 'unsupported-garment' | CameraError | 'model'>('idle');
   readonly hint = signal<FitHint>('no-body');
   readonly ratios = signal<PoseRatios | null>(null);
-  readonly supported = computed(() => supportsLiveOverlay(this.garment().category));
+  readonly supported = computed(() => canOverlay(this.garment()));
 
   private rafId = 0;
   private lastHintAt = 0;
@@ -153,7 +153,7 @@ export class LiveTryOnComponent implements OnDestroy {
         resolve();
       };
       img.onerror = reject;
-      img.src = this.garment().images.overlay;
+      img.src = this.garment().images.cutout!;
     });
   }
 
@@ -173,12 +173,12 @@ export class LiveTryOnComponent implements OnDestroy {
       ctx.clearRect(0, 0, w, h);
       const hint = fitHintFor(points, w);
       if (points && hint === 'good' && this.overlayImg) {
-        const g = this.garment();
-        const m = overlayTransform(g.overlayAnchors, points);
+        const img = this.overlayImg;
+        const m = overlayTransform(cutoutAnchors(this.garment().category, img.naturalWidth, img.naturalHeight), points);
         if (m) {
           ctx.setTransform(...m);
           ctx.globalAlpha = 0.92;
-          ctx.drawImage(this.overlayImg, 0, 0, g.overlaySize[0], g.overlaySize[1]);
+          ctx.drawImage(img, 0, 0);
           ctx.globalAlpha = 1;
         }
       }

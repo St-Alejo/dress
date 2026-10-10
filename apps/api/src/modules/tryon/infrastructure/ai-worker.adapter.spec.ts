@@ -5,7 +5,7 @@ import { AiWorkerAdapter, WorkerCallError } from './ai-worker.adapter';
 const config = (extra: Record<string, unknown> = {}) =>
   new ConfigService({ AI_WORKER_URL: 'http://worker', GENERATION_TIMEOUT_SECONDS: 1, WORKER_TOKEN: 'tok', ...extra });
 
-const request = (provider: 'mock' | 'fashn' = 'mock'): TransferRequest => ({
+const request = (provider: 'mock' | 'hf-fashn' = 'mock'): TransferRequest => ({
   requestId: 'sess-1-1',
   person: Buffer.from('person'),
   garments: [{ image: Buffer.from('g'), mime: 'image/png', category: 'top', name: 'Camisa', color: 'white', fit: 'regular fit' }],
@@ -62,11 +62,11 @@ describe('AiWorkerAdapter', () => {
     await expect(new AiWorkerAdapter(config()).generate(request())).rejects.toMatchObject({ reason: 'provider-error', retryable: true });
   });
 
-  it('el circuito se abre por proveedor: fashn caído no bloquea al mock', async () => {
+  it('el circuito se abre por proveedor: hf-fashn caído no bloquea al mock', async () => {
     const adapter = new AiWorkerAdapter(config());
     fetchMock.mockResolvedValue(error(502, 'provider-error', true));
-    for (let i = 0; i < 4; i++) await adapter.generate(request('fashn')).catch(() => undefined);
-    await expect(adapter.generate(request('fashn'))).rejects.toMatchObject({ reason: 'circuit-open', retryable: false });
+    for (let i = 0; i < 4; i++) await adapter.generate(request('hf-fashn')).catch(() => undefined);
+    await expect(adapter.generate(request('hf-fashn'))).rejects.toMatchObject({ reason: 'circuit-open', retryable: false });
 
     fetchMock.mockResolvedValue(png());
     await expect(adapter.generate(request('mock'))).resolves.toMatchObject({ engine: 'mock' });
@@ -76,7 +76,7 @@ describe('AiWorkerAdapter', () => {
     const adapter = new AiWorkerAdapter(config());
     fetchMock.mockResolvedValue(error(412, 'not-configured', false));
     for (let i = 0; i < 5; i++) {
-      await expect(adapter.generate(request('fashn'))).rejects.toMatchObject({ reason: 'not-configured' });
+      await expect(adapter.generate(request('hf-fashn'))).rejects.toMatchObject({ reason: 'not-configured' });
     }
   });
 

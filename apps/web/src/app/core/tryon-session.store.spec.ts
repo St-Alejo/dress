@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import type { FitRecommendation, GarmentItem, TryOnSession } from '@vestirse/shared-types';
+import type { FitRecommendation, GarmentItem, SimilarBodyModel, TryOnSession } from '@vestirse/shared-types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiService } from './api.service';
 import { GenerationSocketService } from './generation-socket.service';
@@ -7,7 +7,7 @@ import { AppError } from './http/app-error';
 import { NoticeStore } from './notice.store';
 import { TryOnSessionStore } from './tryon-session.store';
 
-const garment = { id: 'g1', name: 'Camisa', category: 'top', images: { front: 'f.svg', flat: 'x.svg' } } as GarmentItem;
+const garment = { id: 'g1', name: 'Camisa', category: 'top', photoType: 'flat-lay', images: { photo: 'p.jpg' } } as GarmentItem;
 const fit: FitRecommendation = { recommendedSize: 'M', confidence: 'medium', basis: [] };
 const session = (over: Partial<TryOnSession> = {}): TryOnSession => ({
   id: 's1',
@@ -28,6 +28,7 @@ const makeApi = () => ({
   overrideSize: vi.fn(),
   deletePhoto: vi.fn(),
   changeMode: vi.fn(),
+  modelPreview: vi.fn(),
 });
 
 describe('TryOnSessionStore', () => {
@@ -110,5 +111,39 @@ describe('TryOnSessionStore', () => {
     api.deletePhoto.mockRejectedValue(new AppError(500, 'internal', 'x'));
     expect(await store.deletePhoto()).toBe(false);
     expect(store.hasPhoto()).toBe(true);
+  });
+
+  describe('prueba sobre un modelo del catálogo', () => {
+    const body = { id: 'b1', photoUrl: '/b1.jpg', previewImages: {} } as unknown as SimilarBodyModel;
+    beforeEach(() => {
+      store.garment.set(garment);
+      store.bodyModels.set([body]);
+      store.selectBody('b1');
+    });
+
+    it('sin prueba generada se muestra la foto real del producto, nunca un dibujo', () => {
+      expect(store.modelPreview()).toBeNull();
+      expect(store.previewImage()).toBe('p.jpg');
+    });
+
+    it('al generarla, la prueba queda como imagen de ese modelo', async () => {
+      api.modelPreview.mockResolvedValue({ imageUrl: '/api/media/catalog/bodies/b1/previews/g1.jpg', cached: false });
+      await store.generateModelPreview();
+      expect(api.modelPreview).toHaveBeenCalledWith('b1', 'g1');
+      expect(store.previewImage()).toBe('/api/media/catalog/bodies/b1/previews/g1.jpg');
+      expect(store.modelPreviewState()).toBe('idle');
+    });
+
+    it('si el motor está sin cupo lo dice y deja la foto del producto', async () => {
+      api.modelPreview.mockRejectedValue(new AppError(503, 'unavailable', 'rate-limited'));
+      await store.generateModelPreview();
+      expect(store.modelPreviewState()).toBe('busy');
+      expect(store.previewImage()).toBe('p.jpg');
+    });
+
+    it('calzado y accesorios no se visten sobre un modelo', () => {
+      store.garment.set({ ...garment, category: 'footwear' });
+      expect(store.wearable()).toBe(false);
+    });
   });
 });

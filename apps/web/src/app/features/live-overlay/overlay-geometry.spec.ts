@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OverlayAnchors } from '@vestirse/shared-types';
-import { affineFrom3, applyAffine, fitHintFor, overlayTransform, poseRatiosFrom, type PosePoints, type Pt } from './overlay-geometry';
+import { affineFrom3, applyAffine, canOverlay, cutoutAnchors, fitHintFor, overlayTransform, poseRatiosFrom, type PosePoints, type Pt } from './overlay-geometry';
 
 const anchors: OverlayAnchors = {
   leftShoulder: [292, 250],
@@ -61,5 +61,34 @@ describe('poseRatiosFrom', () => {
   });
   it('no inventa proporciones si no ve bien el cuerpo', () => {
     expect(poseRatiosFrom(pose({ hipsVisible: 0.3 }))).toBeNull();
+  });
+});
+
+describe('recorte de la foto real en la cámara', () => {
+  it('solo se ofrece con una prenda fotografiada sola y con recorte', () => {
+    const flat = { category: 'top', photoType: 'flat-lay', images: { photo: 'p.jpg', cutout: 'c.webp' } } as const;
+    expect(canOverlay(flat)).toBe(true);
+    expect(canOverlay({ ...flat, images: { photo: 'p.jpg' } })).toBe(false);
+    expect(canOverlay({ ...flat, photoType: 'model' })).toBe(false);
+    expect(canOverlay({ ...flat, category: 'footwear' })).toBe(false);
+  });
+
+  it('las anclas respetan la convención de MediaPipe: "izquierda" es la derecha de la imagen', () => {
+    for (const category of ['top', 'outerwear', 'dress', 'bottom'] as const) {
+      const a = cutoutAnchors(category, 400, 600);
+      expect(a.leftShoulder[0]).toBeGreaterThan(a.rightShoulder[0]);
+      expect(a.leftHip[0]).toBeGreaterThan(a.rightHip[0]);
+      expect(a.leftHip[1]).toBeGreaterThan(a.leftShoulder[1]);
+    }
+  });
+
+  it('en una parte de arriba los hombros caen dentro del recorte; en un pantalón, por encima', () => {
+    expect(cutoutAnchors('top', 400, 600).leftShoulder[1]).toBeGreaterThan(0);
+    expect(cutoutAnchors('bottom', 400, 600).leftShoulder[1]).toBeLessThan(0);
+  });
+
+  it('el recorte se alinea con la pose detectada', () => {
+    const m = overlayTransform(cutoutAnchors('top', 400, 600), pose());
+    expect(m).not.toBeNull();
   });
 });

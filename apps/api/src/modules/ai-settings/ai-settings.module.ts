@@ -1,24 +1,42 @@
 import { Body, Controller, Get, Global, HttpCode, Injectable, Logger, Module, Post, Put, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
-import { WORKER_HEADERS, type AiProvider, type AiProviderSettings } from '@vestirse/shared-types';
+import {
+  AI_PROVIDERS,
+  WORKER_HEADERS,
+  type AiProvider,
+  type AiProviderSettings,
+  type GarmentSuggestion,
+  type PhotoCheck,
+} from '@vestirse/shared-types';
 import { AdminGuard } from '../../common/guards';
 import { PrismaService } from '../../common/prisma.service';
 import { SecretBox } from './secret-box';
 
-export const AI_PROVIDERS: AiProvider[] = ['mock', 'gemini', 'fashn', 'fal-fashn'];
+/** Motores que funcionan sin clave: el mock y los Spaces de Hugging Face (anónimos o con el HF_TOKEN del worker). */
+const KEYLESS: ReadonlySet<AiProvider> = new Set(['mock', 'hf-chain', 'hf-fashn', 'hf-leffa', 'hf-idm']);
 
 /** Modelo por defecto por proveedor (se puede cambiar desde el panel). */
 export const DEFAULT_MODEL: Record<AiProvider, string | undefined> = {
   mock: undefined,
-  // gemini-2.5-flash-image se apagó el 2026-10-02; este es su sucesor.
-  gemini: 'gemini-3.1-flash-image-preview',
-  fashn: 'tryon-v1.6',
-  'fal-fashn': 'fal-ai/fashn/tryon/v1.6',
+  'hf-chain': undefined,
+  'hf-fashn': undefined,
+  'hf-leffa': undefined,
+  'hf-idm': undefined,
+  'fal-catvton': 'fal-ai/cat-vton',
+  replicate: undefined,
 };
 
-/** Costo aproximado por imagen (USD) para mostrar al admin. */
-export const APPROX_COST_USD: Record<AiProvider, number> = { mock: 0, gemini: 0.045, fashn: 0.075, 'fal-fashn': 0.075 };
+/** Costo aproximado por imagen (USD) para mostrar al admin. Los Spaces son gratuitos pero con cuota diaria. */
+export const APPROX_COST_USD: Record<AiProvider, number> = {
+  mock: 0,
+  'hf-chain': 0,
+  'hf-fashn': 0,
+  'hf-leffa': 0,
+  'hf-idm': 0,
+  'fal-catvton': 0.05,
+  replicate: 0.05,
+};
 
 /** Credenciales resueltas: solo viven en memoria del proceso y viajan al worker por la red interna. */
 export interface AiCredentials {
@@ -28,7 +46,7 @@ export interface AiCredentials {
 }
 
 class UpdateAiSettingsDto {
-  @IsIn(AI_PROVIDERS) provider: AiProvider;
+  @IsIn(AI_PROVIDERS as AiProvider[]) provider: AiProvider;
   @IsOptional() @IsString() @MaxLength(80) model?: string;
   /** Vacío = mantener la clave actual; "-" = borrarla. */
   @IsOptional() @IsString() @MaxLength(400) apiKey?: string;
@@ -49,7 +67,7 @@ export class AiSettingsService {
   /** Vista pública para el panel: nunca incluye la clave, solo sus últimos 4 caracteres. */
   async getPublic(): Promise<AiProviderSettings> {
     const row = await this.prisma.aiSettings.findUnique({ where: { id: 'default' } });
-    if (row && (row.encryptedKey || row.provider === 'mock')) {
+    if (row && this.usable(row)) {
       return {
         provider: row.provider as AiProvider,
         model: row.model ?? DEFAULT_MODEL[row.provider as AiProvider],
@@ -67,14 +85,14 @@ export class AiSettingsService {
       keyConfigured: !!env.apiKey,
       keyHint: env.apiKey ? `••••${env.apiKey.slice(-4)}` : undefined,
       lastTestOk: row?.lastTestOk ?? null,
-      source: env.provider === 'mock' && !env.apiKey ? 'none' : 'environment',
+      source: this.config.get('AI_PROVIDER') ? 'environment' : 'none',
     };
   }
 
   /** Uso interno (procesador de generación). La clave descifrada nunca se registra en logs. */
   async resolve(): Promise<AiCredentials> {
     const row = await this.prisma.aiSettings.findUnique({ where: { id: 'default' } });
-    if (row && (row.encryptedKey || row.provider === 'mock')) {
+    if (row && this.usable(row)) {
       const provider = row.provider as AiProvider;
       let apiKey: string | undefined;
       if (row.encryptedKey) {
@@ -113,6 +131,12 @@ export class AiSettingsService {
       create: { id: 'default', lastTestOk: ok },
       update: { lastTestOk: ok },
     });
+  }
+
+  /** Una fila guardada vale si su proveedor sigue existiendo y, si necesita clave, la tiene. */
+  private usable(row: { provider: string; encryptedKey: string | null }): boolean {
+    const provider = row.provider as AiProvider;
+    return AI_PROVIDERS.includes(provider) && (KEYLESS.has(provider) || !!row.encryptedKey);
   }
 
   private fromEnv(): AiCredentials {
@@ -157,6 +181,34 @@ export class AiWorkerClient {
       return { ok: res.ok && body.ok === true, detail: body.detail };
     } catch {
       return { ok: false, detail: 'worker-unreachable' };
+    }
+  }
+
+  /** Revisión del encuadre de la foto. Si el worker o Groq fallan, la foto se da por no revisada: nunca bloquea. */
+  async inspectPhoto(image: Buffer): Promise<PhotoCheck> {
+    const body = await this.postImage<PhotoCheck>('/v1/photo/inspect', image);
+    return body && typeof body.ok === 'boolean' ? body : { checked: false, ok: true };
+  }
+
+  /** Sugerencias de etiquetado para el alta de una prenda; vacías si no hay análisis. */
+  async describeGarment(image: Buffer): Promise<GarmentSuggestion> {
+    const body = await this.postImage<{ suggestion?: GarmentSuggestion }>('/v1/garment/describe', image);
+    return body?.suggestion ?? {};
+  }
+
+  private async postImage<T>(path: string, image: Buffer): Promise<T | null> {
+    const form = new FormData();
+    form.append('image', new Blob([new Uint8Array(image)], { type: 'image/jpeg' }), 'image.jpg');
+    try {
+      const res = await fetch(`${this.baseUrl}${path}`, {
+        method: 'POST',
+        body: form,
+        headers: this.token ? { [WORKER_HEADERS.token]: this.token } : {},
+        signal: AbortSignal.timeout(25_000),
+      });
+      return res.ok ? ((await res.json()) as T) : null;
+    } catch {
+      return null;
     }
   }
 }

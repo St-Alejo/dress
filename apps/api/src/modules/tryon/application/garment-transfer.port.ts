@@ -1,4 +1,4 @@
-import type { GarmentCategory, WorkerErrorCode } from '@vestirse/shared-types';
+import type { GarmentCategory, GarmentPhotoType, WorkerErrorCode } from '@vestirse/shared-types';
 import type { AiCredentials } from '../../ai-settings/ai-settings.module';
 
 export interface TransferResult {
@@ -28,6 +28,8 @@ export interface TransferGarment {
   color: string;
   /** Descriptor de ajuste derivado del análisis por talla (ver fit-brief.ts). */
   fit: string;
+  /** Si la foto muestra la prenda sola o puesta en una persona. */
+  photoType?: GarmentPhotoType;
 }
 
 export interface TransferRequest {

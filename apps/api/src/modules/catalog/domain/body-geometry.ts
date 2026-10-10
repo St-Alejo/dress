@@ -1,7 +1,6 @@
 /**
- * Geometría de un cuerpo ilustrado a partir de medidas reales (cm).
- * Todas las prendas se dibujan sobre estos puntos, así una misma prenda se ve
- * distinta —y honesta— en cada cuerpo del catálogo "cuerpo similar al mío".
+ * Geometría de un cuerpo a partir de medidas reales (cm): solo medidas, nunca
+ * parámetros para "estilizar". La usan las invariantes éticas y el motor de tallas.
  */
 export interface BodyShape {
   heightCm: number;

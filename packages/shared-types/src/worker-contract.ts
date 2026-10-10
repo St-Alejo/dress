@@ -1,4 +1,4 @@
-import type { GarmentCategory } from './index';
+import type { GarmentCategory, GarmentPhotoType } from './index';
 
 /**
  * Contrato v1 entre la API y el ai-worker. La fuente de verdad son los JSON Schema
@@ -14,6 +14,8 @@ export interface WorkerGarment {
   color: string;
   /** Descriptor de ajuste en inglés (ver fit-brief.ts). */
   fit: string;
+  /** Opcional: por defecto el worker asume `flat-lay`. */
+  photoType?: GarmentPhotoType;
 }
 
 export interface WorkerManifest {

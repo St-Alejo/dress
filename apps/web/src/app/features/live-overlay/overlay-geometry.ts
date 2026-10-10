@@ -1,4 +1,4 @@
-import type { GarmentCategory, OverlayAnchors, PoseRatios } from '@vestirse/shared-types';
+import type { GarmentCategory, GarmentItem, OverlayAnchors, PoseRatios } from '@vestirse/shared-types';
 
 export type Pt = [number, number];
 
@@ -45,6 +45,28 @@ export function applyAffine([a, b, c, d, e, f]: Affine, [x, y]: Pt): Pt {
 /** Categorías que se pueden superponer en vivo con anclas de hombros y caderas. */
 export function supportsLiveOverlay(category: GarmentCategory): boolean {
   return category === 'top' || category === 'outerwear' || category === 'dress' || category === 'bottom';
+}
+
+/** La cámara necesita el recorte de una prenda fotografiada sola: una foto con persona se vería como un collage. */
+export function canOverlay(g: Pick<GarmentItem, 'category' | 'images' | 'photoType'>): boolean {
+  return supportsLiveOverlay(g.category) && g.photoType === 'flat-lay' && !!g.images.cutout;
+}
+
+/**
+ * Dónde caen hombros y caderas dentro del recorte de una prenda (px del recorte).
+ * Son proporciones típicas por categoría, no una medición: basta para una vista
+ * previa rápida. En las prendas inferiores los hombros quedan por encima de la imagen.
+ */
+export function cutoutAnchors(category: GarmentCategory, width: number, height: number): OverlayAnchors {
+  const at = (x: number, y: number): Pt => [x * width, y * height];
+  if (category === 'bottom') {
+    return { leftShoulder: at(0.9, -0.62), rightShoulder: at(0.1, -0.62), leftHip: at(0.8, 0.08), rightHip: at(0.2, 0.08) };
+  }
+  if (category === 'dress') {
+    return { leftShoulder: at(0.74, 0.07), rightShoulder: at(0.26, 0.07), leftHip: at(0.68, 0.5), rightHip: at(0.32, 0.5) };
+  }
+  // Partes de arriba: las mangas ensanchan el recorte, así que los hombros quedan hacia dentro.
+  return { leftShoulder: at(0.76, 0.12), rightShoulder: at(0.24, 0.12), leftHip: at(0.7, 0.96), rightHip: at(0.3, 0.96) };
 }
 
 /**

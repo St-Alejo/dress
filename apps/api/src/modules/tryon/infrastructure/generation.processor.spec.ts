@@ -10,7 +10,7 @@ import { TryOnSession } from '../domain/tryon-session.entity';
 import { GenerationProcessor } from './generation.processor';
 import type { TryOnGateway } from './tryon.gateway';
 
-const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="#000"/></svg>');
+const PHOTO = Buffer.from('jpeg');
 
 class FakeTransfer extends GarmentTransferPort {
   calls: TransferRequest[] = [];
@@ -31,7 +31,7 @@ function setup() {
   const record = jest.fn();
   const catalog = {
     findGarment: async () => garment,
-    garmentImageKeys: async () => ({ flat: 'garments/g1/flat.svg', front: 'garments/g1/front.svg' }),
+    garmentPhoto: async () => ({ key: 'catalog/garments/g1/photo.jpg', photoType: 'model' }),
   } as unknown as CatalogRepository;
   const aiSettings = { resolve: async () => ({ provider: 'mock' as const }) } as AiSettingsService;
   const processor = new GenerationProcessor(
@@ -43,7 +43,7 @@ function setup() {
     { emit } as unknown as TryOnGateway,
     { record } as unknown as MetricsService,
   );
-  storage.objects.set('garments/g1/flat.svg', SVG);
+  storage.objects.set('catalog/garments/g1/photo.jpg', PHOTO);
   return { sessions, storage, transfer, emit, record, processor };
 }
 
@@ -66,7 +66,7 @@ describe('GenerationProcessor', () => {
     await env.processor.process(job());
 
     const req = env.transfer.calls[0];
-    expect(req.garments).toEqual([expect.objectContaining({ category: 'top', name: 'Camisa', mime: 'image/png' })]);
+    expect(req.garments).toEqual([expect.objectContaining({ category: 'top', name: 'Camisa', mime: 'image/jpeg', photoType: 'model' })]);
     expect(req.credentials.provider).toBe('mock');
     expect(req.requestId).toBe('s1-1');
     expect(req.bodyBrief).not.toMatch(/\d/);

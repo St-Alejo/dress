@@ -1,7 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
-import sharp from 'sharp';
 import { ObjectStorage } from '../../../common/storage';
 import { AiSettingsService } from '../../ai-settings/ai-settings.module';
 import { CatalogRepository } from '../../catalog/application/catalog.repository';
@@ -56,25 +55,25 @@ export class GenerationProcessor extends WorkerHost {
 
     try {
       const garment = await this.catalog.findGarment(session.garmentId);
-      const keys = await this.catalog.garmentImageKeys(session.garmentId);
-      const [person, garmentSource] = await Promise.all([
+      const photo = await this.catalog.garmentPhoto(session.garmentId);
+      const [person, garmentImage] = await Promise.all([
         this.storage.getBuffer(session.photoKey),
-        keys ? this.storage.getBuffer(keys.photo ?? keys.flat) : null,
+        photo ? this.storage.getBuffer(photo.key) : null,
       ]);
-      if (!garment || !person || !garmentSource) return this.end(session, 'failed', 'missing-input');
+      if (!garment || !photo || !person || !garmentImage) return this.end(session, 'failed', 'missing-input');
 
-      const garmentPng = await sharp(garmentSource, { density: 150 }).png().toBuffer();
       const result = await this.transfer.generate({
         requestId: `${sessionId}-${attempt}`,
         person,
         garments: [
           {
-            image: garmentPng,
-            mime: 'image/png',
+            image: garmentImage,
+            mime: 'image/jpeg',
             category: garment.category,
             name: garment.name,
             color: garment.color,
             fit: describeFit(null, garment.category),
+            photoType: photo.photoType,
           },
         ],
         bodyBrief: describeBody(),

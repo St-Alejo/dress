@@ -5,8 +5,9 @@
   "scripts": {
     "ng": "ng",
     "vision:copy": "node scripts/copy-mediapipe.mjs",
-    "prestart": "npm run vision:copy",
-    "prebuild": "npm run vision:copy",
+    "credits:build": "node scripts/build-credits.mjs",
+    "prestart": "npm run vision:copy && npm run credits:build",
+    "prebuild": "npm run vision:copy && npm run credits:build",
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",

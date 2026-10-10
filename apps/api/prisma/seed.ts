@@ -7,27 +7,29 @@ import { join } from 'node:path';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { S3ObjectStorage } from '../src/common/storage';
 import { fitIntentFor } from '../src/modules/catalog/domain/garment-grading';
-import type { GarmentArt } from '../src/modules/catalog/infrastructure/illustration/garment-art';
 import { sizeRows } from '../src/modules/catalog/infrastructure/size-rows';
-import { IllustrationPublisher } from '../src/modules/catalog/infrastructure/illustration/illustration-publisher';
-import { BODIES, BRANDS, GARMENTS, type SeedGarment } from '../src/seed/seed-data';
+import { BODIES, BRANDS, GARMENTS } from '../src/seed/seed-data';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
 const storage = new S3ObjectStorage(new ConfigService(process.env));
-const publisher = new IllustrationPublisher(storage);
 
-/** Fotos reales con licencia libre (créditos en seed/photos/{garments,bodies}/credits.json). Si falta una, queda la ilustración. */
+/** Fotos reales con licencia libre, ya normalizadas (créditos en seed/photos/{garments,bodies}/credits.json). */
 const PHOTOS_DIR = join(__dirname, '../../../seed/photos');
 
-async function publishPhoto(kind: 'garments' | 'bodies', key: string): Promise<string | undefined> {
-  const file = join(PHOTOS_DIR, kind, `${key}.jpg`);
-  if (!existsSync(file)) return undefined;
-  const objectKey = `catalog/${kind}/${key}/photo.jpg`;
-  await storage.put(objectKey, readFileSync(file), 'image/jpeg');
+async function publish(kind: 'garments' | 'bodies', key: string, file: string, name: string, type: string): Promise<string | undefined> {
+  const path = join(PHOTOS_DIR, kind, file);
+  if (!existsSync(path)) return undefined;
+  const objectKey = `catalog/${kind}/${key}/${name}`;
+  await storage.put(objectKey, readFileSync(path), type);
   return objectKey;
 }
 
-const artOf = (g: SeedGarment): GarmentArt => ({ id: g.key, style: g.style, color: g.color, pattern: g.pattern });
+/** La tienda no tiene imagen de respaldo: una prenda o un modelo sin foto es un error del seed. */
+async function publishPhoto(kind: 'garments' | 'bodies', key: string): Promise<string> {
+  const objectKey = await publish(kind, key, `${key}.jpg`, 'photo.jpg', 'image/jpeg');
+  if (!objectKey) throw new Error(`falta la foto seed/photos/${kind}/${key}.jpg`);
+  return objectKey;
+}
 
 async function main() {
   await storage.onModuleInit();
@@ -52,22 +54,18 @@ async function main() {
     }
   }
 
-  const garmentIds: Record<string, string> = {};
   for (const g of GARMENTS) {
-    const keys = await publisher.publishGarment(g.key, g.category, artOf(g));
-    const created = await prisma.garment.create({
+    await prisma.garment.create({
       data: {
         name: g.name,
         brandId: brandIds[g.brand],
         category: g.category,
         style: g.style,
-        pattern: g.pattern,
         color: g.color,
         priceCents: g.priceCents,
-        imageFrontKey: keys.front,
-        imageFlatKey: keys.flat,
-        imageOverlayKey: keys.overlay,
         photoKey: await publishPhoto('garments', g.key),
+        photoType: g.photoType,
+        cutoutKey: await publish('garments', g.key, `${g.key}.cutout.webp`, 'cutout.webp', 'image/webp'),
         fabricNotes: g.fabricNotes,
         stretch: g.stretch,
         knownLimitations: g.knownLimitations ?? [],
@@ -75,28 +73,21 @@ async function main() {
         sizeChart: { create: sizeRows(g.style, g.sizeChart) },
       },
     });
-    garmentIds[g.key] = created.id;
   }
 
   for (const [i, b] of BODIES.entries()) {
-    const spec = { shape: b.shape, skinTone: b.skinTone, hair: b.hair, hairColor: b.hairColor };
-    const body = await prisma.bodyModel.create({
+    await prisma.bodyModel.create({
       data: {
         bodyTypeTag: b.bodyTypeTag,
         typicalSize: b.typicalSize,
         heightMin: b.heightRange[0],
         heightMax: b.heightRange[1],
         skinTone: b.skinTone,
-        shape: { ...b.shape, hair: b.hair, hairColor: b.hairColor },
-        avatarKey: await publisher.publishAvatar(b.key, spec),
+        shape: { ...b.shape },
         photoKey: await publishPhoto('bodies', b.key),
         sortOrder: i,
       },
     });
-    for (const g of GARMENTS) {
-      const imageKey = await publisher.publishPreview(b.key, g.key, spec, g.category, artOf(g));
-      await prisma.bodyModelPreview.create({ data: { bodyModelId: body.id, garmentId: garmentIds[g.key], imageKey } });
-    }
   }
 
   const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@vestirse.local';

@@ -33,7 +33,7 @@ import { IconComponent } from '../../shared/ui/icon.component';
           @for (item of store.items(); track item.garmentId) {
             <li class="flex flex-col bg-paper">
               <a [routerLink]="['/prenda', item.garmentId]" class="block aspect-[3/4] bg-surface-2">
-                <img [src]="item.imageUrl" [alt]="item.name" class="h-full w-full object-contain p-6" />
+                <img [src]="item.imageUrl" [alt]="item.name" class="h-full w-full object-cover" />
               </a>
               <div class="flex flex-1 flex-col gap-1 px-3 pt-3 pb-4">
                 <p class="label-xs">{{ item.brandName }}</p>
