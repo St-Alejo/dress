@@ -19,7 +19,7 @@ export class MemorySessions extends TryOnSessionRepository {
   async save(s: TryOnSession) { this.items.set(s.id, s); }
   async findById(id: string) { return this.items.get(id) ?? null; }
   async findOwned(id: string, r: Requester) { const s = this.items.get(id); return s?.isOwnedBy(r) ? s : null; }
-  async listOwned() { return [...this.items.values()]; }
+  async listOwned(r: Requester) { return [...this.items.values()].filter((s) => s.isOwnedBy(r)); }
   async findWithExpiredPhotos(now: Date, limit: number) { return [...this.items.values()].filter((s) => s.isExpired(now)).slice(0, limit); }
   async findStuck(changedBefore: Date, limit: number) {
     return [...this.items.values()].filter((s) => s.isInFlight && s.snapshot.statusChangedAt < changedBefore).slice(0, limit);

@@ -57,6 +57,18 @@ async function queuedSession(env: ReturnType<typeof setup>, withPhoto = true) {
   return s;
 }
 
+/** Otra sesión ya terminada, con su foto y su resultado guardados. */
+async function finishedSession(env: ReturnType<typeof setup>, args: { id: string; sid?: string; garmentId?: string; photo?: string }) {
+  const s = TryOnSession.start({ id: args.id, garmentId: args.garmentId ?? 'g1', mode: 'photorealistic', requester: { sid: args.sid ?? 'sid' }, now: new Date() });
+  s.attachPhoto(new Date(), 24);
+  s.requestGeneration();
+  s.complete();
+  await env.storage.put(s.photoKey!, Buffer.from(args.photo ?? 'jpeg'));
+  await env.storage.put(s.resultKey!, Buffer.from('anterior'));
+  await env.sessions.create(s);
+  return s;
+}
+
 const job = (attemptsMade = 0, attempts = 3) => ({ data: { sessionId: 's1' }, attemptsMade, opts: { attempts } }) as Job<GenerationJob>;
 
 describe('GenerationProcessor', () => {
@@ -74,6 +86,40 @@ describe('GenerationProcessor', () => {
     expect(s.status).toBe('done');
     expect(env.storage.objects.get(s.resultKey!)).toEqual(Buffer.from('png'));
     expect(env.emit).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'done' }));
+  });
+
+  it('reutiliza el resultado si la misma persona ya probó esa prenda con la misma foto', async () => {
+    const env = setup();
+    await finishedSession(env, { id: 's0' });
+    await queuedSession(env);
+    await env.processor.process(job());
+
+    expect(env.transfer.calls).toHaveLength(0);
+    const s = (await env.sessions.findById('s1'))!;
+    expect(s.status).toBe('done');
+    expect(env.storage.objects.get(s.resultKey!)).toEqual(Buffer.from('anterior'));
+  });
+
+  it.each([
+    ['de otra persona', { sid: 'otra' }],
+    ['de otra prenda', { garmentId: 'g2' }],
+    ['con otra foto', { photo: 'distinta' }],
+  ])('no reutiliza un resultado %s', async (_caso, other) => {
+    const env = setup();
+    await finishedSession(env, { id: 's0', ...other });
+    await queuedSession(env);
+    await env.processor.process(job());
+    expect(env.transfer.calls).toHaveLength(1);
+  });
+
+  it('volver a generar en la misma sesión pide una imagen nueva al motor', async () => {
+    const env = setup();
+    await finishedSession(env, { id: 's0' });
+    const s = await queuedSession(env);
+    s.complete();
+    s.requestGeneration();
+    await env.processor.process(job());
+    expect(env.transfer.calls).toHaveLength(1);
   });
 
   it('sin foto la sesión termina en failed en vez de quedar en cola', async () => {

@@ -21,6 +21,9 @@ import { TryOnGateway } from './tryon.gateway';
  * - Proveedor no disponible de forma definitiva (sin configurar, categoría no
  *   soportada, circuito abierto) → fallback inmediato (modelo similar / overlay).
  * - Fallo propio (sin foto, falta la prenda, error inesperado agotado) → `failed`.
+ *
+ * Los motores gratuitos tienen cuota diaria: si la misma persona ya probó esta prenda
+ * con esta misma foto, se reutiliza ese resultado en vez de volver a generar.
  */
 @Processor(GENERATION_QUEUE, { concurrency: 2 })
 export class GenerationProcessor extends WorkerHost {
@@ -62,7 +65,9 @@ export class GenerationProcessor extends WorkerHost {
       ]);
       if (!garment || !photo || !person || !garmentImage) return this.end(session, 'failed', 'missing-input');
 
-      const result = await this.transfer.generate({
+      // Con resultado propio, pedir otra generación es querer una imagen nueva: no se reutiliza.
+      const reused = session.resultKey ? null : await this.previousResult(session, person);
+      const result = reused ? { image: reused, engine: 'reused', durationMs: 0 } : await this.transfer.generate({
         requestId: `${sessionId}-${attempt}`,
         person,
         garments: [
@@ -100,6 +105,20 @@ export class GenerationProcessor extends WorkerHost {
       this.logger.error(`generación ${sessionId} falló: ${(err as Error).message}`);
       return this.end(session, 'failed', 'internal');
     }
+  }
+
+  private async previousResult(session: TryOnSession, person: Buffer): Promise<Buffer | null> {
+    const { ownerSid, userId } = session.snapshot;
+    const earlier = (await this.sessions.listOwned({ sid: ownerSid, userId }, 30)).filter(
+      (s) => s.id !== session.id && s.garmentId === session.garmentId && s.status === 'done' && s.photoKey && s.resultKey,
+    );
+    for (const candidate of earlier) {
+      const photo = await this.storage.getBuffer(candidate.photoKey!);
+      if (!photo?.equals(person)) continue;
+      const result = await this.storage.getBuffer(candidate.resultKey!);
+      if (result) return result;
+    }
+    return null;
   }
 
   private async end(session: TryOnSession, status: 'failed' | 'fallback', reason: string) {
