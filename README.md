@@ -4,10 +4,22 @@ Probador virtual de tres capas, implementado a partir de [`docs/README-virtual-t
 
 | Capa | Qué hace | Dónde corre |
 |---|---|---|
-| **Cuerpo similar** (por defecto) | Foto real del producto y, sobre 12 modelos reales XS–4XL, la prenda puesta con IA (una vez por modelo y prenda) | Motor de prueba; el resultado queda en el catálogo |
-| **Track A · Cámara en vivo** | Pose (MediaPipe) + warp afín del recorte de la foto real sobre el video | 100 % navegador; ningún frame sale del dispositivo |
+| **Cuerpo similar** (por defecto) | Foto real del producto y, sobre 12 modelos reales XS–4XL, la prenda puesta al instante con el motor de malla (vista aproximada) o con IA a petición (una vez por modelo y prenda) | Navegador; la prueba IA queda en el catálogo |
+| **Track A · Cámara en vivo** | Pose y segmentación (MediaPipe) + malla con huesos en WebGL2: la manga sigue al brazo, la mano tapa la prenda, luz del video y talla visible. Botón "Foto realista" opcional, con consentimiento | 100 % navegador; ningún frame sale del dispositivo salvo con "Foto realista" |
 | **Track B · Con tu foto** | Prueba virtual por difusión (FASHN VTON 1.5 en Hugging Face, con Leffa e IDM-VTON de respaldo; o *mock*) | Cola BullMQ → microservicio Python |
 | **Track C · ¿Es mi talla?** | Recomendación con confianza explícita, editable, calibrada por marca | Librería TS pura `packages/fit-engine` |
+
+Además:
+- **Armar look** (`/look`): un hueco por parte del cuerpo (arriba o vestido, abajo, abrigo, calzado y
+  accesorio), visto en un modelo o en la cámara. Las sugerencias de color y estilo salen de reglas
+  fijas. El look se guarda en el navegador y se comparte por enlace.
+- **Tienda:** filtros por categoría, color, talla, precio y marca, con búsqueda y orden. Todo queda en la
+  URL, y al pasar el ratón la prenda aparece puesta en un modelo.
+- **Ficha:** galería con la foto, el recorte y la prenda en tres tallas, zoom, "Combina con" y una
+  descripción textual de la vista para lectores de pantalla.
+
+Decisiones: [ADR 0001](docs/adr/0001-fotos-reales-y-motor-gratuito.md) (fotos reales y motor gratuito) y
+[ADR 0002](docs/adr/0002-camara-malla-oclusion-y-fotos-de-producto.md) (cámara con malla y oclusión).
 
 ## Puesta en marcha
 
@@ -82,7 +94,9 @@ pieza y cómo recortarla:
 | `mask` | `rembg` (por defecto), `garment` (SegFormer: quita persona, manos y perchas), `both` (borde de rembg limpiado por el segmentador) o `plain` (fondo liso y claro) |
 | `classes` | clases del segmentador cuando las de la categoría no sirven |
 | `crop` | `[x0, y0, x1, y1]` en fracciones, para quedarse con una parte de la foto |
-| `sleeve`, `anchors` | correcciones a mano del largo de manga o de puntos concretos |
+| `sleeve`, `anchors` | correcciones a mano del largo de manga o de puntos concretos (calzado: `heel` y `toe`) |
+| `erase` | polígonos en fracciones (tras `crop`) que se borran del recorte: percha, interior del escote |
+| `wear` | `{box, erase, trim}`: la parte que se viste cuando la foto de tienda muestra más (un zapato del par, botas sin cinturón). La foto de tienda queda entera |
 
 Para añadir o cambiar una: descarga el original a `seed/photos/_raw/{garments,bodies}/<id>.jpg`, apúntalo
 en `sources.json` y en `credits.json`, y ejecuta:
@@ -111,7 +125,11 @@ levantar la infraestructura (`WORKER_TOKEN=... npm run infra:up`).
 npm test                  # fit-engine, shared-types (tipos), api (jest), web (vitest)
 npm run test:invariants   # solo las invariantes éticas
 cd services/ai-worker && pytest
+node apps/web/scripts/e2e-camera.mjs   # e2e de la cámara (app levantada y Chrome): cámara falsa .y4m,
+                                       # exige tela en el torso y ≥ 12 fps; --out guarda capturas
 ```
+
+Las capturas del recorrido están en [`docs/capturas/`](docs/capturas/README.md).
 
 ### Invariantes éticas verificadas (sección 4 del documento)
 
