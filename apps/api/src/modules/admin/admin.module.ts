@@ -46,6 +46,7 @@ import sharp from 'sharp';
 import { LETTER_SIZES, type GarmentCategory, type GarmentPhotoType } from '@vestirse/shared-types';
 import { AdminGuard } from '../../common/guards';
 import { PrismaService } from '../../common/prisma.service';
+import { Prisma } from '../../generated/prisma/client';
 import { ObjectStorage } from '../../common/storage';
 import { coverageViolations } from '../catalog/domain/body-coverage';
 import { GARMENT_STYLES, type GarmentStyle } from '../catalog/domain/garment-style';
@@ -201,16 +202,19 @@ export class AdminService {
     return { id };
   }
 
-  /** Cambiar la foto invalida el recorte y las pruebas sobre modelos: mostraban la prenda anterior. */
+  /**
+   * Cambiar la foto invalida todo lo derivado de la anterior: recorte, miniatura, anclas de la
+   * cámara y pruebas sobre modelos. Se regeneran fuera de línea con prepare_catalog.py.
+   */
   async replaceGarmentPhoto(id: string, photoType: unknown, file: Upload) {
     if (!PHOTO_TYPES.includes(photoType as GarmentPhotoType)) throw new BadRequestException('photoType inválido');
     const current = await this.prisma.garment.findUnique({ where: { id }, include: { previews: true } });
     if (!current) throw new NotFoundException();
     await this.storage.put(current.photoKey, await storePhoto(file), 'image/jpeg');
-    const stale = [...current.previews.map((p) => p.imageKey), ...(current.cutoutKey ? [current.cutoutKey] : [])];
+    const stale = [...current.previews.map((p) => p.imageKey), ...[current.cutoutKey, current.thumbKey].filter((k): k is string => !!k)];
     await this.prisma.$transaction([
       this.prisma.bodyModelPreview.deleteMany({ where: { garmentId: id } }),
-      this.prisma.garment.update({ where: { id }, data: { photoType: photoType as GarmentPhotoType, cutoutKey: null } }),
+      this.prisma.garment.update({ where: { id }, data: { photoType: photoType as GarmentPhotoType, cutoutKey: null, thumbKey: null, overlayAnchors: Prisma.DbNull } }),
     ]);
     if (stale.length) await this.storage.deleteMany(stale);
     return { id };
