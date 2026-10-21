@@ -17,6 +17,20 @@ export function spreadBySize(bodies: SimilarBodyModel[], sizes: string[], max = 
   return [...new Set(picks)];
 }
 
+/**
+ * El modelo con los brazos más sueltos (hombro→codo→muñeca casi vertical): es donde una prenda
+ * queda mejor puesta sin elegir a nadie, por ejemplo al pasar el ratón por la tienda.
+ */
+export function restingBody(bodies: SimilarBodyModel[]): SimilarBodyModel | null {
+  const spread = (b: SimilarBodyModel) => {
+    const { landmarks: l, width, height } = b.pose!;
+    const tilt = (a: number, c: number) => Math.abs(Math.atan2((l[c].x - l[a].x) * width, (l[c].y - l[a].y) * height));
+    return Math.max(tilt(11, 13), tilt(13, 15), tilt(12, 14), tilt(14, 16));
+  };
+  const posed = bodies.filter((b) => b.pose?.landmarks?.length);
+  return posed.reduce<SimilarBodyModel | null>((best, b) => (!best || spread(b) < spread(best) ? b : best), null);
+}
+
 type Shot = { kind: 'photo' | 'cutout'; src: string } | { kind: 'body'; body: SimilarBodyModel };
 
 /**

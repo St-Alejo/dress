@@ -9,11 +9,11 @@ import { provideI18n } from './core/i18n';
 /** Transición suave entre páginas, pero no al actualizar la URL de la misma página (filtros, look). */
 function skipInPlaceUpdates({ transition }: ViewTransitionInfo) {
   if (!inject(Router).currentNavigation()?.extras.replaceUrl) return;
-  // Saltarla rechaza sus promesas: se atrapan para que no ensucien la consola.
-  transition.ready.catch(() => undefined);
-  transition.updateCallbackDone.catch(() => undefined);
-  transition.finished.catch(() => undefined);
-  transition.skipTransition();
+  // Cambios en la misma página (filtros, look): sin animación. No se usa skipTransition()
+  // porque Angular registra en consola el AbortError que produce.
+  const root = document.documentElement;
+  root.classList.add('vt-instant');
+  transition.finished.finally(() => root.classList.remove('vt-instant')).catch(() => undefined);
 }
 
 export const appConfig: ApplicationConfig = {

@@ -303,8 +303,13 @@ a {
   }
 }
 
-/* Cambio de página: fundido corto; la foto de la prenda viaja de la tarjeta a la ficha. */
+/* Cambio de página: fundido corto. Los cambios dentro de la misma página no se animan. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 180ms;
+}
+.vt-instant::view-transition-group(*),
+.vt-instant::view-transition-old(*),
+.vt-instant::view-transition-new(*) {
+  animation: none;
 }

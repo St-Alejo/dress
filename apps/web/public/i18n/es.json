@@ -41,7 +41,38 @@
     "search": "Buscar prenda",
     "empty": "No hay prendas con esos filtros.",
     "count": "{{n}} prendas",
-    "showingOn": "Modelo elegido:"
+    "showingOn": "Modelo elegido:",
+    "color": "Color",
+    "anyColor": "Cualquier color",
+    "size": "Talla",
+    "allSizes": "Todas las tallas",
+    "price": "Precio",
+    "allPrices": "Cualquier precio",
+    "priceBand": {
+      "low": "Hasta 30 USD",
+      "mid": "30 a 70 USD",
+      "high": "Desde 70 USD"
+    },
+    "sort": "Ordenar",
+    "sortBy": {
+      "relevance": "Destacados",
+      "price-asc": "Precio: menor a mayor",
+      "price-desc": "Precio: mayor a menor",
+      "name": "Nombre"
+    },
+    "clear": "Quitar filtros ({{n}})",
+    "onModel": "Puesta en el modelo",
+    "colorFamily": {
+      "neutral": "Neutros",
+      "earth": "Tierra",
+      "red": "Rojo",
+      "orange": "Naranja",
+      "yellow": "Amarillo",
+      "green": "Verde",
+      "blue": "Azul",
+      "purple": "Morado",
+      "pink": "Rosa"
+    }
   },
   "category": {
     "top": "Superiores",
