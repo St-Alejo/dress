@@ -18,6 +18,7 @@ Campos de cada prenda en sources.json:
   anchors       correcciones a mano de puntos concretos, en fracciones del recorte
   kind          cómo se viste en la cámara si no es el de su categoría (p. ej. un short como "skirt")
   sleeve        "none" | "short" | "long" cuando la medida automática se equivoca
+  erase         polígonos [[x, y], …] en fracciones (tras `crop`) que se borran: percha, interior del escote
 
 Uso (desde services/ai-worker, con el extra `tools` instalado):
   python scripts/prepare_catalog.py ../../seed/photos [--only g01,g02] [--force]
@@ -30,7 +31,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.garment_prep.anchors import anchors_of, kind_for  # noqa: E402
@@ -84,6 +85,19 @@ def plain_background_mask(image: Image.Image, threshold: int = 40) -> Image.Imag
     return Image.fromarray((mask * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(1))
 
 
+def erased(alpha: Image.Image, polygons: list[list[list[float]]] | None) -> Image.Image:
+    """Borra a mano lo que el segmentador cuenta como tela: la percha y el interior del escote
+    (en la foto se ve la espalda de la prenda; puesta, ahí va el cuello o el pecho)."""
+    if not polygons:
+        return alpha
+    out = alpha.copy()
+    draw = ImageDraw.Draw(out)
+    w, h = out.size
+    for poly in polygons:
+        draw.polygon([(x * w, y * h) for x, y in poly], fill=0)
+    return out
+
+
 def cutout_of(image: Image.Image, source: dict, session) -> Image.Image:
     """Sujeto con canal alfa, recortado a su caja."""
     mode = source.get("mask", "rembg")
@@ -104,7 +118,7 @@ def cutout_of(image: Image.Image, source: dict, session) -> Image.Image:
 
         classes = source.get("classes") or classes_for(source["category"], source.get("style"))
         alpha = garment_mask(image, classes)
-    alpha = largest_component(alpha)
+    alpha = largest_component(erased(alpha, source.get("erase")))
     rgba = image.convert("RGBA")
     rgba.putalpha(alpha)
     box = alpha.point(lambda a: 255 if a > 24 else 0).getbbox()
