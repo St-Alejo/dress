@@ -45,7 +45,8 @@ export function buildManifest(req: TransferRequest): WorkerManifest {
       name,
       color,
       fit,
-      ...(photoType ? { photoType } : {}),
+      // Una prenda extraída de una foto con persona ya es la prenda sola: para el motor, flat-lay.
+      ...(photoType ? { photoType: photoType === 'extracted' ? 'flat-lay' : photoType } : {}),
     })),
     bodyBrief: req.bodyBrief,
   };

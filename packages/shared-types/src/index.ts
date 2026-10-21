@@ -158,8 +158,31 @@ export interface OverlayAnchors {
   rightHip: [number, number];
 }
 
-/** Cómo está fotografiada una prenda: sola (flat-lay) o puesta en una persona (model). */
-export type GarmentPhotoType = 'flat-lay' | 'model';
+/** Puntos que se miden en el recorte de cada prenda (ver services/ai-worker/src/garment_prep/anchors.py). */
+export type GarmentAnchorName =
+  | 'neck' | 'leftShoulder' | 'rightShoulder' | 'leftArmpit' | 'rightArmpit' | 'leftCuff' | 'rightCuff'
+  | 'leftHem' | 'rightHem' | 'leftWaist' | 'rightWaist' | 'crotch' | 'leftKnee' | 'rightKnee'
+  | 'leftAnkle' | 'rightAnkle' | 'topLeft' | 'bottomRight' | 'base' | 'top';
+
+/**
+ * Anclas medidas en la foto de la prenda, normalizadas a [0, 1] del recorte. Con ellas la
+ * cámara deforma el recorte con una malla de huesos (mangas que siguen al brazo, perneras
+ * que siguen a la rodilla). "left" = lado izquierdo de quien la viste, como en MediaPipe.
+ */
+export interface GarmentAnchors {
+  version: 1;
+  kind: 'upper' | 'lower' | 'skirt' | 'footwear' | 'accessory';
+  /** ancho / alto del recorte. */
+  aspect: number;
+  points: Partial<Record<GarmentAnchorName, [number, number]>>;
+  sleeve?: 'none' | 'short' | 'long';
+}
+
+/**
+ * Cómo está fotografiada una prenda: sola (flat-lay), puesta en una persona (model) o
+ * extraída de una foto con persona por el segmentador de ropa (extracted: ya es la prenda sola).
+ */
+export type GarmentPhotoType = 'flat-lay' | 'model' | 'extracted';
 
 export interface GarmentItem {
   id: string;
@@ -170,8 +193,11 @@ export interface GarmentItem {
   color: string;
   priceCents: number;
   /** `photo` = foto real de producto; `cutout` = su recorte con transparencia (cámara en vivo). */
-  images: { photo: string; cutout?: string };
+  images: { photo: string; cutout?: string; thumb?: string };
   photoType: GarmentPhotoType;
+  /** Anclas medidas en el recorte; sin ellas no hay cámara en vivo ni vista aproximada. */
+  anchors?: GarmentAnchors;
+  style?: string;
   fitIntent?: FitIntent;
   sizeChart: SizeChartEntry[];
   /** "cae holgado", "tela con poco stretch" — contexto no visual. */

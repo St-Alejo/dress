@@ -14,8 +14,8 @@ export interface WorkerGarment {
   color: string;
   /** Descriptor de ajuste en inglés (ver fit-brief.ts). */
   fit: string;
-  /** Opcional: por defecto el worker asume `flat-lay`. */
-  photoType?: GarmentPhotoType;
+  /** Opcional: por defecto el worker asume `flat-lay`. Una prenda `extracted` viaja como `flat-lay`. */
+  photoType?: Exclude<GarmentPhotoType, 'extracted'>;
 }
 
 export interface WorkerManifest {

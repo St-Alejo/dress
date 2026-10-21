@@ -1,0 +1,27 @@
+{
+ "version": 1,
+ "kind": "skirt",
+ "aspect": 0.91,
+ "points": {
+  "rightWaist": [
+   0.1864,
+   0.019
+  ],
+  "leftWaist": [
+   0.3546,
+   0.019
+  ],
+  "rightHem": [
+   0.073,
+   0.981
+  ],
+  "leftHem": [
+   0.588,
+   0.981
+  ],
+  "crotch": [
+   0.5007,
+   0.3004
+  ]
+ }
+}

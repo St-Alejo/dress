@@ -1,0 +1,27 @@
+{
+ "version": 1,
+ "kind": "lower",
+ "aspect": 0.42,
+ "points": {
+  "rightWaist": [
+   0.3528,
+   0.02
+  ],
+  "leftWaist": [
+   0.6048,
+   0.02
+  ],
+  "crotch": [
+   0.4987,
+   0.4727
+  ],
+  "leftKnee": [
+   0.7653,
+   0.7364
+  ],
+  "leftAnkle": [
+   0.8103,
+   0.9833
+  ]
+ }
+}

@@ -24,6 +24,12 @@ async function publish(kind: 'garments' | 'bodies', key: string, file: string, n
   return objectKey;
 }
 
+/** JSON opcional junto a las fotos (anclas de una prenda, pose de un modelo). */
+function readJson(kind: 'garments' | 'bodies', file: string) {
+  const path = join(PHOTOS_DIR, kind, file);
+  return existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : undefined;
+}
+
 /** La tienda no tiene imagen de respaldo: una prenda o un modelo sin foto es un error del seed. */
 async function publishPhoto(kind: 'garments' | 'bodies', key: string): Promise<string> {
   const objectKey = await publish(kind, key, `${key}.jpg`, 'photo.jpg', 'image/jpeg');
@@ -66,6 +72,8 @@ async function main() {
         photoKey: await publishPhoto('garments', g.key),
         photoType: g.photoType,
         cutoutKey: await publish('garments', g.key, `${g.key}.cutout.webp`, 'cutout.webp', 'image/webp'),
+        thumbKey: await publish('garments', g.key, `${g.key}.w384.webp`, 'thumb.webp', 'image/webp'),
+        overlayAnchors: readJson('garments', `${g.key}.anchors.json`),
         fabricNotes: g.fabricNotes,
         stretch: g.stretch,
         knownLimitations: g.knownLimitations ?? [],
@@ -85,6 +93,7 @@ async function main() {
         skinTone: b.skinTone,
         shape: { ...b.shape },
         photoKey: await publishPhoto('bodies', b.key),
+        pose: readJson('bodies', `${b.key}.pose.json`),
         sortOrder: i,
       },
     });

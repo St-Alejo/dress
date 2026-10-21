@@ -84,10 +84,14 @@ model Garment {
   priceCents       Int
   /// Foto real de producto: la única imagen de la prenda en la tienda.
   photoKey         String
-  /// Cómo está fotografiada: sola (flat-lay) o puesta en una persona (model).
+  /// Cómo está fotografiada: sola (flat-lay), puesta en una persona (model) o extraída de una foto con persona (extracted).
   photoType        String            @default("flat-lay")
   /// Recorte con transparencia para la cámara en vivo; sin él la prenda no la ofrece.
   cutoutKey        String?
+  /// Miniatura WebP de la foto de tienda para listados (srcset).
+  thumbKey         String?
+  /// Anclas medidas en el recorte (cuello, hombros, puños, cintura, rodillas…): ver GarmentAnchors.
+  overlayAnchors   Json?
   /// Holgura de diseño { chestEaseCm, waistEaseCm, hipEaseCm }.
   fitIntent        Json?
   fabricNotes      String?
@@ -138,6 +142,8 @@ model BodyModel {
   shape       Json
   /// Foto real de una persona con esta complexión (banco con licencia libre).
   photoKey    String
+  /// Puntos de pose de la foto (BlazePose, normalizados): para vestir la prenda al instante sin IA.
+  pose        Json?
   sortOrder   Int                @default(0)
   previews    BodyModelPreview[]
 }

@@ -1,0 +1,44 @@
+{
+ "version": 1,
+ "kind": "upper",
+ "aspect": 0.4467,
+ "points": {
+  "neck": [
+   0.4988,
+   0.0367
+  ],
+  "rightShoulder": [
+   0.0735,
+   0.0634
+  ],
+  "leftShoulder": [
+   0.9614,
+   0.0934
+  ],
+  "rightArmpit": [
+   0.0349,
+   0.1379
+  ],
+  "leftArmpit": [
+   1.0,
+   0.1379
+  ],
+  "rightCuff": [
+   0.0,
+   0.1357
+  ],
+  "leftCuff": [
+   0.9614,
+   0.1379
+  ],
+  "rightHem": [
+   0.4214,
+   0.9711
+  ],
+  "leftHem": [
+   0.5611,
+   0.9711
+  ]
+ },
+ "sleeve": "none"
+}

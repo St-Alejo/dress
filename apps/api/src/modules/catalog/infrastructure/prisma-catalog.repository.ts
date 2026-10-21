@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Brand, FitIntent, GarmentDims, GarmentItem, GarmentPhotoType, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
+import type { Brand, FitIntent, GarmentAnchors, GarmentDims, GarmentItem, GarmentPhotoType, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
 import { mediaUrl } from '../../../common/mappers';
 import { PrismaService } from '../../../common/prisma.service';
 import type { Prisma } from '../../../generated/prisma/client';
@@ -26,8 +26,11 @@ export function toGarmentItem(row: GarmentRow): GarmentItem {
     images: {
       photo: mediaUrl(row.photoKey),
       ...(row.cutoutKey ? { cutout: mediaUrl(row.cutoutKey) } : {}),
+      ...(row.thumbKey ? { thumb: mediaUrl(row.thumbKey) } : {}),
     },
     photoType: row.photoType as GarmentPhotoType,
+    ...(row.overlayAnchors ? { anchors: row.overlayAnchors as unknown as GarmentAnchors } : {}),
+    style: row.style,
     fitIntent: (row.fitIntent as FitIntent | null) ?? undefined,
     fabricNotes: row.fabricNotes ?? undefined,
     stretch: row.stretch,
