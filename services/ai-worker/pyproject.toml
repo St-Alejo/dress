@@ -15,8 +15,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "respx>=0.22"]
-# Solo para preparar el catálogo (scripts/prepare_catalog.py); no va en la imagen del worker.
-tools = ["rembg[cpu]>=2.0.60"]
+# Solo para preparar el catálogo (no entra en la imagen Docker). torch conviene instalarlo antes
+# desde https://download.pytorch.org/whl/cpu para no bajar la versión con CUDA.
+tools = ["rembg[cpu]>=2.0.60", "transformers>=5.0", "torch>=2.6", "torchvision>=0.21", "scipy>=1.13"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

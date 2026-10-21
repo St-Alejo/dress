@@ -70,15 +70,34 @@ prendas en el panel de admin. Sin clave, sin cupo o con error, ambas se omiten y
 
 ### Fotos del catálogo
 
-Todas las prendas y modelos usan fotos reales de Pexels (créditos en `/creditos`). `seed/photos/sources.json`
-dice de qué foto sale cada pieza. Para añadir o cambiar una: descarga el original a
-`seed/photos/_raw/{garments,bodies}/<id>.jpg`, apúntalo en `sources.json` y ejecuta:
+Todas las prendas y modelos usan fotos reales de Pexels y Unsplash (créditos en `/creditos`), sin
+personas: cuando la única buena foto de una prenda la llevaba puesta alguien, la prenda se extrae con un
+segmentador de ropa (`photoType: "extracted"`). `seed/photos/sources.json` dice de qué foto sale cada
+pieza y cómo recortarla:
+
+| Campo | Para qué |
+|---|---|
+| `source`, `id` | `pexels` o `unsplash` y el id de la foto |
+| `category`, `style` | qué anclas medir y qué clase pedir al segmentador |
+| `mask` | `rembg` (por defecto), `garment` (SegFormer: quita persona, manos y perchas), `both` (borde de rembg limpiado por el segmentador) o `plain` (fondo liso y claro) |
+| `classes` | clases del segmentador cuando las de la categoría no sirven |
+| `crop` | `[x0, y0, x1, y1]` en fracciones, para quedarse con una parte de la foto |
+| `sleeve`, `anchors` | correcciones a mano del largo de manga o de puntos concretos |
+
+Para añadir o cambiar una: descarga el original a `seed/photos/_raw/{garments,bodies}/<id>.jpg`, apúntalo
+en `sources.json` y en `credits.json`, y ejecuta:
 
 ```bash
 cd services/ai-worker
-pip install -e ".[tools]"                              # rembg, solo para preparar fotos
-python scripts/prepare_catalog.py ../../seed/photos    # fondo claro 768×1024 + recorte para la cámara
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu   # sin CUDA
+pip install -e ".[tools]"                              # rembg, SegFormer y scipy: solo para preparar fotos
+python scripts/prepare_catalog.py ../../seed/photos --only g01 --force
 ```
+
+Por cada prenda salen la foto de tienda (`gNN.jpg`, fondo claro 768×1024), una miniatura WebP de 384 px,
+el recorte con transparencia para la cámara y `gNN.anchors.json`: cuello, hombros, axilas, puños y bajo
+(o cintura, tiro, rodillas y tobillos) medidos sobre el recorte. Con `--anchors-only` se recalculan solo
+las anclas.
 
 Desde el panel de admin también se puede dar de alta una prenda con su foto (obligatoria); esas no
 tienen recorte, así que no ofrecen la cámara en vivo.
