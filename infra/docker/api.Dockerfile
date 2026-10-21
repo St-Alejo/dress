@@ -24,4 +24,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=3s --retries=5 \
   CMD node -e "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 # Las migraciones se aplican al arrancar (idempotente); luego se levanta la API.
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Con RESEED_ONCE=1 recarga el catálogo de demo una sola vez (ver scripts/start.mjs).
+CMD ["node", "scripts/start.mjs"]
