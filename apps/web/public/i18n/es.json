@@ -491,5 +491,17 @@
       "and": "y",
       "onBody": "{{list}}, sobre el modelo {{body}}, {{min}}–{{max}} cm"
     }
+  },
+  "gallery": {
+    "label": "Más vistas de la prenda",
+    "photo": "Foto",
+    "cutout": "Prenda sola",
+    "onSize": "En talla {{size}}",
+    "zoom": {
+      "photo": "Ampliar la foto",
+      "cutout": "Ampliar la prenda sola"
+    },
+    "zoomTitle": "Foto ampliada",
+    "zoomHelp": "Toca o haz clic para acercar; mueve el puntero para recorrerla. Esc para cerrar."
   }
 }

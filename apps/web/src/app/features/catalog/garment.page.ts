@@ -21,6 +21,9 @@ import { PhotoTryOnComponent } from '../photo-upload/photo-tryon.component';
 import { ReviewsPanelComponent } from '../reviews/reviews-panel.component';
 import { ApproxViewComponent } from './approx-view.component';
 import { BodyPickerComponent } from './body-picker.component';
+import { GarmentGalleryComponent } from './garment-gallery.component';
+import { PairsWithComponent } from '../look/pairs-with.component';
+import { describeLook } from '../look/look-description';
 
 /**
  * Página de prenda: las tres capas conviven, ninguna es obligatoria para comprar (sección 2).
@@ -28,7 +31,7 @@ import { BodyPickerComponent } from './body-picker.component';
  */
 @Component({
   selector: 'app-garment-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, FitPanelComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, FitPanelComponent, GarmentGalleryComponent, PairsWithComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     /* Mismo fondo que el lienzo de las fotos de catálogo: la foto no se ve "pegada". */
@@ -63,6 +66,7 @@ import { BodyPickerComponent } from './body-picker.component';
                     @if (!store.modelPreview() && approxBody(); as b) {
                       <app-approx-view class="block h-full" [body]="b" [garments]="approxGarments()" [fits]="approxFits()" (placed)="approxPlaced.set($event)" />
                       <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.approxPreview' | transloco }}</p>
+                      <p class="sr-only" aria-live="polite">{{ approxDescription() }}</p>
                     } @else {
                       <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain" />
                     }
@@ -110,6 +114,7 @@ import { BodyPickerComponent } from './body-picker.component';
               }
             </div>
             <p class="text-[12px] text-muted">{{ 'mode.note.' + store.mode() | transloco }}</p>
+            <app-garment-gallery [garment]="g" [bodies]="store.bodyModels()" />
           </section>
 
           <!-- Información, talla y contexto -->
@@ -132,6 +137,10 @@ import { BodyPickerComponent } from './body-picker.component';
               @if (comparison.count() > 0) {
                 <a routerLink="/comparar" class="btn btn-ghost">{{ 'compare.open' | transloco: { n: comparison.count() } }}</a>
               }
+            </div>
+
+            <div class="border-b border-line py-6">
+              <app-pairs-with [garment]="g" [bodyId]="store.selectedBodyId()" />
             </div>
 
             <div class="py-6">
@@ -192,6 +201,13 @@ export class GarmentPage {
     return { [g.id]: fitForSize(g.sizeChart.map((s) => s.size), body.typicalSize, this.store.chosenSize() ?? undefined) };
   });
   readonly approxPlaced = signal(-1);
+  /** Lo mismo que se ve, en palabras: prenda, talla, holgura y modelo. */
+  readonly approxDescription = computed(() => {
+    this.dictionary();
+    const g = this.store.garment();
+    const size = this.store.chosenSize() ?? undefined;
+    return g ? describeLook([g], this.approxBody(), (k, p) => this.transloco.translate(k, p), { [g.id]: { size, fit: this.approxFits()[g.id] } }) : '';
+  });
 
   readonly inComparison = computed(() => {
     const g = this.store.garment();

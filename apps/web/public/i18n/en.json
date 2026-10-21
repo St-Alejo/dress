@@ -491,5 +491,17 @@
       "and": "and",
       "onBody": "{{list}}, on the model {{body}}, {{min}}–{{max}} cm"
     }
+  },
+  "gallery": {
+    "label": "More views of the garment",
+    "photo": "Photo",
+    "cutout": "Garment only",
+    "onSize": "In size {{size}}",
+    "zoom": {
+      "photo": "Zoom the photo",
+      "cutout": "Zoom the garment only"
+    },
+    "zoomTitle": "Zoomed photo",
+    "zoomHelp": "Tap or click to zoom in; move the pointer to look around. Esc to close."
   }
 }
