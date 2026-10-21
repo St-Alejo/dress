@@ -91,27 +91,43 @@
     "breadcrumb": "Breadcrumb"
   },
   "live": {
-    "intro": "See the garment on you in real time. Everything happens on your device.",
+    "intro": "See yourself wearing it in real time: the sleeve follows your arm, your hands stay in front and the lighting matches your room.",
     "start": "Turn on camera",
     "stop": "Turn off camera",
-    "privacy": "We only ask for the camera (no microphone). No image is sent to any server.",
+    "privacy": "We only ask for the camera (no microphone). No frame leaves your device unless you tap “Realistic photo” and accept.",
     "loading": "Getting the camera ready…",
     "quickPreview": "Quick preview — for a more realistic result, use your photo",
-    "unsupportedGarment": "Live view works with torso and leg garments. For this one, use the similar body.",
+    "unsupportedGarment": "This item does not have a measured cutout for the camera yet. Try the similar body or your photo.",
     "ratiosReady": "Proportions ready to refine your size (optional).",
     "hint": {
       "no-body": "Stand in front of the camera",
       "too-far": "Come a little closer",
       "too-close": "Step back a little",
       "show-hips": "Make sure your shoulders and hips are visible",
-      "good": "That's it!"
+      "good": "That's it!",
+      "show-legs": "Step back so your knees are visible",
+      "show-feet": "Step back so your feet are visible",
+      "show-head": "Make sure your head is visible"
     },
     "error": {
       "denied": "We don't have permission to use the camera. You can enable it in your browser settings.",
       "unavailable": "We couldn't find an available camera.",
       "unsupported": "Your browser doesn't allow using the camera here.",
       "model": "We couldn't load the pose detector on this device."
-    }
+    },
+    "qualityFull": "Live view · arms and hands in front",
+    "qualityBasic": "Live view",
+    "size": "Size in view",
+    "recommended": "recommended",
+    "capture": "Save snapshot",
+    "realistic": "Realistic AI photo",
+    "realisticNote": "“Save snapshot” stays on your device. “Realistic photo” takes a photo in 3 s and, if you accept, sends it to the AI engine for a photographic result.",
+    "adjust": "Adjust",
+    "up": "Move up",
+    "down": "Move down",
+    "smaller": "Make smaller",
+    "bigger": "Make bigger",
+    "reset": "Reset"
   },
   "photo": {
     "intro": "Upload a photo to see a realistic AI-generated image. It's optional: you can buy without it.",

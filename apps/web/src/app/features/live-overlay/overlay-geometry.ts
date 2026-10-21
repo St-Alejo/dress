@@ -1,93 +1,42 @@
-import type { GarmentCategory, GarmentItem, OverlayAnchors, PoseRatios } from '@vestirse/shared-types';
+import type { GarmentItem, PoseRatios } from '@vestirse/shared-types';
+import { dist } from './engine/geometry';
+import type { Body, Joint } from './engine/rig';
+import { canWear } from './engine/tryon-scene';
 
-export type Pt = [number, number];
+export type FitHint = 'no-body' | 'too-far' | 'too-close' | 'show-hips' | 'show-legs' | 'show-feet' | 'show-head' | 'good';
 
-/** Puntos de pose relevantes, en px del lienzo. Solo números: nunca píxeles de la imagen. */
-export interface PosePoints {
-  leftShoulder: Pt;
-  rightShoulder: Pt;
-  leftHip: Pt;
-  rightHip: Pt;
-  /** Visibilidad mínima de hombros y caderas (0..1). */
-  shouldersVisible: number;
-  hipsVisible: number;
+const VISIBLE = 0.5;
+const seen = (j?: Joint): j is Joint => !!j && j.v >= VISIBLE;
+
+/** ¿Qué parte del cuerpo hace falta ver para vestir esta prenda? */
+export type Needs = 'shoulders' | 'hips' | 'legs' | 'feet' | 'head';
+
+export function needsFor(g: Pick<GarmentItem, 'category' | 'style'>): Needs {
+  if (g.category === 'bottom') return g.style === 'skirt' ? 'hips' : 'legs';
+  if (g.category === 'footwear') return 'feet';
+  if (g.category === 'accessory' && g.style === 'cap') return 'head';
+  return 'shoulders';
 }
 
-export type FitHint = 'no-body' | 'too-far' | 'too-close' | 'show-hips' | 'good';
-
-/** Matriz afín [a, b, c, d, e, f] (formato de CanvasRenderingContext2D.setTransform). */
-export type Affine = [number, number, number, number, number, number];
-
-const mid = (a: Pt, b: Pt): Pt => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-
-/**
- * Transformación afín que lleva tres puntos de origen a tres de destino.
- * Resuelve x' = a·x + c·y + e ; y' = b·x + d·y + f.
- */
-export function affineFrom3(src: [Pt, Pt, Pt], dst: [Pt, Pt, Pt]): Affine | null {
-  const [[x1, y1], [x2, y2], [x3, y3]] = src;
-  const det = x1 * (y2 - y3) - x2 * (y1 - y3) + x3 * (y1 - y2);
-  if (Math.abs(det) < 1e-9) return null;
-  const solve = (v1: number, v2: number, v3: number): [number, number, number] => [
-    (v1 * (y2 - y3) - v2 * (y1 - y3) + v3 * (y1 - y2)) / det,
-    (x1 * (v2 - v3) - x2 * (v1 - v3) + x3 * (v1 - v2)) / det,
-    (x1 * (y2 * v3 - y3 * v2) - x2 * (y1 * v3 - y3 * v1) + x3 * (y1 * v2 - y2 * v1)) / det,
-  ];
-  const [a, c, e] = solve(dst[0][0], dst[1][0], dst[2][0]);
-  const [b, d, f] = solve(dst[0][1], dst[1][1], dst[2][1]);
-  return [a, b, c, d, e, f];
-}
-
-export function applyAffine([a, b, c, d, e, f]: Affine, [x, y]: Pt): Pt {
-  return [a * x + c * y + e, b * x + d * y + f];
-}
-
-/** Categorías que se pueden superponer en vivo con anclas de hombros y caderas. */
-export function supportsLiveOverlay(category: GarmentCategory): boolean {
-  return category === 'top' || category === 'outerwear' || category === 'dress' || category === 'bottom';
-}
-
-/** La cámara necesita el recorte de una prenda fotografiada sola: una foto con persona se vería como un collage. */
-export function canOverlay(g: Pick<GarmentItem, 'category' | 'images' | 'photoType'>): boolean {
-  return supportsLiveOverlay(g.category) && g.photoType === 'flat-lay' && !!g.images.cutout;
-}
-
-/**
- * Dónde caen hombros y caderas dentro del recorte de una prenda (px del recorte).
- * Son proporciones típicas por categoría, no una medición: basta para una vista
- * previa rápida. En las prendas inferiores los hombros quedan por encima de la imagen.
- */
-export function cutoutAnchors(category: GarmentCategory, width: number, height: number): OverlayAnchors {
-  const at = (x: number, y: number): Pt => [x * width, y * height];
-  if (category === 'bottom') {
-    return { leftShoulder: at(0.9, -0.62), rightShoulder: at(0.1, -0.62), leftHip: at(0.8, 0.08), rightHip: at(0.2, 0.08) };
-  }
-  if (category === 'dress') {
-    return { leftShoulder: at(0.74, 0.07), rightShoulder: at(0.26, 0.07), leftHip: at(0.68, 0.5), rightHip: at(0.32, 0.5) };
-  }
-  // Partes de arriba: las mangas ensanchan el recorte, así que los hombros quedan hacia dentro.
-  return { leftShoulder: at(0.76, 0.12), rightShoulder: at(0.24, 0.12), leftHip: at(0.7, 0.96), rightHip: at(0.3, 0.96) };
-}
-
-/**
- * Warp afín por región (sección 7.1): alinea hombros y centro de cadera de la
- * imagen de la prenda con los keypoints detectados. Deliberadamente simple.
- */
-export function overlayTransform(anchors: OverlayAnchors, pose: PosePoints): Affine | null {
-  const src: [Pt, Pt, Pt] = [anchors.leftShoulder, anchors.rightShoulder, mid(anchors.leftHip, anchors.rightHip)];
-  const dst: [Pt, Pt, Pt] = [pose.leftShoulder, pose.rightShoulder, mid(pose.leftHip, pose.rightHip)];
-  return affineFrom3(src, dst);
+/** La cámara necesita el recorte de la prenda sola y sus anclas medidas. */
+export function canOverlay(g: Pick<GarmentItem, 'images' | 'anchors'>): boolean {
+  return canWear(g);
 }
 
 /** Guía conversacional de encuadre (paso 3): qué decirle a la persona. */
-export function fitHintFor(pose: PosePoints | null, canvasWidth: number): FitHint {
-  if (!pose || pose.shouldersVisible < 0.5) return 'no-body';
-  const shoulderWidth = Math.hypot(pose.leftShoulder[0] - pose.rightShoulder[0], pose.leftShoulder[1] - pose.rightShoulder[1]);
-  const rel = shoulderWidth / canvasWidth;
-  if (rel > 0.42) return 'too-close';
-  if (rel < 0.1) return 'too-far';
-  // El warp usa el centro de cadera como tercer ancla: sin caderas no hay alineación estable.
-  if (pose.hipsVisible < 0.5) return 'show-hips';
+export function fitHintFor(body: Body | null, canvasWidth: number, needs: Needs = 'shoulders'): FitHint {
+  const ls = body?.leftShoulder;
+  const rs = body?.rightShoulder;
+  if (needs === 'feet') {
+    return seen(body?.leftAnkle) && seen(body?.rightAnkle) ? 'good' : body ? 'show-feet' : 'no-body';
+  }
+  if (!body || !seen(ls) || !seen(rs)) return 'no-body';
+  const rel = dist(ls.p, rs.p) / canvasWidth;
+  if (rel > 0.5) return 'too-close';
+  if (rel < 0.08) return 'too-far';
+  if (needs === 'head' && !(seen(body.leftEar) && seen(body.rightEar))) return 'show-head';
+  if ((needs === 'hips' || needs === 'legs') && !(seen(body.leftHip) && seen(body.rightHip))) return 'show-hips';
+  if (needs === 'legs' && !(seen(body.leftKnee) && seen(body.rightKnee))) return 'show-legs';
   return 'good';
 }
 
@@ -97,10 +46,10 @@ export function fitHintFor(pose: PosePoints | null, canvasWidth: number): FitHin
  * por la relación típica entre landmarks.
  */
 export const TYPICAL_LANDMARK_RATIO = 1.45;
-export function poseRatiosFrom(pose: PosePoints): PoseRatios | null {
-  if (pose.shouldersVisible < 0.6 || pose.hipsVisible < 0.6) return null;
-  const shoulders = Math.hypot(pose.leftShoulder[0] - pose.rightShoulder[0], pose.leftShoulder[1] - pose.rightShoulder[1]);
-  const hips = Math.hypot(pose.leftHip[0] - pose.rightHip[0], pose.leftHip[1] - pose.rightHip[1]);
+export function poseRatiosFrom(body: Body): PoseRatios | null {
+  const { leftShoulder: ls, rightShoulder: rs, leftHip: lh, rightHip: rh } = body;
+  if (!ls || !rs || !lh || !rh || Math.min(ls.v, rs.v, lh.v, rh.v) < 0.6) return null;
+  const hips = dist(lh.p, rh.p);
   if (hips < 1) return null;
-  return { shoulderToHipRatio: Math.round((shoulders / hips / TYPICAL_LANDMARK_RATIO) * 100) / 100 };
+  return { shoulderToHipRatio: Math.round((dist(ls.p, rs.p) / hips / TYPICAL_LANDMARK_RATIO) * 100) / 100 };
 }

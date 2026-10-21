@@ -91,27 +91,43 @@
     "breadcrumb": "Ruta de navegación"
   },
   "live": {
-    "intro": "Ve la prenda sobre ti en tiempo real. Todo ocurre en tu dispositivo.",
+    "intro": "Mírate con la prenda puesta en tiempo real: la manga sigue a tu brazo, tus manos quedan por delante y la luz se ajusta a tu habitación.",
     "start": "Encender cámara",
     "stop": "Apagar cámara",
-    "privacy": "Solo pedimos la cámara (sin micrófono). Ninguna imagen se envía a ningún servidor.",
+    "privacy": "Solo pedimos la cámara (sin micrófono). Ningún fotograma sale de tu dispositivo, salvo que pulses «Foto realista» y lo aceptes.",
     "loading": "Preparando la cámara…",
     "quickPreview": "Vista previa rápida — para un resultado más realista, usa tu foto",
-    "unsupportedGarment": "La vista en vivo funciona con prendas de torso y piernas. Para esta prenda, usa el cuerpo similar.",
+    "unsupportedGarment": "Esta prenda todavía no tiene recorte medido para la cámara. Prueba el cuerpo similar o tu foto.",
     "ratiosReady": "Proporciones listas para afinar tu talla (opcional).",
     "hint": {
       "no-body": "Colócate frente a la cámara",
       "too-far": "Acércate un poco",
       "too-close": "Aléjate un poco",
       "show-hips": "Que se vean tus hombros y tu cadera",
-      "good": "¡Así está bien!"
+      "good": "¡Así está bien!",
+      "show-legs": "Aléjate para que se vean tus rodillas",
+      "show-feet": "Aléjate para que se vean tus pies",
+      "show-head": "Que se vea tu cabeza"
     },
     "error": {
       "denied": "No tenemos permiso para usar la cámara. Puedes activarlo en la configuración del navegador.",
       "unavailable": "No encontramos una cámara disponible.",
       "unsupported": "Tu navegador no permite usar la cámara aquí.",
       "model": "No pudimos cargar el detector de pose en este dispositivo."
-    }
+    },
+    "qualityFull": "Vista en vivo · brazos y manos por delante",
+    "qualityBasic": "Vista en vivo",
+    "size": "Talla en la vista",
+    "recommended": "recomendada",
+    "capture": "Guardar captura",
+    "realistic": "Foto realista con IA",
+    "realisticNote": "«Guardar captura» se queda en tu dispositivo. «Foto realista» toma una foto en 3 s y, si aceptas, la envía al motor de IA para un resultado fotográfico.",
+    "adjust": "Ajustar",
+    "up": "Subir la prenda",
+    "down": "Bajar la prenda",
+    "smaller": "Achicar la prenda",
+    "bigger": "Agrandar la prenda",
+    "reset": "Restablecer"
   },
   "photo": {
     "intro": "Sube una foto para ver una imagen realista generada con IA. Es opcional: puedes comprar sin hacerlo.",
