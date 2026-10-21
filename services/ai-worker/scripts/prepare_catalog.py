@@ -111,6 +111,11 @@ def cutout_of(image: Image.Image, source: dict, session) -> Image.Image:
     return rgba.crop(box) if box else rgba
 
 
+def write_anchors(path: Path, anchors: dict) -> None:
+    # Siempre LF: en Windows write_text pondría CRLF y git avisaría en cada regeneración.
+    path.write_text(json.dumps(anchors, indent=1) + "\n", encoding="utf-8", newline="\n")
+
+
 def on_canvas(cutout: Image.Image) -> Image.Image:
     """Encaja el recorte en el lienzo de tienda conservando la proporción, con una sombra suave."""
     canvas = Image.new("RGB", CANVAS, BACKGROUND)
@@ -155,7 +160,7 @@ def main() -> None:
             if args.anchors_only:
                 if kind == "garments" and cut_path.exists():
                     anchors = anchors_for(Image.open(cut_path), source)
-                    (root / kind / f"{key}.anchors.json").write_text(json.dumps(anchors, indent=1), encoding="utf-8")
+                    write_anchors(root / kind / f"{key}.anchors.json", anchors)
                     print(f"{kind}/{key} anclas")
                 continue
             if target.exists() and not args.force:
@@ -176,7 +181,7 @@ def main() -> None:
                     cutout.thumbnail((CUTOUT_MAX, CUTOUT_MAX), Image.LANCZOS)
                     cutout.save(cut_path, "WEBP", quality=88, method=6)
                     anchors = anchors_for(cutout, source)
-                    (root / kind / f"{key}.anchors.json").write_text(json.dumps(anchors, indent=1), encoding="utf-8")
+                    write_anchors(root / kind / f"{key}.anchors.json", anchors)
             store.save(target, "JPEG", quality=88, optimize=True)
             thumb = ImageOps.contain(store, (THUMB_W, THUMB_W * 4 // 3), Image.LANCZOS)
             thumb.save(root / kind / f"{key}.w{THUMB_W}.webp", "WEBP", quality=82, method=6)
