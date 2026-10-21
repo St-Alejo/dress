@@ -69,6 +69,9 @@
       "mid-soft": "Average, soft build"
     },
     "aiPreview": "AI-generated try-on over a real model",
+    "approxPreview": "Approximate view, no AI",
+    "approxHelp": "This is an instant approximate view. The AI try-on, with real drape and folds, takes up to a minute.",
+    "approxFailed": "This garment cannot be placed with this model’s pose; try another one.",
     "generate": "See the garment on this model",
     "generateHelp": "There is no try-on of this garment on this model yet. Generating it takes up to a minute.",
     "generating": "Dressing the model… this can take up to a minute.",

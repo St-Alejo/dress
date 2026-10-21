@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -13,9 +13,13 @@ import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 import { FitPanelComponent } from '../fit-engine/fit-panel.component';
 import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
+import type { Fit } from '../live-overlay/engine/rig';
+import { fitForSize } from '../live-overlay/engine/size-fit';
+import { canWear } from '../live-overlay/engine/tryon-scene';
 import { canOverlay } from '../live-overlay/overlay-geometry';
 import { PhotoTryOnComponent } from '../photo-upload/photo-tryon.component';
 import { ReviewsPanelComponent } from '../reviews/reviews-panel.component';
+import { ApproxViewComponent } from './approx-view.component';
 import { BodyPickerComponent } from './body-picker.component';
 
 /**
@@ -24,7 +28,7 @@ import { BodyPickerComponent } from './body-picker.component';
  */
 @Component({
   selector: 'app-garment-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, BodyPickerComponent, FitPanelComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, FitPanelComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     /* Mismo fondo que el lienzo de las fotos de catálogo: la foto no se ve "pegada". */
@@ -56,7 +60,12 @@ import { BodyPickerComponent } from './body-picker.component';
               @switch (store.mode()) {
                 @case ('similar-model') {
                   <div class="stage relative h-[min(70vh,640px)] overflow-hidden">
-                    <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain" />
+                    @if (!store.modelPreview() && approxBody(); as b) {
+                      <app-approx-view class="block h-full" [body]="b" [garments]="approxGarments()" [fits]="approxFits()" (placed)="approxPlaced.set($event)" />
+                      <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.approxPreview' | transloco }}</p>
+                    } @else {
+                      <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain" />
+                    }
                     @if (store.modelPreview()) {
                       <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.aiPreview' | transloco }}</p>
                     }
@@ -68,8 +77,12 @@ import { BodyPickerComponent } from './body-picker.component';
                   </div>
                   @if (!store.selectedBody()) {
                     <p class="mt-3 text-[13px] text-ink-2">{{ 'body.chooseToSee' | transloco }}</p>
+                  } @else if (approxBody() && approxPlaced() === 0) {
+                    <p class="mt-3 text-[13px] text-ink-2">{{ 'body.approxFailed' | transloco }}</p>
                   } @else if (!store.wearable()) {
-                    <p class="mt-3 text-[13px] text-ink-2">{{ 'body.notWearable' | transloco }}</p>
+                    @if (!approxBody()) {
+                      <p class="mt-3 text-[13px] text-ink-2">{{ 'body.notWearable' | transloco }}</p>
+                    }
                   } @else if (!store.modelPreview()) {
                     <div class="mt-3 flex flex-wrap items-center gap-3">
                       <button type="button" class="btn btn-primary" [disabled]="store.modelPreviewState() === 'generating'" (click)="store.generateModelPreview()">
@@ -79,7 +92,7 @@ import { BodyPickerComponent } from './body-picker.component';
                         @switch (store.modelPreviewState()) {
                           @case ('busy') {{{ 'body.generateBusy' | transloco }}}
                           @case ('failed') {{{ 'body.generateFailed' | transloco }}}
-                          @default {{{ 'body.generateHelp' | transloco }}}
+                          @default {{{ (approxBody() ? 'body.approxHelp' : 'body.generateHelp') | transloco }}}
                         }
                       </p>
                     </div>
@@ -160,6 +173,25 @@ export class GarmentPage {
     this.dictionary();
     return this.availableModes().map((m) => ({ id: m, label: this.transloco.translate('mode.' + m) }));
   });
+
+  /** Modelo elegido sobre el que se puede vestir la prenda al instante (tiene pose medida y la prenda, recorte y anclas). */
+  readonly approxBody = computed(() => {
+    const g = this.store.garment();
+    const body = this.store.selectedBody();
+    return g && body?.pose && canWear(g) ? body : null;
+  });
+  readonly approxGarments = computed(() => {
+    const g = this.store.garment();
+    return g ? [g] : [];
+  });
+  /** La talla elegida vista sobre un cuerpo que suele usar su talla típica. */
+  readonly approxFits = computed<Record<string, Fit>>(() => {
+    const g = this.store.garment();
+    const body = this.approxBody();
+    if (!g || !body) return {};
+    return { [g.id]: fitForSize(g.sizeChart.map((s) => s.size), body.typicalSize, this.store.chosenSize() ?? undefined) };
+  });
+  readonly approxPlaced = signal(-1);
 
   readonly inComparison = computed(() => {
     const g = this.store.garment();

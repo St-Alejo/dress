@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Brand, FitIntent, GarmentAnchors, GarmentDims, GarmentItem, GarmentPhotoType, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
+import type { BodyPose, Brand, FitIntent, GarmentAnchors, GarmentDims, GarmentItem, GarmentPhotoType, LetterSize, SimilarBodyModel, SizeChartEntry } from '@vestirse/shared-types';
 import { mediaUrl } from '../../../common/mappers';
 import { PrismaService } from '../../../common/prisma.service';
 import type { Prisma } from '../../../generated/prisma/client';
@@ -100,6 +100,7 @@ export class PrismaCatalogRepository extends CatalogRepository {
       skinTone: b.skinTone,
       photoUrl: mediaUrl(b.photoKey),
       previewImages: Object.fromEntries(b.previews.map((p) => [p.garmentId, mediaUrl(p.imageKey)])),
+      ...(b.pose ? { pose: b.pose as unknown as BodyPose } : {}),
     }));
   }
 

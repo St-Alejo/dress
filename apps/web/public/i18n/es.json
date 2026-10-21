@@ -69,6 +69,9 @@
       "mid-soft": "Media, complexión suave"
     },
     "aiPreview": "Prueba generada con IA sobre un modelo real",
+    "approxPreview": "Vista aproximada, sin IA",
+    "approxHelp": "Es una vista aproximada al instante. La prueba con IA, con la caída y los pliegues reales, tarda hasta un minuto.",
+    "approxFailed": "Con la pose de este modelo no se puede colocar la prenda; prueba con otro.",
     "generate": "Ver la prenda en este modelo",
     "generateHelp": "Aún no hay una prueba de esta prenda sobre este modelo. Generarla tarda hasta un minuto.",
     "generating": "Vistiendo al modelo… puede tardar hasta un minuto.",
