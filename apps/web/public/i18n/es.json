@@ -15,7 +15,8 @@
     "privacy": "Privacidad",
     "admin": "Panel de administración",
     "menu": "Menú",
-    "credits": "Créditos de fotos"
+    "credits": "Créditos de fotos",
+    "look": "Armar look"
   },
   "footer": {
     "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo.",
@@ -448,5 +449,47 @@
     "garments": "Prendas",
     "bodies": "Cuerpos de referencia",
     "by": "por"
+  },
+  "look": {
+    "title": "Arma tu look",
+    "lead": "Elige una prenda por hueco y mírala puesta al instante en un modelo parecido a ti o en tu cámara. Las sugerencias combinan color y estilo con reglas fijas; tú decides.",
+    "stage": "Vista del look",
+    "stageTab": {
+      "model": "En un modelo",
+      "camera": "En tu cámara"
+    },
+    "pieces": "Prendas del look",
+    "slot": {
+      "top": "Arriba o vestido",
+      "bottom": "Abajo",
+      "outerwear": "Abrigo",
+      "footwear": "Calzado",
+      "accessory": "Accesorio"
+    },
+    "remove": "Quitar",
+    "options": "Elige una",
+    "goesWith": "Combina con lo que llevas",
+    "dressCovers": "El vestido ya cubre la parte de abajo.",
+    "total": "Total",
+    "share": "Copiar enlace",
+    "save": "Guardar look",
+    "reset": "Empezar de cero",
+    "saved": "Tus looks guardados (en este navegador)",
+    "delete": "Borrar este look",
+    "savedNotice": "Look guardado en este navegador.",
+    "linkCopied": "Enlace copiado.",
+    "linkManual": "No se pudo copiar: copia la dirección de la barra del navegador.",
+    "cameraEmpty": "Elige al menos una prenda con recorte para verla en tu cámara.",
+    "open": "Armar un look con esta prenda",
+    "goesWithTitle": "Combina con",
+    "seeLook": "Ver el look completo",
+    "describe": {
+      "empty": "Todavía no hay prendas en el look.",
+      "size": "talla {{size}}",
+      "loose": "holgada",
+      "snug": "ajustada",
+      "and": "y",
+      "onBody": "{{list}}, sobre el modelo {{body}}, {{min}}–{{max}} cm"
+    }
   }
 }

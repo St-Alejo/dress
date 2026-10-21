@@ -12,6 +12,7 @@ const adminOnly: CanMatchFn = async () => {
 export const routes: Routes = [
   { path: '', component: CatalogPage, title: 'Vestirse' },
   { path: 'prenda/:id', loadComponent: () => import('./features/catalog/garment.page').then((m) => m.GarmentPage) },
+  { path: 'look', loadComponent: () => import('./features/look/look.page').then((m) => m.LookPage), title: 'Armar look · Vestirse' },
   { path: 'comparar', loadComponent: () => import('./features/comparison/comparison.page').then((m) => m.ComparisonPage), title: 'Comparar · Vestirse' },
   { path: 'cuenta', loadComponent: () => import('./features/account/account.page').then((m) => m.AccountPage), title: 'Cuenta · Vestirse' },
   { path: 'privacidad', loadComponent: () => import('./features/privacy/privacy.page').then((m) => m.PrivacyPage), title: 'Privacidad · Vestirse' },

@@ -27,6 +27,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
 
         <ul class="hidden items-center gap-6 md:flex">
           <li><a routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="nav-active" class="nav-link">{{ 'nav.catalog' | transloco }}</a></li>
+          <li><a routerLink="/look" routerLinkActive="nav-active" class="nav-link">{{ 'nav.look' | transloco }}</a></li>
           <li>
             <a routerLink="/comparar" routerLinkActive="nav-active" class="nav-link">
               {{ 'nav.compare' | transloco }}@if (comparison.count()) {<span class="tabular"> ({{ comparison.count() }})</span>}
@@ -136,6 +137,7 @@ export class App {
   readonly themeIcon = computed<IconName>(() => ({ system: 'contrast', light: 'sun', dark: 'moon' }) [this.theme.preference()] as IconName);
   readonly menuLinks = computed(() => [
     { path: '/', label: 'nav.catalog' },
+    { path: '/look', label: 'nav.look' },
     { path: '/comparar', label: 'nav.compare' },
     { path: '/cuenta', label: this.auth.user() ? 'nav.account' : 'nav.signIn' },
     { path: '/privacidad', label: 'nav.privacy' },

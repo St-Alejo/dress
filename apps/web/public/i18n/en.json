@@ -15,7 +15,8 @@
     "privacy": "Privacy",
     "admin": "Admin panel",
     "menu": "Menu",
-    "credits": "Photo credits"
+    "credits": "Photo credits",
+    "look": "Build a look"
   },
   "footer": {
     "promise": "We never alter your silhouette. Your live camera never leaves your device.",
@@ -448,5 +449,47 @@
     "garments": "Garments",
     "bodies": "Reference bodies",
     "by": "by"
+  },
+  "look": {
+    "title": "Build your look",
+    "lead": "Pick one garment per slot and see it on instantly, on a model similar to you or on your camera. Suggestions pair color and style with fixed rules; you decide.",
+    "stage": "Look preview",
+    "stageTab": {
+      "model": "On a model",
+      "camera": "On your camera"
+    },
+    "pieces": "Garments in the look",
+    "slot": {
+      "top": "Top or dress",
+      "bottom": "Bottom",
+      "outerwear": "Outerwear",
+      "footwear": "Shoes",
+      "accessory": "Accessory"
+    },
+    "remove": "Remove",
+    "options": "Pick one",
+    "goesWith": "Goes with what you have",
+    "dressCovers": "The dress already covers the bottom.",
+    "total": "Total",
+    "share": "Copy link",
+    "save": "Save look",
+    "reset": "Start over",
+    "saved": "Your saved looks (in this browser)",
+    "delete": "Delete this look",
+    "savedNotice": "Look saved in this browser.",
+    "linkCopied": "Link copied.",
+    "linkManual": "Couldn't copy: copy the address from the browser bar.",
+    "cameraEmpty": "Pick at least one garment with a cutout to see it on your camera.",
+    "open": "Build a look with this garment",
+    "goesWithTitle": "Goes with",
+    "seeLook": "See the full look",
+    "describe": {
+      "empty": "No garments in the look yet.",
+      "size": "size {{size}}",
+      "loose": "loose",
+      "snug": "snug",
+      "and": "and",
+      "onBody": "{{list}}, on the model {{body}}, {{min}}–{{max}} cm"
+    }
   }
 }
