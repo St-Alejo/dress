@@ -364,6 +364,13 @@
       "exists": "Ese correo ya tiene una cuenta.",
       "credentials": "Correo o contraseña incorrectos.",
       "generic": "Algo salió mal. Inténtalo de nuevo."
+    },
+    "looks": {
+      "title": "Tus looks",
+      "body": "Se guardan solo en este navegador, sin cuenta y sin fotos: solo qué prendas y qué modelo elegiste.",
+      "clear": "Borrar mis looks de este navegador",
+      "empty": "Armar mi primer look",
+      "cleared": "Looks borrados de este navegador."
     }
   },
   "privacy": {

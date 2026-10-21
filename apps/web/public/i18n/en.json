@@ -364,6 +364,13 @@
       "exists": "That email already has an account.",
       "credentials": "Wrong email or password.",
       "generic": "Something went wrong. Please try again."
+    },
+    "looks": {
+      "title": "Your looks",
+      "body": "Saved only in this browser, with no account and no photos: just which garments and which model you picked.",
+      "clear": "Delete my looks from this browser",
+      "empty": "Build my first look",
+      "cleared": "Looks deleted from this browser."
     }
   },
   "privacy": {

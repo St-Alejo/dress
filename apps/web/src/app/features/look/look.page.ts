@@ -18,6 +18,7 @@ import { canOverlay } from '../live-overlay/overlay-geometry';
 import { canWear } from '../live-overlay/engine/tryon-scene';
 import { LOOK_SLOTS, type LookSlot, slotOf, suggestionsFor } from './pairing';
 import { describeLook } from './look-description';
+import { SavedLooksComponent } from './saved-looks.component';
 
 type Stage = 'model' | 'camera';
 
@@ -28,7 +29,7 @@ type Stage = 'model' | 'camera';
  */
 @Component({
   selector: 'app-look-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent, SavedLooksComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-8">
@@ -123,18 +124,7 @@ type Stage = 'model' | 'camera';
             @if (looks.looks().length) {
               <div class="mt-8">
                 <h2 class="label-xs">{{ 'look.saved' | transloco }}</h2>
-                <ul class="mt-3 space-y-2">
-                  @for (l of looks.looks(); track l.id) {
-                    <li class="flex items-center gap-2">
-                      <a [routerLink]="[]" [queryParams]="queryFor(l.garmentIds, l.bodyId)" class="flex min-w-0 flex-1 gap-1" [attr.aria-label]="namesOf(l.garmentIds)">
-                        @for (g of garmentsOf(l.garmentIds); track g.id) {
-                          <img [src]="g.images.thumb ?? g.images.photo" alt="" class="h-14 w-11 bg-surface-2 object-cover" />
-                        }
-                      </a>
-                      <button type="button" class="grid size-10 place-items-center text-ink-2 hover:text-ink" [attr.aria-label]="'look.delete' | transloco" (click)="looks.remove(l.id)"><ui-icon name="close" [size]="16" /></button>
-                    </li>
-                  }
-                </ul>
+                <app-saved-looks class="mt-3 block" [catalog]="catalog()" />
               </div>
             }
           </section>
@@ -240,7 +230,7 @@ export class LookPage {
   }
 
   async copyLink() {
-    const tree = this.router.createUrlTree(['/look'], { queryParams: this.queryFor(this.chosen().map((g) => g.id), this.session.selectedBodyId()) });
+    const tree = this.router.createUrlTree(['/look'], { queryParams: lookQuery(this.chosen().map((g) => g.id), this.session.selectedBodyId()) });
     const url = new URL(this.router.serializeUrl(tree), location.origin).toString();
     try {
       await navigator.clipboard.writeText(url);
@@ -248,18 +238,6 @@ export class LookPage {
     } catch {
       this.notices.info('look.linkManual');
     }
-  }
-
-  queryFor(ids: string[], bodyId: string | null) {
-    return lookQuery(ids, bodyId);
-  }
-
-  garmentsOf(ids: string[]): GarmentItem[] {
-    return ids.map((id) => this.catalog().find((g) => g.id === id)).filter((g): g is GarmentItem => !!g);
-  }
-
-  namesOf(ids: string[]): string {
-    return this.garmentsOf(ids).map((g) => g.name).join(', ');
   }
 
   private update(next: GarmentItem[]) {

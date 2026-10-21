@@ -3,13 +3,17 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import type { GarmentItem } from '@vestirse/shared-types';
+import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
+import { LookStore } from '../../core/look.store';
 import { NoticeStore } from '../../core/notice.store';
 import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
+import { SavedLooksComponent } from '../look/saved-looks.component';
 
 @Component({
   selector: 'app-account-page',
-  imports: [FormsModule, TranslocoPipe, RouterLink, TabsComponent],
+  imports: [FormsModule, TranslocoPipe, RouterLink, TabsComponent, SavedLooksComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-md px-4 pt-10 pb-16 space-y-8">
@@ -60,12 +64,25 @@ import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
           <button type="submit" class="btn btn-primary w-full" [disabled]="busy()">{{ 'account.' + tab() | transloco }}</button>
         </form>
       }
+
+      <div class="card p-5 space-y-3">
+        <h2 class="text-lg">{{ 'account.looks.title' | transloco }}</h2>
+        <p class="text-sm text-ink-2">{{ 'account.looks.body' | transloco }}</p>
+        @if (looks.looks().length) {
+          <app-saved-looks [catalog]="catalog()" />
+          <button type="button" class="btn" (click)="clearLooks()">{{ 'account.looks.clear' | transloco }}</button>
+        } @else {
+          <a routerLink="/look" class="btn">{{ 'account.looks.empty' | transloco }}</a>
+        }
+      </div>
     </section>
   `,
 })
 export class AccountPage {
   readonly auth = inject(AuthStore);
   private readonly notices = inject(NoticeStore);
+  readonly looks = inject(LookStore);
+  readonly catalog = signal<GarmentItem[]>([]);
   readonly tab = signal<'login' | 'register'>('login');
   private readonly transloco = inject(TranslocoService);
   private readonly dictionary = toSignal(this.transloco.selectTranslation());
@@ -79,6 +96,21 @@ export class AccountPage {
   readonly deleted = signal<{ deletedObjects: number; deletedSessions: number } | null>(null);
   email = '';
   password = '';
+
+  constructor() {
+    // Las miniaturas de los looks solo hacen falta si hay alguno guardado.
+    if (this.looks.looks().length) {
+      inject(ApiService)
+        .garments()
+        .then((all) => this.catalog.set(all))
+        .catch(() => this.catalog.set([]));
+    }
+  }
+
+  clearLooks() {
+    this.looks.clear();
+    this.notices.info('account.looks.cleared');
+  }
 
   async submit() {
     this.busy.set(true);
