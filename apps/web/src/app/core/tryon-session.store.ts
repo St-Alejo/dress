@@ -56,6 +56,11 @@ export class TryOnSessionStore {
   /** Proporciones de pose (números, nunca imagen) — solo se usan si la persona lo permite. */
   readonly poseRatios = signal<PoseRatios | null>(null);
   readonly usePoseRatios = signal(false);
+  /**
+   * Fotograma que la persona capturó con «Foto realista» en la cámara. Vive solo en memoria
+   * hasta que acepta la lista de privacidad y lo sube; si no, se descarta sin salir del navegador.
+   */
+  readonly cameraFrame = signal<Blob | null>(null);
 
   readonly fit = signal<FitRecommendation | null>(null);
   readonly fitLoading = signal(false);

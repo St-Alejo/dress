@@ -130,7 +130,7 @@ const EXPECTED_SECONDS = 35;
           </div>
         }
         @case ('checklist') {
-          <app-privacy-checklist [ttlHours]="ttlHours()" (accepted)="step.set('prepare')" (cancelled)="step.set('intro')" />
+          <app-privacy-checklist [ttlHours]="ttlHours()" (accepted)="step.set('prepare')" (cancelled)="cancelChecklist()" />
         }
         @case ('prepare') {
           <div class="card p-5 space-y-4">
@@ -219,6 +219,8 @@ export class PhotoTryOnComponent {
 
   private readonly previewRef = viewChild<ElementRef<HTMLCanvasElement>>('preview');
   private bitmap: ImageBitmap | null = null;
+  /** La foto vino de la cámara en vivo: tras subirla se genera directamente. */
+  private fromCamera = false;
 
   constructor() {
     void this.api.privacyPolicy().then((p) => this.ttlHours.set(p.photoTtlHours)).catch(() => undefined);
@@ -230,6 +232,13 @@ export class PhotoTryOnComponent {
       clearInterval(timer);
       this.bitmap?.close();
     });
+    // Fotograma de la cámara («Foto realista»): primero la lista de privacidad, luego preparar y subir.
+    const frame = this.store.cameraFrame();
+    if (frame) {
+      this.store.cameraFrame.set(null);
+      this.fromCamera = true;
+      void this.useImage(frame).then(() => this.step.set('checklist'));
+    }
     // Re-dibuja la vista previa cuando cambian las opciones de privacidad.
     effect(() => {
       const opts = { treatment: this.treatment(), face: this.face(), manualCropTop: this.manualCrop() };
@@ -247,6 +256,10 @@ export class PhotoTryOnComponent {
       this.error.set('photo.error.tooBig');
       return;
     }
+    await this.useImage(file);
+  }
+
+  private async useImage(file: Blob) {
     try {
       this.bitmap?.close();
       this.bitmap = await loadBitmap(file);
@@ -269,10 +282,20 @@ export class PhotoTryOnComponent {
     try {
       await this.store.uploadPhoto(await canvasToJpeg(canvas));
       this.reset('ready');
+      if (this.fromCamera) {
+        this.fromCamera = false;
+        this.generate();
+      }
     } catch {
       this.step.set('prepare');
       this.error.set('photo.error.upload');
     }
+  }
+
+  /** Sin consentimiento, el fotograma de la cámara se descarta: nunca se sube. */
+  cancelChecklist() {
+    this.fromCamera = false;
+    this.reset('intro');
   }
 
   generate() {

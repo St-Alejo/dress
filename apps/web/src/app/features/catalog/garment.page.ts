@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { PoseRatios, TryOnMode } from '@vestirse/shared-types';
 import { ComparisonStore } from '../../core/comparison/comparison.store';
+import { canvasToBlob } from '../../core/frame-export';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
 import { PricePipe } from '../../shared/price.pipe';
 import { IconComponent } from '../../shared/ui/icon.component';
@@ -88,7 +89,7 @@ import { BodyPickerComponent } from './body-picker.component';
                   </div>
                 }
                 @case ('live-overlay') {
-                  <app-live-tryon [garment]="g" (poseRatios)="onPoseRatios($event)" />
+                  <app-live-tryon [garment]="g" [recommendedSize]="store.chosenSize() ?? undefined" (poseRatios)="onPoseRatios($event)" (realisticFrame)="onRealisticFrame($event)" />
                 }
                 @case ('photorealistic') {
                   <app-photo-tryon (fallbackTo)="setMode($event)" />
@@ -189,6 +190,14 @@ export class GarmentPage {
 
   onPoseRatios(r: PoseRatios) {
     this.store.poseRatios.set(r);
+  }
+
+  /** «Foto realista» desde la cámara: pasa al modo con foto, que pide consentimiento antes de subir nada. */
+  async onRealisticFrame(frame: HTMLCanvasElement) {
+    const blob = await canvasToBlob(frame);
+    if (!blob) return;
+    this.store.cameraFrame.set(blob);
+    this.setMode('photorealistic');
   }
 
   toggleCompare() {
