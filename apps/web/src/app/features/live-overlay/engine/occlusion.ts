@@ -67,3 +67,32 @@ export function occlusionMask(labels: Uint8Array, w: number, h: number, body: Bo
   return out;
 }
 
+let scratch = new Uint8Array(0);
+
+/**
+ * Suaviza en el sitio los bordes de la máscara RG (dos pasadas de caja 3×3 ≈ tienda 5×5).
+ * La segmentación es de baja resolución: sin esto, el pelo y las manos recortan la prenda
+ * en escalones de varios píxeles al ampliarla al lienzo.
+ */
+export function softenMask(rg: Uint8Array, w: number, h: number): Uint8Array {
+  if (scratch.length < rg.length) scratch = new Uint8Array(rg.length);
+  for (let pass = 0; pass < 2; pass++) {
+    boxPass(rg, scratch, w, h, 1, 0);
+    boxPass(scratch, rg, w, h, 0, 1);
+  }
+  return rg;
+}
+
+/** Media de 3 a lo largo de (dx, dy) en los dos canales, repitiendo el borde. */
+function boxPass(src: Uint8Array, dst: Uint8Array, w: number, h: number, dx: number, dy: number): void {
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 2;
+      const a = (Math.max(0, y - dy) * w + Math.max(0, x - dx)) * 2;
+      const b = (Math.min(h - 1, y + dy) * w + Math.min(w - 1, x + dx)) * 2;
+      dst[i] = (src[a] + src[i] + src[b] + 1) / 3;
+      dst[i + 1] = (src[a + 1] + src[i + 1] + src[b + 1] + 1) / 3;
+    }
+  }
+}
+

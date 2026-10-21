@@ -1,6 +1,6 @@
 import type { BodyPose } from '@vestirse/shared-types';
 import { BodyTracker, type RawLandmark } from './body-tracker';
-import { occlusionMask } from './occlusion';
+import { occlusionMask, softenMask } from './occlusion';
 import type { Body } from './rig';
 
 /** Deshace la codificación por tramos [etiqueta, longitud, …] de la segmentación guardada. */
@@ -26,5 +26,5 @@ export function occlusionFromPose(pose: BodyPose, body: Body): Uint8Array {
   const { width, height, rle } = pose.seg;
   const sx = pose.width / width;
   const sy = pose.height / height;
-  return occlusionMask(decodeRle(rle, width * height), width, height, body, (x, y) => [x * sx, y * sy]);
+  return softenMask(occlusionMask(decodeRle(rle, width * height), width, height, body, (x, y) => [x * sx, y * sy]), width, height);
 }

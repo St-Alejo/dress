@@ -60,6 +60,15 @@ const SHOULDER_SEAM = 1.1;
 const HIP_CONTOUR = 1.7;
 /** Giro máximo de una manga o pernera respecto de su caída con el torso (radianes, ~40°). */
 const MAX_SLEEVE_TURN = 0.7;
+/**
+ * Una prenda extendida muestra media circunferencia; puesta, la tela rodea el cuerpo y de
+ * frente se ve más o menos el 80 % de ese ancho. Se aplica bajo la axila, nunca a los hombros.
+ */
+const WRAP = 0.8;
+/** Holgura mínima sobre el contorno de cadera al estrechar la tela (que nunca quede justa). */
+const WRAP_EASE = 1.08;
+/** Ancho visible del pecho respecto de la distancia entre articulaciones de hombro. */
+const CHEST = 0.9;
 
 export interface Mesh {
   /** Posiciones en px del recorte (x, y intercalados). */
@@ -158,16 +167,22 @@ export function vertexWeights(anchors: GarmentAnchors, p: Named, v: Pt, width: n
     if (!rs || !ls || !ra || !la || !rc || !lc || anchors.sleeve === 'none' || anchors.sleeve === 'hanging') return [0, 0, 0];
     const band = dist(rs, ls) * 0.07;
     const centerX = (rs[0] + ls[0]) / 2;
-    // Hasta la axila la frontera es la costura hombro→axila; por debajo, el borde vertical del
-    // torso. Así un puño mal medido nunca convierte medio torso en manga.
-    const side = (s: Pt, a: Pt) => {
+    // Una celda de malla por fuera del costado aún dibuja tela del torso: hasta ahí, peso 0.
+    const cell = width / 20;
+    // Hasta la axila la frontera es la costura hombro→axila; por debajo, el costado axila→bajo
+    // (vertical si no hay bajo), desplazado una celda hacia fuera. Así un puño mal medido nunca
+    // convierte medio torso en manga, y el borde del torso no se va con la manga al girarla.
+    const side = (s: Pt, a: Pt, hem: Pt | undefined) => {
       const out = Math.sign(s[0] - centerX) || 1; // hacia fuera de la prenda
-      if (v[1] > a[1]) return smoothstep(-band, band, (v[0] - a[0]) * out);
-      const outward = Math.sign(signedDistance(add(a, [out, 0]), s, a)) || 1;
-      return smoothstep(-band, band, signedDistance(v, s, a) * outward);
+      const outward = (from: Pt, to: Pt) => Math.sign(signedDistance(add(from, [out, 0]), from, to)) || 1;
+      const seam = smoothstep(-band, band, signedDistance(v, s, a) * outward(s, a));
+      if (v[1] <= a[1]) return seam;
+      const h = hem && hem[1] > a[1] + 1 ? hem : add(a, [0, 1]);
+      const flank = smoothstep(cell, cell + 2 * band, signedDistance(v, a, h) * outward(a, h));
+      return seam + (flank - seam) * smoothstep(a[1], a[1] + 2 * band, v[1]);
     };
-    const wr = side(rs, ra);
-    const wl = side(ls, la);
+    const wr = side(rs, ra, p['rightHem']);
+    const wl = side(ls, la, p['leftHem']);
     let wf = 0;
     if (anchors.sleeve === 'long') {
       const t = wr >= wl ? along(v, rs, rc) : along(v, ls, lc);
@@ -200,12 +215,28 @@ export interface Pose {
   left: [Affine, Affine];
   /** Escala px del recorte → px del lienzo, útil para la sombra y el difuminado del borde. */
   scale: number;
+  /** Ceñido del cuerpo de la prenda (en px del recorte), si lo hay. */
+  wrap?: Wrap;
+}
+
+/** Bajo la línea `from`→`to` el ancho se acerca al eje `cx` hasta quedar en `k` veces el original. */
+export interface Wrap {
+  cx: number;
+  from: number;
+  to: number;
+  k: number;
+}
+
+function wrapped(wrap: Wrap | undefined, [x, y]: Pt): Pt {
+  if (!wrap) return [x, y];
+  const k = 1 + (wrap.k - 1) * smoothstep(wrap.from, wrap.to, y);
+  return [wrap.cx + (x - wrap.cx) * k, y];
 }
 
 /** Posición de un vértice con skinning lineal. */
 export function skin(pose: Pose, v: Pt, w: [number, number, number]): Pt {
   const [wr, wl, wf] = w;
-  const base = apply(pose.base, v);
+  const base = apply(pose.base, wrapped(pose.wrap, v));
   if (wr === 0 && wl === 0) return base;
   const limb = wr >= wl ? pose.right : pose.left;
   const wl2 = Math.max(wr, wl);
@@ -282,7 +313,21 @@ export function upperPose(anchors: GarmentAnchors, width: number, height: number
   const lc = p['leftCuff'] ?? ls;
   const right = limbBones(base, rs, garmentElbow(anchors, rs, rc), rc, body.rightShoulder, body.rightElbow, body.rightWrist, k, twoPart);
   const left = limbBones(base, ls, garmentElbow(anchors, ls, lc), lc, body.leftShoulder, body.leftElbow, body.leftWrist, k, twoPart);
-  return { base, right, left, scale: k };
+  return { base, right, left, scale: k, wrap: torsoWrap(p, base, body) };
+}
+
+/**
+ * Cuánto se ciñe el cuerpo de la prenda: hasta WRAP, sin quedar más estrecho que el pecho
+ * (a la altura de la axila) ni que la cadera (en el bajo), para no dejar ver la ropa de debajo.
+ */
+function torsoWrap(p: Named, base: Affine, body: Body): Wrap | undefined {
+  const [rs, ls, ra, la, rh, lh] = [p['rightShoulder'], p['leftShoulder'], p['rightArmpit'], p['leftArmpit'], p['rightHem'], p['leftHem']];
+  if (!rs || !ls || !ra || !la || !rh || !lh || !body.leftShoulder || !body.rightShoulder) return undefined;
+  const chest = (dist(body.leftShoulder.p, body.rightShoulder.p) * CHEST) / (dist(apply(base, ra), apply(base, la)) || 1);
+  const hips = seen(body.leftHip) && seen(body.rightHip) ? (dist(body.leftHip.p, body.rightHip.p) * HIP_CONTOUR * WRAP_EASE) / (dist(apply(base, rh), apply(base, lh)) || 1) : 0;
+  const k = clamp(Math.max(chest, hips), WRAP, 1);
+  if (k >= 0.999) return undefined;
+  return { cx: (rs[0] + ls[0]) / 2, from: (rs[1] + ls[1]) / 2, to: (ra[1] + la[1]) / 2, k };
 }
 
 /** Pose de un pantalón, short o falda: pelvis en las caderas y perneras siguiendo rodillas y tobillos. */

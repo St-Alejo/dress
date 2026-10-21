@@ -16,7 +16,7 @@ import type { GarmentItem, PoseRatios } from '@vestirse/shared-types';
 import { downloadCanvas } from '../../core/frame-export';
 import { BodyTracker } from './engine/body-tracker';
 import { easeGain, sceneGain } from './engine/lighting';
-import { occlusionMask } from './engine/occlusion';
+import { occlusionMask, softenMask } from './engine/occlusion';
 import type { Body } from './engine/rig';
 import { fitForSize } from './engine/size-fit';
 import { type Adjust, NO_ADJUST, TryOnScene } from './engine/tryon-scene';
@@ -359,7 +359,7 @@ export class LiveTryOnComponent implements OnDestroy {
     if (this.occBuf.length !== seg.width * seg.height * 2) this.occBuf = new Uint8Array(seg.width * seg.height * 2);
     const sx = w / seg.width;
     const sy = h / seg.height;
-    occlusionMask(seg.labels, seg.width, seg.height, this.body, (x, y) => [x * sx, y * sy], this.occBuf);
+    softenMask(occlusionMask(seg.labels, seg.width, seg.height, this.body, (x, y) => [x * sx, y * sy], this.occBuf), seg.width, seg.height);
     this.scene!.setOcclusion(this.occBuf, seg.width, seg.height);
   }
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BodyTracker, HOLD_MS } from './body-tracker';
 import { affineFrom3, apply, dist, limitTurn, similarity, type Pt } from './geometry';
 import { easeGain, sceneGain } from './lighting';
-import { occlusionMask, SEG } from './occlusion';
+import { occlusionMask, SEG, softenMask } from './occlusion';
 import { OneEuroFilter } from './one-euro';
 import { type Body, buildMesh, lowerPose, poseFor, skin, skinMesh, upperPose, vertexWeights } from './rig';
 import { fitForSize } from './size-fit';
@@ -135,6 +135,15 @@ describe('rig: pesos de la malla', () => {
     expect(vertexWeights(anchors, badCuff, [W * 0.7, H * 0.8], W)).toEqual([0, 0, 0]);
   });
 
+  it('el costado del torso bajo la axila (y la celda de malla que lo cruza) sigue al torso', () => {
+    // Borde del torso en x = 0.25·W; una celda de malla (W/20) por fuera aún toca tela del torso.
+    expect(vertexWeights(TEE, named, [W * 0.25, H * 0.8], W)[0]).toBe(0);
+    expect(vertexWeights(TEE, named, [W * 0.25 - W / 22, H * 0.8], W)[0]).toBe(0);
+    // Un vestido que se abre hacia el bajo: su falda tampoco es manga.
+    const flared = { ...named, rightHem: [W * 0.05, H * 0.97] as Pt };
+    expect(vertexWeights(TEE, flared, [W * 0.1, H * 0.9], W)[0]).toBe(0);
+  });
+
   it('con las mangas colgando en la foto, toda la prenda sigue al torso', () => {
     expect(vertexWeights({ ...TEE, sleeve: 'hanging' }, named, [W * 0.08, H * 0.3], W)).toEqual([0, 0, 0]);
   });
@@ -167,6 +176,25 @@ describe('rig: pose', () => {
     const hem = apply(pose.base, [W / 2, 0.97 * H]);
     expect(hem[1]).toBeGreaterThan(150);
     expect(hem[0]).toBeCloseTo(320, 0);
+  });
+
+  it('la tela plana rodea el torso bajo la axila, sin estrecharse más que la cadera', () => {
+    const slim = standing();
+    slim.leftHip = j(340, 300);
+    slim.rightHip = j(300, 300);
+    const hemWidth = (body: Body) => {
+      const pose = upperPose(TEE, W, H, body)!;
+      return dist(skin(pose, [0.25 * W, 0.97 * H], [0, 0, 0]), skin(pose, [0.75 * W, 0.97 * H], [0, 0, 0]));
+    };
+    const shoulderWidth = (body: Body) => {
+      const pose = upperPose(TEE, W, H, body)!;
+      return dist(skin(pose, [0.25 * W, 0.08 * H], [0, 0, 0]), skin(pose, [0.75 * W, 0.08 * H], [0, 0, 0]));
+    };
+    // De frente se ve menos ancho que el de la prenda extendida, pero los hombros no se mueven.
+    expect(hemWidth(slim)).toBeLessThan(hemWidth(standing()) * 0.9);
+    expect(shoulderWidth(slim)).toBeCloseTo(shoulderWidth(standing()), 3);
+    // Con caderas anchas la prenda conserva todo su ancho para cubrirlas.
+    expect(hemWidth(standing())).toBeCloseTo(dist(apply(upperPose(TEE, W, H, standing())!.base, [0.25 * W, 0.97 * H]), apply(upperPose(TEE, W, H, standing())!.base, [0.75 * W, 0.97 * H])), 3);
   });
 
   it('la manga sigue al brazo levantado', () => {
@@ -240,6 +268,21 @@ describe('oclusión', () => {
     expect(rg[at(375, 155)]).toBe(0);
     expect(rg[at(375, 155) + 1]).toBe(0);
     expect(rg[at(320, 95) + 1]).toBe(255);
+  });
+
+  it('suaviza el borde escalonado sin tocar el interior ni el fondo', () => {
+    const w = 12;
+    const h = 4;
+    const rg = new Uint8Array(w * h * 2);
+    for (let y = 0; y < h; y++) for (let x = 0; x < 6; x++) rg[(y * w + x) * 2 + 1] = 255;
+    softenMask(rg, w, h);
+    const g = (x: number) => rg[(1 * w + x) * 2 + 1];
+    expect(g(0)).toBe(255);
+    expect(g(11)).toBe(0);
+    expect(g(5)).toBeGreaterThan(100);
+    expect(g(5)).toBeLessThan(255);
+    expect(g(6)).toBeGreaterThan(0);
+    expect(g(6)).toBeLessThan(g(5));
   });
 });
 
