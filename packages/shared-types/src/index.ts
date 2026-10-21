@@ -176,7 +176,9 @@ export interface OverlayAnchors {
 export type GarmentAnchorName =
   | 'neck' | 'leftShoulder' | 'rightShoulder' | 'leftArmpit' | 'rightArmpit' | 'leftCuff' | 'rightCuff'
   | 'leftHem' | 'rightHem' | 'leftWaist' | 'rightWaist' | 'crotch' | 'leftKnee' | 'rightKnee'
-  | 'leftAnkle' | 'rightAnkle' | 'topLeft' | 'bottomRight' | 'base' | 'top';
+  | 'leftAnkle' | 'rightAnkle' | 'topLeft' | 'bottomRight' | 'base' | 'top'
+  // Calzado (un solo zapato de perfil): extremos de la suela.
+  | 'heel' | 'toe';
 
 /**
  * Anclas medidas en la foto de la prenda, normalizadas a [0, 1] del recorte. Con ellas la

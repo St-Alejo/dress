@@ -8,6 +8,7 @@ import {
   apply,
   clamp,
   dist,
+  dot,
   lerp,
   limitTurn,
   mid,
@@ -410,9 +411,48 @@ export function placementPose(anchors: GarmentAnchors, style: string | undefined
   return box([width / 2, 0], [1, 0], add(hip, [-shoulderW * 0.35, -shoulderW * 0.15]), [1, 0], k);
 }
 
-export function poseFor(anchors: GarmentAnchors, style: string | undefined, width: number, height: number, body: Body, fit: Fit = NEUTRAL_FIT): Pose | null {
+/** Largo visible de un zapato de frente (escorzado) respecto del ancho de hombros. */
+const SHOE_LENGTH = 0.46;
+
+/**
+ * Un zapato de perfil sobre un pie: la suela (talón→punta de la foto) queda plana en el suelo,
+ * el talón bajo el tobillo y la punta hacia fuera. El otro pie lleva el mismo zapato en espejo.
+ */
+export function footPose(anchors: GarmentAnchors, width: number, height: number, body: Body, side: 'left' | 'right'): Pose | null {
+  const ankle = body[`${side}Ankle`];
+  if (!seen(ankle)) return null;
+  const p = anchorPx(anchors, width, height);
+  const heel = p['heel'] ?? ([width, height] as Pt);
+  const toe = p['toe'] ?? ([0, height] as Pt);
+  const shoulders = seen(body.leftShoulder) && seen(body.rightShoulder) ? dist(body.leftShoulder.p, body.rightShoulder.p) : 0;
+  let len = Math.max(shoulders * SHOE_LENGTH, seen(body.leftAnkle) && seen(body.rightAnkle) ? dist(body.leftAnkle.p, body.rightAnkle.p) * 0.45 : 0);
+  if (len <= 0) return null;
+  const foot = body[`${side}Foot`];
+  const ground = Math.max(seen(foot) ? foot.p[1] + len * 0.06 : 0, ankle.p[1] + len * 0.3);
+  const sole = sub(toe, heel);
+  const soleLen = Math.hypot(sole[0], sole[1]) || 1;
+  // "Arriba" del zapato en la foto: perpendicular a la suela, hacia y negativa.
+  const up0: Pt = [sole[1], -sole[0]];
+  const up = up0[1] <= 0 ? up0 : scale(up0, -1);
+  // Un zapato bajo (zapatilla) debe llegar al menos hasta el tobillo: si no, se ve el calzado
+  // propio por encima. Se mide la altura de la foto sobre la suela y se agranda si hace falta.
+  const upUnit = scale(up, 1 / soleLen);
+  const tall = Math.max(...([[0, 0], [width, 0], [0, height], [width, height]] as Pt[]).map((c) => dot(sub(c, heel), upUnit)));
+  const needed = ((ground - ankle.p[1]) * 1.15 * soleLen) / (tall || 1);
+  len = Math.min(Math.max(len, needed), shoulders > 0 ? shoulders * 0.72 : Infinity);
+  const outward: Pt = side === 'right' ? [-1, 0] : [1, 0]; // derecha de la persona = izquierda de la imagen
+  // El zapato queda casi centrado bajo el tobillo, un poco hacia fuera (de frente el pie se ve escorzado).
+  const bHeel: Pt = [ankle.p[0] - outward[0] * len * 0.42, ground];
+  const bToe = add(bHeel, scale(outward, len));
+  const base = affineFrom3([heel, toe, add(heel, up)], [bHeel, bToe, add(bHeel, [0, -len])]);
+  if (!base) return null;
+  return { base, right: [base, base], left: [base, base], scale: len / (dist(heel, toe) || 1) };
+}
+
+export function poseFor(anchors: GarmentAnchors, style: string | undefined, width: number, height: number, body: Body, fit: Fit = NEUTRAL_FIT, side?: 'left' | 'right'): Pose | null {
   if (anchors.kind === 'upper') return upperPose(anchors, width, height, body, fit);
   if (anchors.kind === 'lower' || anchors.kind === 'skirt') return lowerPose(anchors, width, height, body, fit);
+  if (anchors.kind === 'footwear' && side) return footPose(anchors, width, height, body, side);
   return placementPose(anchors, style, width, height, body);
 }
 

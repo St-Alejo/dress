@@ -9,6 +9,8 @@ interface Prepared {
   image: HTMLImageElement;
   mesh: Mesh;
   out: Float32Array;
+  /** Calzado: cada zapato va en su pie (la misma foto, una vez por lado). */
+  side?: 'left' | 'right';
 }
 
 /** Ajuste fino de la persona: desplazamiento (px del lienzo) y escala alrededor de los hombros. */
@@ -88,15 +90,16 @@ export class TryOnScene {
   async setGarments(garments: GarmentItem[]): Promise<void> {
     const wearable = garments.filter(canWear).sort((a, b) => (LAYER_ORDER[a.category] ?? 9) - (LAYER_ORDER[b.category] ?? 9));
     const loaded = await Promise.all(wearable.map(async (garment) => ({ garment, image: await loadImage(garment.images.cutout!) })));
-    this.items = loaded.map(({ garment, image }) => {
+    this.items = loaded.flatMap(({ garment, image }) => {
       const mesh = buildMesh(garment.anchors!, image.naturalWidth, image.naturalHeight, alphaSampler(image), this.gl ? 24 : 12);
-      return { garment, image, mesh, out: new Float32Array(mesh.rest.length) };
+      const sides: (Prepared['side'])[] = garment.anchors!.kind === 'footwear' ? ['right', 'left'] : [undefined];
+      return sides.map((side) => ({ garment, image, mesh, out: new Float32Array(mesh.rest.length), side }));
     });
     this.gl?.setGarments(this.items.map(({ image, mesh }) => ({ image, mesh })));
   }
 
   get garmentCount(): number {
-    return this.items.length;
+    return new Set(this.items.map((it) => it.garment.id)).size;
   }
 
   setOcclusion(rg: Uint8Array | null, width: number, height: number): void {
@@ -116,9 +119,9 @@ export class TryOnScene {
     let shadow = 6;
     const positions = this.items.map((it) => {
       if (!body) return null;
-      const pose = poseFor(it.garment.anchors!, it.garment.style, it.mesh.width, it.mesh.height, body, fits[it.garment.id] ?? NEUTRAL_FIT);
+      const pose = poseFor(it.garment.anchors!, it.garment.style, it.mesh.width, it.mesh.height, body, fits[it.garment.id] ?? NEUTRAL_FIT, it.side);
       if (!pose) return null;
-      placed++;
+      if (it.side !== 'left') placed++; // un par cuenta como una prenda
       shadow = Math.max(3, Math.min(14, pose.scale * it.mesh.width * 0.012));
       return applyAdjust(skinMesh(it.mesh, pose, it.out), adjust, body);
     });

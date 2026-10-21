@@ -247,6 +247,23 @@ describe('rig: pose', () => {
     const shoes = poseFor({ version: 1, kind: 'footwear', aspect: 2, points: {} }, 'sneakers', 200, 100, body)!;
     expect(apply(shoes.base, [100, 100])[1]).toBeGreaterThan(460);
   });
+
+  it('un zapato por pie: suela horizontal en el suelo, la punta hacia fuera y el otro en espejo', () => {
+    const body = standing();
+    // Zapatilla de perfil e inclinada en la foto: talón abajo a la derecha, punta abajo a la izquierda.
+    const shoe = { version: 1, kind: 'footwear', aspect: 2, points: { heel: [0.9, 0.8], toe: [0.1, 1] } } as GarmentAnchors;
+    const right = poseFor(shoe, 'sneakers', 200, 100, body, undefined, 'right')!;
+    const left = poseFor(shoe, 'sneakers', 200, 100, body, undefined, 'left')!;
+    const heelR = apply(right.base, [180, 80]);
+    const toeR = apply(right.base, [20, 100]);
+    const toeL = apply(left.base, [20, 100]);
+    expect(heelR[1]).toBeCloseTo(toeR[1], 3); // la suela queda plana
+    expect(heelR[1]).toBeGreaterThan(470); // bajo el tobillo
+    expect(toeR[0]).toBeLessThan(heelR[0]); // pie derecho (izquierda de la imagen): punta a la izquierda
+    expect(toeL[0]).toBeGreaterThan(apply(left.base, [180, 80])[0]); // el izquierdo, en espejo
+    // El talón cae bajo su tobillo.
+    expect(Math.abs(heelR[0] - 276)).toBeLessThan(40);
+  });
 });
 
 describe('oclusión', () => {

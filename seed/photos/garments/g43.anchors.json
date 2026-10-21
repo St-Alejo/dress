@@ -1,7 +1,7 @@
 {
  "version": 1,
  "kind": "footwear",
- "aspect": 1.3006,
+ "aspect": 0.8486,
  "points": {
   "topLeft": [
    0.0,
@@ -18,6 +18,14 @@
   "top": [
    0.5,
    0.0
+  ],
+  "heel": [
+   0.88,
+   0.97
+  ],
+  "toe": [
+   0.03,
+   0.9
   ]
  }
 }

@@ -18,6 +18,9 @@ Campos de cada prenda en sources.json:
   anchors       correcciones a mano de puntos concretos, en fracciones del recorte
   kind          cómo se viste en la cámara si no es el de su categoría (p. ej. un short como "skirt")
   sleeve        "none" | "short" | "long" cuando la medida automática se equivoca
+  wear          {box, erase, trim}: box y erase en fracciones del recorte completo, trim en las de
+                la pieza ya recortada: lo que se viste si la foto muestra más
+                (un zapato de un par, sin el cinturón de atrezo); la foto de tienda queda entera
   erase         polígonos [[x, y], …] en fracciones (tras `crop`) que se borran: percha, interior del escote
 
 Uso (desde services/ai-worker, con el extra `tools` instalado):
@@ -125,6 +128,25 @@ def cutout_of(image: Image.Image, source: dict, session) -> Image.Image:
     return rgba.crop(box) if box else rgba
 
 
+def worn(cutout: Image.Image, wear: dict | None) -> Image.Image:
+    """La parte que se viste en la cámara cuando la foto de tienda muestra más (p. ej. un solo
+    zapato de un par). `box` y `erase` van en fracciones del recorte completo."""
+    if not wear:
+        return cutout
+    w, h = cutout.size
+    rgba = cutout.copy()
+    alpha = erased(rgba.getchannel("A"), wear.get("erase"))
+    rgba.putalpha(alpha)
+    x0, y0, x1, y1 = wear.get("box", [0, 0, 1, 1])
+    rgba = rgba.crop((int(x0 * w), int(y0 * h), int(x1 * w), int(y1 * h)))
+    rgba.putalpha(largest_component(rgba.getchannel("A")))
+    box = rgba.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox()
+    rgba = rgba.crop(box) if box else rgba
+    if wear.get("trim"):  # retoque final, en fracciones de la pieza ya recortada
+        rgba.putalpha(largest_component(erased(rgba.getchannel("A"), wear["trim"])))
+    return rgba
+
+
 def write_anchors(path: Path, anchors: dict) -> None:
     # Siempre LF: en Windows write_text pondría CRLF y git avisaría en cada regeneración.
     path.write_text(json.dumps(anchors, indent=1) + "\n", encoding="utf-8", newline="\n")
@@ -192,6 +214,7 @@ def main() -> None:
                 cutout = cutout_of(image, source, session)
                 store = on_canvas(cutout)
                 if kind == "garments":
+                    cutout = worn(cutout, source.get("wear"))
                     cutout.thumbnail((CUTOUT_MAX, CUTOUT_MAX), Image.LANCZOS)
                     cutout.save(cut_path, "WEBP", quality=88, method=6)
                     anchors = anchors_for(cutout, source)
