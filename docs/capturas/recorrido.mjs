@@ -1,5 +1,5 @@
 // Recorrido real de la app local con capturas (ver README.md de esta carpeta).
-// Uso: node docs/capturas/recorrido.mjs <dirCapturas> <fotoPersona> [catalogo camiseta jean vestido modelo creditos]
+// Uso: node docs/capturas/recorrido.mjs <dirCapturas> <fotoPersona|-> [catalogo camiseta jean vestido modelo creditos tienda ficha look]
 import { chromium } from 'playwright-core';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -99,6 +99,46 @@ if (wants('creditos')) {
   await page.locator('li img').first().waitFor();
   await page.waitForLoadState('networkidle');
   await shot('08-creditos.png');
+}
+
+if (wants('tienda')) {
+  console.log('> tienda: filtros en la URL y prenda puesta al pasar el ratón');
+  await page.goto(`${BASE}/?cat=top&color=blue&orden=price-asc`);
+  await page.locator('main a[href^="/prenda/"] img').first().waitFor();
+  await page.waitForLoadState('networkidle');
+  await shot('09-tienda-filtros.png');
+  await page.goto(`${BASE}/?cat=top`);
+  await page.locator('main a[href^="/prenda/"]').nth(1).hover();
+  await page.locator('main app-approx-view canvas').waitFor();
+  await page.waitForTimeout(2500);
+  await shot('09-tienda-vista-en-modelo.png');
+}
+
+if (wants('ficha')) {
+  console.log('> ficha: vista aproximada al instante, galería con tres tallas y zoom');
+  await page.setViewportSize({ width: 1440, height: 1300 });
+  await page.goto(`${BASE}/prenda/${idOf('Camisa Oxford celeste')}`);
+  await page.locator('[role=radiogroup] [role=radio]').nth(4).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(3000);
+  await shot('10-ficha-vista-aproximada.png');
+  await page.getByRole('button', { name: /Ampliar la foto/ }).first().click();
+  await page.mouse.move(720, 520);
+  await page.mouse.click(720, 520);
+  await page.waitForTimeout(600);
+  await shot('10-ficha-zoom.png');
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 1440, height: 900 });
+}
+
+if (wants('look')) {
+  console.log('> armar look: tres prendas sobre un modelo');
+  const ids = ['Camisa Oxford celeste', 'Jean ancho claro', 'Blazer beige'].map(idOf);
+  await page.goto(`${BASE}/look?prendas=${ids.join(',')}`);
+  await page.locator('[role=radiogroup] [role=radio]').nth(4).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(3000);
+  await shot('11-look.png');
 }
 
 await browser.close();

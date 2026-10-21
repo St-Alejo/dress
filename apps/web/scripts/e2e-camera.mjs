@@ -29,9 +29,9 @@ const MIN_FPS = Number(arg('min-fps', '12'));
  * color dentro del torso). Se eligen colores que la persona del video no lleva puestos.
  */
 const CASES = [
-  { slug: 'camara-cardigan', name: 'Cárdigan rojo de punto', fabric: ([r, g, b]) => r > 120 && r > g * 1.9 && r > b * 1.9, zone: 'torso' },
-  { slug: 'camara-camisa', name: 'Camisa Oxford celeste', fabric: ([r, g, b]) => b > 150 && b > r + 15 && g > r, zone: 'torso' },
-  { slug: 'camara-vestido', name: 'Vestido rojo plisado', fabric: ([r, g, b]) => r > 120 && r > g * 1.9 && r > b * 1.9, zone: 'torso' },
+  { slug: '12-camara-cardigan', name: 'Cárdigan rojo de punto', fabric: ([r, g, b]) => r > 120 && r > g * 1.9 && r > b * 1.9, zone: 'torso' },
+  { slug: '12-camara-camisa', name: 'Camisa Oxford celeste', fabric: ([r, g, b]) => b > 150 && b > r + 15 && g > r, zone: 'torso' },
+  { slug: '12-camara-vestido', name: 'Vestido rojo plisado', fabric: ([r, g, b]) => r > 120 && r > g * 1.9 && r > b * 1.9, zone: 'torso' },
 ];
 
 const W = 640;
