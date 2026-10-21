@@ -52,7 +52,8 @@ void main() {
   float edge = smoothstep(0.08, 0.6, c.a);
   float occ = 0.0;
   if (uUseOcc) {
-    vec2 o = texture(uOcc, vScreen).rg;
+    // La máscara llega en baja resolución: umbral suave sobre el filtrado lineal = borde limpio.
+    vec2 o = smoothstep(vec2(0.3), vec2(0.7), texture(uOcc, vScreen).rg);
     occ = vRegion < 0.5 ? max(o.r, o.g) : o.g;
   }
   float a = edge * (1.0 - occ) * uOpacity;

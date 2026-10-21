@@ -1,12 +1,13 @@
 import type { GarmentAnchors } from '@vestirse/shared-types';
 import { describe, expect, it } from 'vitest';
 import { BodyTracker, HOLD_MS } from './body-tracker';
-import { affineFrom3, apply, dist, similarity, type Pt } from './geometry';
+import { affineFrom3, apply, dist, limitTurn, similarity, type Pt } from './geometry';
 import { easeGain, sceneGain } from './lighting';
 import { occlusionMask, SEG } from './occlusion';
 import { OneEuroFilter } from './one-euro';
 import { type Body, buildMesh, lowerPose, poseFor, skin, skinMesh, upperPose, vertexWeights } from './rig';
 import { fitForSize } from './size-fit';
+import { bodyFromPose, decodeRle } from './static-pose';
 
 const W = 400;
 const H = 360;
@@ -74,6 +75,12 @@ describe('geometría', () => {
     expect(apply(m, [0, 10])).toEqual([5, 35]);
   });
 
+  it('limitTurn deja pasar giros pequeños y recorta los grandes', () => {
+    expect(limitTurn([0, 1], [0.2, 1], 0.7)).toEqual([0.2, 1]);
+    const [x, y] = limitTurn([0, 1], [0, -1], 0.7); // media vuelta pedida
+    expect(Math.atan2(Math.abs(x), y)).toBeCloseTo(0.7, 5);
+  });
+
   it('similarity gira y escala alrededor del punto de apoyo', () => {
     const m = similarity([0, 0], [1, 0], [100, 100], [0, 1], 2);
     const p = apply(m, [10, 0]);
@@ -120,6 +127,16 @@ describe('rig: pesos de la malla', () => {
     expect(wr).toBeGreaterThan(0.95);
     expect(wl).toBe(0);
     expect(vertexWeights(TEE, named, [W * 0.92, H * 0.3], W)[1]).toBeGreaterThan(0.95);
+  });
+
+  it('un puño mal medido (caído en el bajo) no convierte el torso en manga', () => {
+    const badCuff = { ...named, leftCuff: [W * 0.76, H * 0.95] as Pt };
+    const anchors = { ...TEE, points: { ...TEE.points, leftCuff: [0.76, 0.95] as [number, number] } };
+    expect(vertexWeights(anchors, badCuff, [W * 0.7, H * 0.8], W)).toEqual([0, 0, 0]);
+  });
+
+  it('con las mangas colgando en la foto, toda la prenda sigue al torso', () => {
+    expect(vertexWeights({ ...TEE, sleeve: 'hanging' }, named, [W * 0.08, H * 0.3], W)).toEqual([0, 0, 0]);
   });
 
   it('la malla solo tiene triángulos donde hay tela y dibuja el torso antes que las mangas', () => {
@@ -241,5 +258,20 @@ describe('talla visible', () => {
     expect(fitForSize(['S', 'M', 'L'], 'M', 'M')).toEqual({ width: 1, length: 1 });
     expect(fitForSize(['S', 'M', 'L'], 'M', 'S').width).toBeLessThan(1);
     expect(fitForSize(['S', 'M', 'L'], undefined, 'L')).toEqual({ width: 1, length: 1 });
+  });
+});
+
+describe('pose guardada de un modelo (vista aproximada)', () => {
+  it('decodifica la segmentación por tramos sin pasarse del tamaño', () => {
+    expect(Array.from(decodeRle([0, 2, 4, 3, 2, 9], 7))).toEqual([0, 0, 4, 4, 4, 2, 2]);
+  });
+
+  it('convierte los landmarks normalizados en articulaciones en píxeles de la foto', () => {
+    const landmarks = Array.from({ length: 33 }, () => ({ x: 0.5, y: 0.5, v: 0.99 }));
+    landmarks[11] = { x: 0.6, y: 0.25, v: 0.99 }; // hombro izquierdo de la persona
+    landmarks[12] = { x: 0.4, y: 0.25, v: 0.99 };
+    const body = bodyFromPose({ version: 1, width: 768, height: 1024, landmarks, seg: { width: 2, height: 2, rle: [0, 4] } });
+    expect(body?.leftShoulder?.p[0]).toBeCloseTo(0.6 * 768, 0);
+    expect(body?.rightShoulder?.p[1]).toBeCloseTo(0.25 * 1024, 0);
   });
 });

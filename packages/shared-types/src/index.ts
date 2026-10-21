@@ -45,6 +45,20 @@ export interface SimilarBodyModel {
   photoUrl: string;
   /** garmentId -> prueba real generada por IA: el modelo con esa prenda puesta. Puede faltar. */
   previewImages: Record<string, string>;
+  /** Pose y segmentación medidas una vez sobre la foto: permiten la "vista aproximada" al instante. */
+  pose?: BodyPose;
+}
+
+/**
+ * Landmarks de MediaPipe (BlazePose, 33 puntos, normalizados 0–1) y segmentación selfie_multiclass
+ * de la foto de un modelo, codificada por tramos [etiqueta, longitud, …] fila a fila.
+ */
+export interface BodyPose {
+  version: 1;
+  width: number;
+  height: number;
+  landmarks: { x: number; y: number; v: number }[];
+  seg: { width: number; height: number; rle: number[] };
 }
 
 export type Silhouette = 'feminine' | 'masculine' | 'neutral';
@@ -175,7 +189,8 @@ export interface GarmentAnchors {
   /** ancho / alto del recorte. */
   aspect: number;
   points: Partial<Record<GarmentAnchorName, [number, number]>>;
-  sleeve?: 'none' | 'short' | 'long';
+  /** "hanging": las mangas cuelgan pegadas al cuerpo en la foto; la prenda se viste rígida con el torso. */
+  sleeve?: 'none' | 'short' | 'long' | 'hanging';
 }
 
 /**

@@ -9,6 +9,7 @@ import {
   clamp,
   dist,
   lerp,
+  limitTurn,
   mid,
   scale,
   signedDistance,
@@ -57,6 +58,8 @@ const seen = (j?: Joint): j is Joint => !!j && j.v >= VISIBLE;
 const SHOULDER_SEAM = 1.1;
 /** Ancho del contorno de cadera respecto de la distancia entre articulaciones de cadera. */
 const HIP_CONTOUR = 1.7;
+/** Giro máximo de una manga o pernera respecto de su caída con el torso (radianes, ~40°). */
+const MAX_SLEEVE_TURN = 0.7;
 
 export interface Mesh {
   /** Posiciones en px del recorte (x, y intercalados). */
@@ -151,16 +154,20 @@ export function vertexWeights(anchors: GarmentAnchors, p: Named, v: Pt, width: n
     const la = p['leftArmpit'];
     const rc = p['rightCuff'];
     const lc = p['leftCuff'];
-    if (!rs || !ls || !ra || !la || !rc || !lc || anchors.sleeve === 'none') return [0, 0, 0];
+    // Sin manga o con las mangas colgando en la foto: toda la prenda sigue al torso.
+    if (!rs || !ls || !ra || !la || !rc || !lc || anchors.sleeve === 'none' || anchors.sleeve === 'hanging') return [0, 0, 0];
     const band = dist(rs, ls) * 0.07;
-    // La costura va del hombro a la axila; del lado del puño, es manga.
-    const side = (s: Pt, a: Pt, c: Pt) => {
-      const sd = signedDistance(v, s, a);
-      const cuffSide = Math.sign(signedDistance(c, s, a)) || 1;
-      return smoothstep(-band, band, sd * cuffSide);
+    const centerX = (rs[0] + ls[0]) / 2;
+    // Hasta la axila la frontera es la costura hombro→axila; por debajo, el borde vertical del
+    // torso. Así un puño mal medido nunca convierte medio torso en manga.
+    const side = (s: Pt, a: Pt) => {
+      const out = Math.sign(s[0] - centerX) || 1; // hacia fuera de la prenda
+      if (v[1] > a[1]) return smoothstep(-band, band, (v[0] - a[0]) * out);
+      const outward = Math.sign(signedDistance(add(a, [out, 0]), s, a)) || 1;
+      return smoothstep(-band, band, signedDistance(v, s, a) * outward);
     };
-    const wr = side(rs, ra, rc);
-    const wl = side(ls, la, lc);
+    const wr = side(rs, ra);
+    const wl = side(ls, la);
     let wf = 0;
     if (anchors.sleeve === 'long') {
       const t = wr >= wl ? along(v, rs, rc) : along(v, ls, lc);
@@ -235,7 +242,10 @@ function limbBones(base: Affine, gStart: Pt, gMid: Pt, gEnd: Pt, start: Joint | 
   if (!seen(start) || !seen(middle)) return [base, base];
   const anchor = apply(base, gStart);
   const gUpper = sub(gMid, gStart);
-  const bUpper = sub(middle.p, start.p);
+  // La manga gira con el brazo, pero no más de MAX_SLEEVE_TURN respecto de cómo cae con el
+  // torso: con el brazo en alto, una tela rígida "volando" se ve peor que una manga que se queda.
+  const rest = sub(apply(base, gMid), anchor);
+  const bUpper = limitTurn(rest, sub(middle.p, start.p), MAX_SLEEVE_TURN);
   // Manga corta: conserva el tamaño de la prenda. Manga larga: se estira lo justo para llegar al codo.
   const kUpper = twoPart ? clamp(dist(middle.p, start.p) / (dist(gMid, gStart) || 1), k * 0.75, k * 1.35) : k;
   const upper = similarity(gStart, gUpper, anchor, bUpper, kUpper);
@@ -325,7 +335,12 @@ export function placementPose(anchors: GarmentAnchors, style: string | undefined
     const ra = body.rightAnkle;
     if (!seen(la) || !seen(ra)) return null;
     const span = Math.max(dist(la.p, ra.p) * 1.5, (seen(ls) && seen(rs) ? dist(ls.p, rs.p) : 0) * 0.9);
-    return box([0, height], [1, 0], add(mid(la.p, ra.p), [-span / 2, dist(la.p, ra.p) * 0.35]), [1, 0], span / width);
+    // La suela va a la altura de las puntas de los pies (o algo bajo los tobillos si no se ven).
+    const lf = body.leftFoot;
+    const rf = body.rightFoot;
+    const feet = seen(lf) && seen(rf) ? mid(lf.p, rf.p) : add(mid(la.p, ra.p), [0, span * 0.25]);
+    const ground = Math.max(feet[1], mid(la.p, ra.p)[1]) + span * 0.04;
+    return box([0, height], [1, 0], [feet[0] - span / 2, ground], [1, 0], span / width);
   }
   if (!seen(ls) || !seen(rs)) return null;
   const across = sub(ls.p, rs.p);

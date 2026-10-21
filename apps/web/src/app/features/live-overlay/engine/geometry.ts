@@ -22,6 +22,16 @@ export const unit = (a: Pt): Pt => {
 };
 export const clamp = (x: number, lo: number, hi: number): number => Math.min(Math.max(x, lo), hi);
 
+/** Gira `from` hacia `to` como mucho `max` radianes; conserva el largo de `to`. */
+export function limitTurn(from: Pt, to: Pt, max: number): Pt {
+  const turn = Math.atan2(cross(from, to), dot(from, to));
+  if (Math.abs(turn) <= max) return to;
+  const r = Math.sign(turn) * max;
+  const [ux, uy] = unit(from);
+  const l = len(to);
+  return [(ux * Math.cos(r) - uy * Math.sin(r)) * l, (ux * Math.sin(r) + uy * Math.cos(r)) * l];
+}
+
 export function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = clamp((x - edge0) / (edge1 - edge0 || 1e-9), 0, 1);
   return t * t * (3 - 2 * t);
