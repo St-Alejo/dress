@@ -16,6 +16,7 @@ Campos de cada prenda en sources.json:
   classes       clases del segmentador a extraer cuando las de la categoría no sirven
   crop          [x0, y0, x1, y1] en fracciones, para quedarse con una parte de la foto
   anchors       correcciones a mano de puntos concretos, en fracciones del recorte
+  kind          cómo se viste en la cámara si no es el de su categoría (p. ej. un short como "skirt")
   sleeve        "none" | "short" | "long" cuando la medida automática se equivoca
 
 Uso (desde services/ai-worker, con el extra `tools` instalado):
@@ -124,7 +125,7 @@ def on_canvas(cutout: Image.Image) -> Image.Image:
 
 
 def anchors_for(cutout: Image.Image, source: dict) -> dict:
-    anchors = anchors_of(np.asarray(cutout.getchannel("A")), kind_for(source["category"], source.get("style")))
+    anchors = anchors_of(np.asarray(cutout.getchannel("A")), source.get("kind") or kind_for(source["category"], source.get("style")))
     for name, point in (source.get("anchors") or {}).items():
         anchors["points"][name] = [round(float(point[0]), 4), round(float(point[1]), 4)]
     if source.get("sleeve"):

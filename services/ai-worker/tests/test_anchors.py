@@ -38,10 +38,14 @@ def test_tshirt_anchors_follow_the_photo():
     assert p["neck"][1] < 0.15
 
 
-def test_long_sleeves_are_detected():
+def test_hanging_sleeves_dress_the_garment_rigidly():
+    # Mangas largas colgando junto al torso, como en una percha: los hombros salen de las
+    # esquinas de arriba (algo hacia dentro), no del borde exterior de las mangas.
     a = anchors_of(tshirt(long_sleeves=True), "upper")
-    assert a["sleeve"] == "long"
-    assert a["points"]["rightCuff"][1] > 0.8
+    p = a["points"]
+    assert a["sleeve"] == "hanging"
+    assert 0.1 < p["rightShoulder"][0] < 0.25 and 0.75 < p["leftShoulder"][0] < 0.9
+    assert p["rightCuff"][1] > 0.8
 
 
 def test_pants_have_crotch_knees_and_ankles():

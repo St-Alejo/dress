@@ -107,9 +107,12 @@ def _upper(mask: np.ndarray) -> tuple[dict[str, Point], str]:
     # Puño: el píxel de la manga más lejano a su hombro (a cada lado del torso).
     yy, xx = np.nonzero(mask)
 
+    # Un bajo algo más ancho que el torso no es una manga: el puño tiene que quedar claramente fuera.
+    margin = max(2.0, (b - a) * 0.05)
+
     def cuff(shoulder: tuple[float, float], side: int) -> tuple[float, float]:
         torso_edge = a if side < 0 else b
-        sel = (xx < torso_edge - 2) if side < 0 else (xx > torso_edge + 2)
+        sel = (xx < torso_edge - margin) if side < 0 else (xx > torso_edge + margin)
         sel &= yy < top + span * 0.95
         if not sel.any():
             return (shoulder[0], float(armpit_y))
@@ -125,6 +128,13 @@ def _upper(mask: np.ndarray) -> tuple[dict[str, Point], str]:
     if sleeve == "attached" and sleeve_kind != "none":
         sleeve_kind = "long"
 
+    # Mangas colgando junto al cuerpo (la foto típica en percha): las axilas no se ven y el
+    # "torso" medido incluye las mangas. La prenda se viste rígida con el torso, como cuelga
+    # en la foto; los hombros salen de las esquinas de arriba del contorno.
+    cuffs_low = (right_cuff[1] + left_cuff[1]) / 2 > neck[1] + 0.55 * (hem_y - neck[1])
+    if sleeve_kind != "none" and (sleeve == "attached" or cuffs_low):
+        return _hanging(mask, top, bottom, cx, neck), "hanging"
+
     points = {
         "neck": neck,
         "rightShoulder": right_sh,
@@ -139,6 +149,31 @@ def _upper(mask: np.ndarray) -> tuple[dict[str, Point], str]:
     return {k: _norm(v, w, h) for k, v in points.items()}, sleeve_kind
 
 
+def _hanging(mask: np.ndarray, top: int, bottom: int, cx: int, neck: tuple[float, float]) -> dict[str, Point]:
+    h, w = mask.shape
+    span = bottom - top + 1
+    # A la altura del pecho la prenda mide de borde a borde de las mangas colgando; la costura
+    # del hombro queda un 10 % del ancho hacia dentro de cada borde.
+    chest = np.flatnonzero(mask[top + int(span * 0.2) : top + int(span * 0.3)].any(axis=0))
+    edges = (float(chest[0]), float(chest[-1])) if chest.size else (0.0, float(w - 1))
+    inset = w * 0.1
+    hem_y = top + int(span * 0.97)
+    points: dict[str, tuple[float, float]] = {"neck": neck}
+    for out, name in ((-1, "right"), (1, "left")):
+        corner_x = edges[0] if out < 0 else edges[1]
+        sx = corner_x - out * inset
+        col = np.flatnonzero(mask[:, int(round(sx))])
+        sy = float(col[0]) if col.size else float(top)
+        sleeve_side = (np.arange(w) - sx) * out > 0
+        rows = np.flatnonzero(mask[:, sleeve_side].any(axis=1))
+        cuff_y = float(rows[-1]) if rows.size else float(hem_y)
+        points[f"{name}Shoulder"] = (sx, sy)
+        points[f"{name}Armpit"] = (sx, sy + span * 0.22)
+        points[f"{name}Cuff"] = ((corner_x + sx) / 2, cuff_y)
+        points[f"{name}Hem"] = (sx, float(hem_y))
+    return {k: _norm(v, w, h) for k, v in points.items()}
+
+
 def _lower(mask: np.ndarray, skirt: bool) -> dict[str, Point]:
     h, w = mask.shape
     ys = np.flatnonzero(mask.any(axis=1))
@@ -146,8 +181,11 @@ def _lower(mask: np.ndarray, skirt: bool) -> dict[str, Point]:
     span = bottom - top + 1
     cx = int(round(np.flatnonzero(mask.any(axis=0)).mean()))
 
-    waist_y = top + int(span * 0.02)
-    wa, wb = _run_at(mask[waist_y], cx) or (0, w - 1)
+    # Cintura: extremos de la franja de arriba entera. Una sola fila puede caer entre trabillas
+    # o en una pretina inclinada y dar una cintura diminuta (y un pantalón gigante en la cámara).
+    waist_y = top + int(span * 0.03)
+    band = np.flatnonzero(mask[top : top + max(2, int(span * 0.12))].any(axis=0))
+    wa, wb = (int(band[0]), int(band[-1])) if band.size else (0, w - 1)
     points: dict[str, tuple[float, float]] = {
         "rightWaist": (float(wa), float(waist_y)),
         "leftWaist": (float(wb), float(waist_y)),

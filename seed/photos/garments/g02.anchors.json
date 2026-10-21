@@ -8,32 +8,32 @@
    0.03
   ],
   "rightShoulder": [
-   0.1335,
+   0.1341,
    0.0768
   ],
-  "leftShoulder": [
-   0.8646,
-   0.168
-  ],
   "rightArmpit": [
-   0.1017,
-   0.5673
-  ],
-  "leftArmpit": [
-   0.8964,
-   0.5673
+   0.1341,
+   0.297
   ],
   "rightCuff": [
    0.02,
    0.5
   ],
-  "leftCuff": [
-   0.97,
-   0.55
-  ],
   "rightHem": [
    0.04,
    0.96
+  ],
+  "leftShoulder": [
+   0.8113,
+   0.1001
+  ],
+  "leftArmpit": [
+   0.8113,
+   0.3204
+  ],
+  "leftCuff": [
+   0.97,
+   0.55
   ],
   "leftHem": [
    0.89,
