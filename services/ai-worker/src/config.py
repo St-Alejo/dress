@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     # Groq: visión para el control de calidad de la foto y el etiquetado de prendas.
     groq_api_key: str = ""
     groq_vision_model: str = "qwen/qwen3.8-27b"
+    # "groq" (por defecto, gratuito) o "claude" (de pago; si falla o no tiene saldo, cae a Groq).
+    vision_provider: str = "groq"
+    anthropic_api_key: str = ""
+    claude_vision_model: str = "claude-haiku-5-5"
     # Adaptadores heredados: se pueden configurar por entorno además de por cabecera.
     fal_key: str = ""
     fal_model: str = "fal-ai/cat-vton"

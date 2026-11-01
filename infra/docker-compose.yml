@@ -50,6 +50,10 @@ services:
       HF_TOKEN: ${HF_TOKEN:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_VISION_MODEL: ${GROQ_VISION_MODEL:-qwen/qwen3.8-27b}
+      # Visión opcional con Claude (de pago): VISION_PROVIDER=claude y ANTHROPIC_API_KEY.
+      VISION_PROVIDER: ${VISION_PROVIDER:-groq}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_VISION_MODEL: ${CLAUDE_VISION_MODEL:-claude-haiku-5-5}
     ports: ["${AI_WORKER_PORT:-8000}:8000"]
     # El healthcheck vive en el Dockerfile del worker.
 

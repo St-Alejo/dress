@@ -1,15 +1,20 @@
 """
-Visión con Groq (imagen → JSON): control de calidad de la foto de la persona y
-etiquetado de prendas. Groq no genera imágenes; aquí solo describe lo que ve.
+Visión (imagen → JSON): control de calidad de la foto de la persona y etiquetado
+de prendas. Ningún proveedor genera imágenes; aquí solo describen lo que ven.
 
-La cuota gratuita es pequeña (cada imagen cuesta ~2 000 tokens de un cupo de
-8 000 por minuto), así que el cliente:
+Proveedores:
+  - Groq (por defecto, gratuito): cupo pequeño (cada imagen cuesta ~2 000 tokens
+    de un cupo de 8 000 por minuto).
+  - Claude (opcional, de pago): se activa con `VISION_PROVIDER=claude` y una key
+    de Anthropic; si falla o no tiene saldo, la petición cae a Groq.
+
+Para todos, el cliente:
   - reduce la imagen antes de enviarla y manda una sola por petición;
   - recuerda las respuestas por hash de la imagen;
-  - no pasa de `MAX_PER_MINUTE` llamadas y respeta `retry-after` tras un 429.
+  - no pasa de su cupo por minuto y respeta `retry-after` tras un 429.
 
-Nunca bloquea a la persona: si Groq no está configurado, no tiene cupo o falla,
-se lanza `VisionUnavailable` y quien llama sigue adelante sin el análisis.
+Nunca bloquea a la persona: si el proveedor no está configurado, no tiene cupo o
+falla, se lanza `VisionUnavailable` y quien llama sigue adelante sin el análisis.
 """
 
 from __future__ import annotations
@@ -22,12 +27,15 @@ import time
 from collections import OrderedDict, deque
 from typing import Any
 
+import anthropic
 import httpx
 from PIL import Image
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 MAX_SIDE = 768
 MAX_PER_MINUTE = 3
+# Claude no tiene el cupo gratuito de Groq, pero cada llamada cuesta: el tope es para el gasto.
+CLAUDE_MAX_PER_MINUTE = 20
 CACHE_SIZE = 256
 
 PHOTO_REASONS = ("no-person", "multiple-people", "not-full-body", "not-frontal", "too-dark")
@@ -56,12 +64,45 @@ GARMENT_PROMPT = (
     'as a #rrggbb hex string), "name" (a short product name in Spanish, at most 6 words, no brand).'
 )
 
+# Esquemas para las salidas estructuradas de Claude: la respuesta llega siempre como JSON válido.
+PHOTO_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "people": {"type": "integer"},
+        "fullBody": {"type": "boolean"},
+        "frontal": {"type": "boolean"},
+        "lightingOk": {"type": "boolean"},
+    },
+    "required": ["people", "fullBody", "frontal", "lightingOk"],
+    "additionalProperties": False,
+}
+GARMENT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "style": {"type": "string", "enum": list(STYLES)},
+        "photoType": {"type": "string", "enum": ["flat-lay", "model"]},
+        "color": {"type": "string"},
+        "name": {"type": "string"},
+    },
+    "required": ["style", "photoType", "color", "name"],
+    "additionalProperties": False,
+}
+SCHEMAS = {"photo": PHOTO_SCHEMA, "garment": GARMENT_SCHEMA}
+
 
 class VisionUnavailable(Exception):
     """El análisis no se pudo hacer. Quien llama debe continuar sin él."""
 
 
-def _data_url(image: bytes) -> str:
+class RetryLater(VisionUnavailable):
+    """El proveedor pidió esperar `seconds` antes de volver a llamarlo."""
+
+    def __init__(self, message: str, seconds: float) -> None:
+        super().__init__(message)
+        self.seconds = seconds
+
+
+def _jpeg(image: bytes) -> bytes:
     try:
         img = Image.open(io.BytesIO(image)).convert("RGB")
     except Exception as exc:
@@ -69,14 +110,23 @@ def _data_url(image: bytes) -> str:
     img.thumbnail((MAX_SIDE, MAX_SIDE))
     out = io.BytesIO()
     img.save(out, format="JPEG", quality=85)
-    return "data:image/jpeg;base64," + base64.b64encode(out.getvalue()).decode()
+    return out.getvalue()
 
 
-class GroqVision:
-    def __init__(self, api_key: str, model: str, transport: httpx.AsyncBaseTransport | None = None, clock=time.monotonic) -> None:
-        self.api_key = api_key
-        self.model = model
-        self._transport = transport
+def _retry_after(headers: Any, default: float = 60.0) -> float:
+    try:
+        return float(headers.get("retry-after", default))
+    except (TypeError, ValueError):
+        return default
+
+
+class VisionClient:
+    """Lo común a todos los proveedores: interpretar la respuesta, caché por imagen y cupo por minuto."""
+
+    label = "visión"
+    max_per_minute = MAX_PER_MINUTE
+
+    def __init__(self, clock=time.monotonic) -> None:
         self._clock = clock
         self._calls: deque[float] = deque()
         self._blocked_until = 0.0
@@ -84,7 +134,7 @@ class GroqVision:
 
     @property
     def configured(self) -> bool:
-        return bool(self.api_key)
+        raise NotImplementedError
 
     async def inspect_photo(self, image: bytes) -> dict[str, Any]:
         """Qué tan utilizable es la foto. `reason` es el primer problema encontrado, o None."""
@@ -122,7 +172,7 @@ class GroqVision:
 
     async def _ask(self, task: str, prompt: str, image: bytes) -> dict[str, Any]:
         if not self.configured:
-            raise VisionUnavailable("Groq sin configurar")
+            raise VisionUnavailable(f"{self.label} sin configurar")
         key = f"{task}:{hashlib.sha256(image).hexdigest()}"
         if key in self._cache:
             self._cache.move_to_end(key)
@@ -131,10 +181,42 @@ class GroqVision:
         now = self._clock()
         while self._calls and now - self._calls[0] > 60:
             self._calls.popleft()
-        if now < self._blocked_until or len(self._calls) >= MAX_PER_MINUTE:
-            raise VisionUnavailable("sin cupo de Groq por ahora")
+        if now < self._blocked_until or len(self._calls) >= self.max_per_minute:
+            raise VisionUnavailable(f"sin cupo de {self.label} por ahora")
         self._calls.append(now)
 
+        try:
+            parsed = await self._request(task, prompt, _jpeg(image))
+        except RetryLater as exc:
+            self._blocked_until = self._clock() + exc.seconds
+            raise
+        if not isinstance(parsed, dict):
+            raise VisionUnavailable(f"respuesta de {self.label} ilegible")
+
+        self._cache[key] = parsed
+        if len(self._cache) > CACHE_SIZE:
+            self._cache.popitem(last=False)
+        return parsed
+
+    async def _request(self, task: str, prompt: str, jpeg: bytes) -> Any:
+        """Una llamada al proveedor con la imagen ya reducida. Devuelve el JSON decodificado."""
+        raise NotImplementedError
+
+
+class GroqVision(VisionClient):
+    label = "Groq"
+
+    def __init__(self, api_key: str, model: str, transport: httpx.AsyncBaseTransport | None = None, clock=time.monotonic) -> None:
+        super().__init__(clock)
+        self.api_key = api_key
+        self.model = model
+        self._transport = transport
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.api_key)
+
+    async def _request(self, task: str, prompt: str, jpeg: bytes) -> Any:
         body = {
             "model": self.model,
             "temperature": 0,
@@ -145,7 +227,7 @@ class GroqVision:
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": _data_url(image)}},
+                        {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(jpeg).decode()}},
                     ],
                 }
             ],
@@ -157,22 +239,86 @@ class GroqVision:
             raise VisionUnavailable("Groq no responde") from exc
 
         if res.status_code == 429:
-            try:
-                wait = float(res.headers.get("retry-after", "60"))
-            except ValueError:
-                wait = 60.0
-            self._blocked_until = self._clock() + wait
-            raise VisionUnavailable("Groq pidió esperar")
+            raise RetryLater("Groq pidió esperar", _retry_after(res.headers))
         if res.status_code >= 400:
             raise VisionUnavailable(f"Groq respondió {res.status_code}")
         try:
-            parsed = json.loads(res.json()["choices"][0]["message"]["content"])
+            return json.loads(res.json()["choices"][0]["message"]["content"])
         except (KeyError, IndexError, TypeError, ValueError) as exc:
             raise VisionUnavailable("respuesta de Groq ilegible") from exc
-        if not isinstance(parsed, dict):
-            raise VisionUnavailable("respuesta de Groq ilegible")
 
-        self._cache[key] = parsed
-        if len(self._cache) > CACHE_SIZE:
-            self._cache.popitem(last=False)
-        return parsed
+
+class ClaudeVision(VisionClient):
+    """Visión con Claude (API de Anthropic). Opcional y de pago: sin key se considera sin configurar."""
+
+    label = "Claude"
+    max_per_minute = CLAUDE_MAX_PER_MINUTE
+
+    def __init__(self, api_key: str, model: str, client: Any | None = None, clock=time.monotonic) -> None:
+        super().__init__(clock)
+        self.api_key = api_key
+        self.model = model
+        # Sin reintentos del SDK: si falla, la cadena pasa a Groq en vez de hacer esperar a la persona.
+        self._client = client or (anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=30.0) if api_key else None)
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.api_key) and self._client is not None
+
+    async def _request(self, task: str, prompt: str, jpeg: bytes) -> Any:
+        try:
+            res = await self._client.messages.create(
+                model=self.model,
+                max_tokens=1024,
+                # Tarea de clasificación corta: poco razonamiento basta y abarata la llamada.
+                output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMAS[task]}},
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.standard_b64encode(jpeg).decode()},
+                            },
+                            {"type": "text", "text": prompt},
+                        ],
+                    }
+                ],
+            )
+        except anthropic.RateLimitError as exc:
+            raise RetryLater("Claude pidió esperar", _retry_after(exc.response.headers)) from exc
+        except anthropic.APIStatusError as exc:
+            # 400 sin saldo, 401 key inválida, 404 modelo inexistente, 5xx: todo se trata como "sin análisis".
+            raise VisionUnavailable(f"Claude respondió {exc.status_code}") from exc
+        except anthropic.APIConnectionError as exc:
+            raise VisionUnavailable("Claude no responde") from exc
+
+        if res.stop_reason in ("refusal", "max_tokens"):
+            raise VisionUnavailable(f"Claude no terminó ({res.stop_reason})")
+        text = next((b.text for b in res.content if b.type == "text"), None)
+        try:
+            return json.loads(text)
+        except (TypeError, ValueError) as exc:
+            raise VisionUnavailable("respuesta de Claude ilegible") from exc
+
+
+class FallbackVision(VisionClient):
+    """Prueba los proveedores en orden; cada uno conserva su caché y su cupo."""
+
+    def __init__(self, clients: list[VisionClient]) -> None:
+        super().__init__()
+        self.clients = clients
+        self.label = " → ".join(c.label for c in clients)
+
+    @property
+    def configured(self) -> bool:
+        return any(c.configured for c in self.clients)
+
+    async def _ask(self, task: str, prompt: str, image: bytes) -> dict[str, Any]:
+        last: VisionUnavailable = VisionUnavailable("visión sin configurar")
+        for client in self.clients:
+            try:
+                return await client._ask(task, prompt, image)
+            except VisionUnavailable as exc:
+                last = exc
+        raise last

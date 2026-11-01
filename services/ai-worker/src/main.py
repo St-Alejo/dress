@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from .config import Settings
 from .contract import CONTRACT_VERSION, Manifest, WorkerError, worker_error_handler
 from .providers import Credentials, GarmentInput, ProviderRegistry, TransferRequest, TryOnProvider, default_registry
-from .vision import GroqVision, VisionUnavailable
+from .vision import ClaudeVision, FallbackVision, GroqVision, VisionClient, VisionUnavailable
 
 app = FastAPI(title="Vestirse AI worker", version="1.0.0")
 app.add_exception_handler(WorkerError, worker_error_handler)
@@ -37,13 +37,22 @@ def get_registry() -> ProviderRegistry:
 
 
 @lru_cache
-def _vision(api_key: str, model: str) -> GroqVision:
+def _vision(provider: str, groq_key: str, groq_model: str, claude_key: str, claude_model: str) -> VisionClient:
     # Una instancia por configuración: su caché y su límite de llamadas viven entre peticiones.
-    return GroqVision(api_key, model)
+    groq = GroqVision(groq_key, groq_model)
+    if provider == "claude":
+        return FallbackVision([ClaudeVision(claude_key, claude_model), groq])
+    return groq
 
 
-def get_vision(settings: Annotated[Settings, Depends(get_settings)]) -> GroqVision:
-    return _vision(settings.groq_api_key, settings.groq_vision_model)
+def get_vision(settings: Annotated[Settings, Depends(get_settings)]) -> VisionClient:
+    return _vision(
+        settings.vision_provider.strip().lower(),
+        settings.groq_api_key,
+        settings.groq_vision_model,
+        settings.anthropic_api_key,
+        settings.claude_vision_model,
+    )
 
 
 def require_token(
@@ -145,7 +154,7 @@ async def test_provider(provider: Annotated[TryOnProvider, Depends(get_provider)
 @app.post("/v1/photo/inspect", dependencies=[Depends(require_token)])
 async def inspect_photo(
     image: Annotated[UploadFile, File()],
-    vision: Annotated[GroqVision, Depends(get_vision)],
+    vision: Annotated[VisionClient, Depends(get_vision)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> dict:
     """Control de calidad de la foto. `checked: false` = no se pudo analizar; nunca es motivo para rechazarla."""
@@ -159,7 +168,7 @@ async def inspect_photo(
 @app.post("/v1/garment/describe", dependencies=[Depends(require_token)])
 async def describe_garment(
     image: Annotated[UploadFile, File()],
-    vision: Annotated[GroqVision, Depends(get_vision)],
+    vision: Annotated[VisionClient, Depends(get_vision)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> dict:
     """Sugerencias de etiquetado para el alta de una prenda. Sin análisis, la lista viene vacía."""
