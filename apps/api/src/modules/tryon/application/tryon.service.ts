@@ -96,6 +96,7 @@ export class TryOnService {
       throw new UnprocessableEntityException('la imagen no se pudo leer');
     }
 
+    this.domain(() => session.assertPhotoChangeable());
     const stale = session.purgePhoto();
     if (stale.length) await this.storage.deleteMany(stale);
     this.domain(() => session.attachPhoto(new Date(), this.ttlHours));

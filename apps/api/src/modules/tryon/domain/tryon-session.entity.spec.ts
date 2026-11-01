@@ -51,6 +51,26 @@ describe('TryOnSession', () => {
     expect(s.resultKey).toBe('saved/u1/s1.png');
   });
 
+  it('no deja cambiar la foto mientras se genera, antes de borrar nada', () => {
+    const s = start();
+    s.attachPhoto(now, 24);
+    s.requestGeneration();
+    expect(() => s.assertPhotoChangeable()).toThrow(DomainError);
+    expect(s.photoKey).toBe('uploads/sessions/s1/photo.jpg');
+  });
+
+  it('regenerar tras guardar deja el nuevo resultado sujeto a la purga', () => {
+    const s = start();
+    s.attachPhoto(now, 24);
+    s.requestGeneration();
+    s.complete();
+    s.saveResult('u1');
+    s.requestGeneration();
+    s.complete();
+    expect(s.toDto().resultSaved).toBe(false);
+    expect(s.purgePhoto().sort()).toEqual(['uploads/sessions/s1/photo.jpg', 'uploads/sessions/s1/result.png']);
+  });
+
   it('pertenece a su sid o a su cuenta, a nadie más', () => {
     const s = start();
     expect(s.isOwnedBy(requester)).toBe(true);

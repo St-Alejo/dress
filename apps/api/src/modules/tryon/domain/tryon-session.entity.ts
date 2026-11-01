@@ -75,9 +75,14 @@ export class TryOnSession {
     this.props.mode = mode;
   }
 
+  /** Comprobar antes de borrar la foto anterior: la generación en curso la está leyendo. */
+  assertPhotoChangeable() {
+    if (this.isInFlight) throw new DomainError('no se puede cambiar la foto mientras se genera');
+  }
+
   /** Adjuntar foto implica modo fotorrealista y fija la expiración (TTL corto por defecto). */
   attachPhoto(now: Date, ttlHours: number) {
-    if (this.isInFlight) throw new DomainError('no se puede cambiar la foto mientras se genera');
+    this.assertPhotoChangeable();
     this.props.mode = 'photorealistic';
     this.props.photoKey = TryOnSession.photoKeyFor(this.id);
     this.props.photoExpiresAt = new Date(now.getTime() + ttlHours * 3600_000);
@@ -98,6 +103,8 @@ export class TryOnSession {
 
   complete(now = new Date()) {
     this.props.resultKey = TryOnSession.resultKeyFor(this.id);
+    // El resultado nuevo es temporal aunque uno anterior se guardara (ese sigue en saved/).
+    this.props.resultSaved = false;
     this.transition('done', now);
   }
 
