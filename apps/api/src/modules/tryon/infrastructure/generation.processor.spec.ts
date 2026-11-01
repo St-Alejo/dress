@@ -147,6 +147,14 @@ describe('GenerationProcessor', () => {
     expect(env.record).toHaveBeenCalledWith('generation-failed', expect.objectContaining({ reason: 'timeout' }));
   });
 
+  it('la cuota agotada da fallback inmediato: reintentar en segundos no la devuelve', async () => {
+    const env = setup();
+    await queuedSession(env);
+    env.transfer.next = () => Promise.reject(new TransferUnavailableError('rate-limited', true));
+    await env.processor.process(job(0));
+    expect((await env.sessions.findById('s1'))!.toDto()).toMatchObject({ generationStatus: 'fallback', failureReason: 'rate-limited' });
+  });
+
   it('un fallo definitivo del proveedor da fallback inmediato, sin reintentos', async () => {
     const env = setup();
     await queuedSession(env);

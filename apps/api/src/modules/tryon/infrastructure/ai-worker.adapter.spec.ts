@@ -80,6 +80,14 @@ describe('AiWorkerAdapter', () => {
     }
   });
 
+  it('la cuota agotada no abre el circuito: el aviso de cuota llega tal cual', async () => {
+    const adapter = new AiWorkerAdapter(config());
+    fetchMock.mockResolvedValue(error(429, 'rate-limited', true));
+    for (let i = 0; i < 5; i++) {
+      await expect(adapter.generate(request('hf-fashn'))).rejects.toMatchObject({ reason: 'rate-limited' });
+    }
+  });
+
   it('classify respeta el orden: worker → timeout → circuito → transitorio', () => {
     expect(AiWorkerAdapter.classify(new WorkerCallError('content-policy', false))).toEqual(new TransferUnavailableError('content-policy', false));
     expect(AiWorkerAdapter.classify(Object.assign(new Error('t'), { code: 'ETIMEDOUT' })).reason).toBe('timeout');

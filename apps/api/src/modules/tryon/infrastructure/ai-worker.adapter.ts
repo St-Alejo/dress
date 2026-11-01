@@ -102,7 +102,8 @@ export class AiWorkerAdapter extends GarmentTransferPort {
         volumeThreshold: 3,
         resetTimeout: 30_000,
         // Errores de la petición o de configuración no son fallas del proveedor: no abren el circuito.
-        errorFilter: (err: Error) => err instanceof WorkerCallError && !err.retryable,
+        // La cuota agotada tampoco: con el circuito abierto se perdería el aviso de cuota.
+        errorFilter: (err: Error) => err instanceof WorkerCallError && (!err.retryable || err.code === 'rate-limited'),
       });
       breaker.on('open', () => this.logger.warn(`circuito de generación ABIERTO para ${provider}: se usará fallback`));
       breaker.on('close', () => this.logger.log(`circuito de generación cerrado para ${provider}`));

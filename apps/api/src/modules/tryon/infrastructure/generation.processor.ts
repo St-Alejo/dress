@@ -95,7 +95,8 @@ export class GenerationProcessor extends WorkerHost {
       this.gateway.emit({ sessionId, status: 'done', progress: 1, resultImageUrl: current.toDto().resultImageUrl });
     } catch (err) {
       if (err instanceof TransferUnavailableError) {
-        if (err.retryable && !isLastAttempt) {
+        // La cuota de GPU es diaria: reintentar a los pocos segundos solo alarga la espera.
+        if (err.retryable && err.reason !== 'rate-limited' && !isLastAttempt) {
           this.logger.warn(`generación ${sessionId}: ${err.reason}, intento ${attempt}; se reintentará`);
           throw err;
         }
