@@ -80,6 +80,11 @@ catálogo se genera una sola vez y queda guardada.
 (Groq no genera imágenes): el aviso de encuadre al subir la foto y el etiquetado automático de
 prendas en el panel de admin. Sin clave, sin cupo o con error, ambas se omiten y nada se bloquea.
 
+Opcionalmente, las mismas dos ayudas pueden ir con **Claude** (API de Anthropic, de pago, sin capa
+gratuita): `VISION_PROVIDER=claude` y `ANTHROPIC_API_KEY`. Usa `claude-haiku-5-5` por defecto
+(`CLAUDE_VISION_MODEL`), con salidas estructuradas, y cae a Groq si Claude falla, no tiene saldo o se
+queda sin cupo. Ver [ADR 0003](docs/adr/0003-vision-opcional-con-claude.md).
+
 ### Fotos del catálogo
 
 Todas las prendas y modelos usan fotos reales de Pexels y Unsplash (créditos en `/creditos`), sin
@@ -148,7 +153,7 @@ Las capturas del recorrido están en [`docs/capturas/`](docs/capturas/README.md)
 ```
 apps/web      Angular 21 (standalone, signals, zoneless) · Tailwind 4 · Transloco es/en · PWA
 apps/api      NestJS 11 hexagonal · Prisma 7 · BullMQ · Socket.IO · opossum
-services/ai-worker   FastAPI · motores de Hugging Face, fal CatVTON, Replicate y mock · visión con Groq
+services/ai-worker   FastAPI · motores de Hugging Face, fal CatVTON, Replicate y mock · visión con Groq o Claude
 packages/shared-types   modelo de datos canónico (sección 9)
 packages/fit-engine     Track C, sin I/O
 ```
