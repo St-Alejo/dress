@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import type {
   BodyMeasurements,
+  BodyPose,
   FitRecommendation,
   GarmentCategory,
   GarmentItem,
@@ -91,6 +92,12 @@ export class TryOnSessionStore {
   readonly hasPhoto = computed(() => !!this.session()?.uploadedPhotoUrl);
   /** Aviso de encuadre de la última foto subida (si se pudo revisar). */
   readonly photoCheck = signal<PhotoCheck | null>(null);
+  /**
+   * Copia local de la foto subida y su pose, medida en el navegador: permite la vista aproximada
+   * sobre la propia foto sin pedir nada al servidor. Solo en memoria (URL blob:) y se libera al
+   * cambiar de prenda o borrar la foto.
+   */
+  readonly localPhoto = signal<{ photoUrl: string; pose: BodyPose } | null>(null);
 
   private stopWatching?: () => void;
   /** Prenda → sesión. Vive en sessionStorage: recargar la página no pierde la prueba en curso. */
@@ -104,6 +111,7 @@ export class TryOnSessionStore {
     this.mode.set('similar-model');
     this.modelPreviewState.set('idle');
     this.photoCheck.set(null);
+    this.setLocalPhoto(null);
     this.generation.set({ status: 'idle', progress: 0 });
     const [garment, bodies] = await Promise.all([this.api.garment(id), this.api.bodyModels(id)]);
     this.garment.set(garment);
@@ -220,11 +228,18 @@ export class TryOnSessionStore {
     return s;
   }
 
-  async uploadPhoto(photo: Blob) {
+  async uploadPhoto(photo: Blob, pose?: BodyPose | null) {
     const s = await this.ensureSession();
     const updated = await this.api.uploadPhoto(s.id, photo);
     this.photoCheck.set(updated.photoCheck ?? null);
+    this.setLocalPhoto(pose ? { photo, pose } : null);
     this.adoptSession(updated);
+  }
+
+  private setLocalPhoto(next: { photo: Blob; pose: BodyPose } | null) {
+    const previous = this.localPhoto();
+    if (previous) URL.revokeObjectURL(previous.photoUrl);
+    this.localPhoto.set(next ? { photoUrl: URL.createObjectURL(next.photo), pose: next.pose } : null);
   }
 
   async generate() {
@@ -249,6 +264,7 @@ export class TryOnSessionStore {
     try {
       const updated = await this.api.deletePhoto(s.id);
       this.stopWatching?.();
+      this.setLocalPhoto(null);
       this.adoptSession(updated);
       this.generation.set({ status: 'idle', progress: 0 });
       this.notices.success('photo.deleted');

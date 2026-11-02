@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import type { FitRecommendation, GarmentItem, SimilarBodyModel, TryOnSession } from '@vestirse/shared-types';
+import type { BodyPose, FitRecommendation, GarmentItem, SimilarBodyModel, TryOnSession } from '@vestirse/shared-types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiService } from './api.service';
 import { GenerationSocketService } from './generation-socket.service';
@@ -125,6 +125,31 @@ describe('TryOnSessionStore', () => {
     await s.loadGarment('g1');
     expect(s.generation()).toMatchObject({ status: 'failed', fallbackReason: 'stuck' });
     expect(watch).not.toHaveBeenCalled();
+  });
+
+  it('la foto subida con su pose queda solo en memoria y se libera al borrarla', async () => {
+    const created = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:foto');
+    const revoked = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const pose: BodyPose = { version: 1, width: 3, height: 4, landmarks: [], seg: { width: 1, height: 1, rle: [0, 1] } };
+    (api as Record<string, unknown>)['uploadPhoto'] = vi.fn().mockResolvedValue(session({ uploadedPhotoUrl: '/p' }));
+    store.garment.set(garment);
+
+    await store.uploadPhoto(new Blob(['x']), pose);
+    expect(store.localPhoto()).toEqual({ photoUrl: 'blob:foto', pose });
+
+    api.deletePhoto.mockResolvedValue(session());
+    await store.deletePhoto();
+    expect(store.localPhoto()).toBeNull();
+    expect(revoked).toHaveBeenCalledWith('blob:foto');
+    created.mockRestore();
+    revoked.mockRestore();
+  });
+
+  it('sin pose medida no hay vista aproximada de la foto propia', async () => {
+    (api as Record<string, unknown>)['uploadPhoto'] = vi.fn().mockResolvedValue(session({ uploadedPhotoUrl: '/p' }));
+    store.garment.set(garment);
+    await store.uploadPhoto(new Blob(['x']), undefined);
+    expect(store.localPhoto()).toBeNull();
   });
 
   it('borrar la foto solo confirma si el servidor lo hizo', async () => {

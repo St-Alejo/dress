@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import type { GarmentItem, SimilarBodyModel } from '@vestirse/shared-types';
 import { sceneGain } from '../live-overlay/engine/lighting';
 import type { Fit } from '../live-overlay/engine/rig';
 import { bodyFromPose, occlusionFromPose } from '../live-overlay/engine/static-pose';
 import { TryOnScene } from '../live-overlay/engine/tryon-scene';
+
+/** Lo único que necesita la vista: una foto y su pose medida (un modelo del catálogo o la foto propia). */
+export type ApproxSubject = Pick<SimilarBodyModel, 'photoUrl' | 'pose'>;
 
 /**
  * "Vista aproximada": la prenda vestida sobre la foto de un modelo con el mismo motor de la
@@ -14,14 +17,14 @@ import { TryOnScene } from '../live-overlay/engine/tryon-scene';
   selector: 'app-approx-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="relative mx-auto aspect-[3/4] h-full max-w-full">
+    <div class="relative mx-auto h-full max-w-full" [style.aspect-ratio]="aspect()">
       <img #photo [src]="body().photoUrl" alt="" crossorigin="anonymous" class="absolute inset-0 h-full w-full object-cover" (load)="photoLoads.update((n) => n + 1)" />
       <canvas #canvas class="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
     </div>
   `,
 })
 export class ApproxViewComponent {
-  readonly body = input.required<SimilarBodyModel>();
+  readonly body = input.required<ApproxSubject>();
   readonly garments = input.required<GarmentItem[]>();
   readonly fits = input<Record<string, Fit>>({});
   /** Cuántas prendas se pudieron colocar (0 = la pose no basta para esta prenda). */
@@ -29,6 +32,11 @@ export class ApproxViewComponent {
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private readonly photo = viewChild.required<ElementRef<HTMLImageElement>>('photo');
+  /** Proporción de la foto medida (3:4 en los modelos): el lienzo coincide con la imagen. */
+  readonly aspect = computed(() => {
+    const pose = this.body().pose;
+    return pose ? `${pose.width} / ${pose.height}` : '3 / 4';
+  });
   /** Sube con cada carga de la foto: entonces se mide su luz. */
   readonly photoLoads = signal(0);
   private scene: TryOnScene | null = null;
@@ -46,7 +54,7 @@ export class ApproxViewComponent {
     inject(DestroyRef).onDestroy(() => this.scene?.dispose());
   }
 
-  private async render(body: SimilarBodyModel, garments: GarmentItem[], fits: Record<string, Fit>, photoReady: boolean) {
+  private async render(body: ApproxSubject, garments: GarmentItem[], fits: Record<string, Fit>, photoReady: boolean) {
     const run = ++this.run;
     const pose = body.pose;
     const person = pose ? bodyFromPose(pose) : null;

@@ -1,5 +1,5 @@
 // Recorrido real de la app local con capturas (ver README.md de esta carpeta).
-// Uso: node docs/capturas/recorrido.mjs <dirCapturas> <fotoPersona|-> [catalogo camiseta jean vestido modelo creditos tienda ficha look]
+// Uso: node docs/capturas/recorrido.mjs <dirCapturas> <fotoPersona|-> [catalogo camiseta jean vestido modelo creditos tienda ficha look foto-propia]
 import { chromium } from 'playwright-core';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -139,6 +139,24 @@ if (wants('look')) {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(3000);
   await shot('11-look.png');
+}
+
+if (wants('foto-propia')) {
+  // Sin «Generar»: la vista aproximada sale de la pose medida en el navegador, sin IA ni cuota.
+  console.log('> foto propia: vista aproximada al instante');
+  const photo = personPhoto && personPhoto !== '-' ? personPhoto : 'seed/photos/bodies/b05.jpg';
+  await page.goto(`${BASE}/prenda/${idOf('Camiseta básica blanca')}`);
+  await page.getByRole('tab', { name: 'Con tu foto' }).click();
+  await page.getByRole('button', { name: 'Usar una foto' }).click();
+  for (const box of await page.locator('app-privacy-checklist input[type=checkbox]').all()) await box.check();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.locator('input[type=file]').first().setInputFiles(photo);
+  await page.getByRole('button', { name: 'Subir foto preparada' }).click();
+  await page.locator('app-photo-tryon app-approx-view canvas').waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(2500);
+  await page.locator('app-photo-tryon').screenshot({ path: join(out, '12-foto-propia-aproximada.png') });
+  console.log('  captura 12-foto-propia-aproximada.png');
+  await page.getByRole('button', { name: 'Borrar mi foto ahora' }).click();
 }
 
 await browser.close();

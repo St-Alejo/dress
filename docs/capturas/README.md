@@ -26,6 +26,7 @@ con una foto propia o de banco libre.
 | `10-ficha-vista-aproximada.png` | Ficha: vista aproximada al instante, "Combina con" y galería con tres tallas puestas |
 | `10-ficha-zoom.png` | Zoom de la foto de producto, que sigue al puntero |
 | `11-look.png` | Armar look: camisa, jean y blazer sobre un modelo, con sugerencias por hueco |
+| `12-foto-propia-aproximada.png` | "Con tu foto": la prenda puesta al instante sobre la foto subida, con la pose medida en el navegador (sin IA) |
 | `12-camara-*.png` | Cámara en vivo con una cámara falsa (foto de modelo con vaivén): cárdigan, camisa y vestido |
 
 ## Lo que falta capturar

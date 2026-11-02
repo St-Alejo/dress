@@ -10,16 +10,20 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
+import type { BodyPose } from '@vestirse/shared-types';
 import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-group.component';
+import { ApproxViewComponent } from '../catalog/approx-view.component';
 import { canOverlay } from '../live-overlay/overlay-geometry';
 import { PrivacyChecklistComponent } from './privacy-checklist.component';
 import { failureCopy } from './failure-copy';
+import { PhotoPoseMeter, localPhotoReason } from './user-pose';
 import { canvasToJpeg, detectFace, loadBitmap, renderPrepared, type FaceBox, type FaceTreatment } from './photo-prep';
 
 type Step = 'intro' | 'checklist' | 'prepare' | 'uploading' | 'ready';
@@ -29,9 +33,17 @@ const EXPECTED_SECONDS = 35;
 
 @Component({
   selector: 'app-photo-tryon',
-  imports: [TranslocoPipe, PrivacyChecklistComponent, RouterLink, ChoiceGroupComponent],
+  imports: [TranslocoPipe, PrivacyChecklistComponent, RouterLink, ChoiceGroupComponent, ApproxViewComponent, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <ng-template #approxTpl>
+      @if (approx(); as a) {
+        <div class="stage relative h-[min(60vh,520px)] overflow-hidden">
+          <app-approx-view class="block h-full" [body]="a" [garments]="approxGarments()" />
+          <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.approxPreview' | transloco }}</p>
+        </div>
+      }
+    </ng-template>
     @let gen = store.generation();
     @if (store.hasPhoto() && step() !== 'prepare' && step() !== 'checklist') {
       <!-- Foto ya subida: generar, ver resultado o fallback -->
@@ -56,6 +68,7 @@ const EXPECTED_SECONDS = 35;
             </figcaption>
           </figure>
         } @else if (gen.status === 'queued' || gen.status === 'processing') {
+          <ng-container [ngTemplateOutlet]="approxTpl" />
           <div class="card p-5 space-y-3" role="status" aria-live="polite">
             <p class="font-medium">{{ 'photo.generating' | transloco }}</p>
             <div class="h-0.5 bg-line overflow-hidden">
@@ -65,6 +78,7 @@ const EXPECTED_SECONDS = 35;
           </div>
         } @else if (gen.status === 'failed') {
           @let copy = failure();
+          <ng-container [ngTemplateOutlet]="approxTpl" />
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.failed.title' | transloco }}</p>
             <p class="text-sm text-ink-2">{{ copy.body | transloco }}</p>
@@ -77,6 +91,7 @@ const EXPECTED_SECONDS = 35;
           </div>
         } @else if (gen.status === 'fallback') {
           @let copy = failure();
+          <ng-container [ngTemplateOutlet]="approxTpl" />
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.fallback.title' | transloco }}</p>
             <p class="text-sm text-ink-2">{{ copy.body | transloco }}</p>
@@ -92,8 +107,11 @@ const EXPECTED_SECONDS = 35;
           </div>
         } @else {
           @let check = store.photoCheck();
+          <ng-container [ngTemplateOutlet]="approxTpl" />
           <div class="card p-4 flex gap-4 items-center">
-            <img [src]="store.session()?.uploadedPhotoUrl" alt="" class="h-28 w-20 object-cover bg-surface-2" />
+            @if (!approx()) {
+              <img [src]="store.session()?.uploadedPhotoUrl" alt="" class="h-28 w-20 object-cover bg-surface-2" />
+            }
             <div class="space-y-2">
               @if (check && !check.ok && check.reason) {
                 <div role="status">
@@ -153,6 +171,12 @@ const EXPECTED_SECONDS = 35;
             </div>
 
             <canvas #preview class="w-full max-h-[420px] object-contain bg-surface-2" [class.hidden]="!hasImage()"></canvas>
+            @if (draftReason(); as reason) {
+              <div class="text-sm" role="status">
+                <p class="font-medium">{{ 'photo.check.title' | transloco }}</p>
+                <p class="text-ink-2">{{ 'photo.check.' + reason | transloco }}</p>
+              </div>
+            }
 
             @if (hasImage()) {
               <fieldset class="space-y-2">
@@ -196,6 +220,20 @@ export class PhotoTryOnComponent {
     const g = this.store.garment();
     return !!g && canOverlay(g);
   });
+  /** La propia foto con la prenda puesta por el motor de la cámara: sin IA, al instante. */
+  readonly approx = computed(() => (this.liveAvailable() ? this.store.localPhoto() : null));
+  readonly approxGarments = computed(() => {
+    const g = this.store.garment();
+    return g ? [g] : [];
+  });
+  /** Pose de la foto en preparación (`undefined` = aún sin medir o no se pudo medir). */
+  readonly draftPose = signal<BodyPose | null | undefined>(undefined);
+  /** Aviso de encuadre al instante, antes de subir, para lo que esta prenda necesita ver. */
+  readonly draftReason = computed(() => {
+    const pose = this.draftPose();
+    const g = this.store.garment();
+    return pose === undefined || !g || !this.hasImage() ? null : localPhotoReason(pose, g);
+  });
   /** Texto y opción de reintentar según el motivo por el que no terminó la prueba. */
   readonly failure = computed(() => {
     const gen = this.store.generation();
@@ -231,6 +269,9 @@ export class PhotoTryOnComponent {
 
   private readonly previewRef = viewChild<ElementRef<HTMLCanvasElement>>('preview');
   private bitmap: ImageBitmap | null = null;
+  private readonly meter = new PhotoPoseMeter();
+  private measureTimer?: ReturnType<typeof setTimeout>;
+  private measureRun = 0;
   /** La foto vino de la cámara en vivo: tras subirla se genera directamente. */
   private fromCamera = false;
 
@@ -242,7 +283,9 @@ export class PhotoTryOnComponent {
     }, 400);
     inject(DestroyRef).onDestroy(() => {
       clearInterval(timer);
+      clearTimeout(this.measureTimer);
       this.bitmap?.close();
+      this.meter.dispose();
     });
     // Fotograma de la cámara («Foto realista»): primero la lista de privacidad, luego preparar y subir.
     const frame = this.store.cameraFrame();
@@ -255,7 +298,10 @@ export class PhotoTryOnComponent {
     effect(() => {
       const opts = { treatment: this.treatment(), face: this.face(), manualCropTop: this.manualCrop() };
       const canvas = this.previewRef()?.nativeElement;
-      if (this.hasImage() && this.bitmap && canvas) renderPrepared(this.bitmap, canvas, opts);
+      if (this.hasImage() && this.bitmap && canvas) {
+        renderPrepared(this.bitmap, canvas, opts);
+        this.scheduleMeasure(canvas);
+      }
     });
   }
 
@@ -292,7 +338,9 @@ export class PhotoTryOnComponent {
     renderPrepared(this.bitmap, canvas, { treatment: this.treatment(), face: this.face(), manualCropTop: this.manualCrop() });
     this.step.set('uploading');
     try {
-      await this.store.uploadPhoto(await canvasToJpeg(canvas));
+      // La pose se mide sobre la foto tal cual se sube (con el recorte y el difuminado elegidos).
+      const [photo, pose] = await Promise.all([canvasToJpeg(canvas), this.meter.measure(canvas)]);
+      await this.store.uploadPhoto(photo, pose);
       this.reset('ready');
       if (this.fromCamera) {
         this.fromCamera = false;
@@ -322,11 +370,24 @@ export class PhotoTryOnComponent {
     this.manualCrop.set(Number((ev.target as HTMLInputElement).value));
   }
 
+  /** Mide la pose un momento después del último cambio de recorte, no en cada movimiento del control. */
+  private scheduleMeasure(canvas: HTMLCanvasElement) {
+    clearTimeout(this.measureTimer);
+    const run = ++this.measureRun;
+    this.measureTimer = setTimeout(() => {
+      void this.meter.measure(canvas).then((pose) => {
+        if (run === this.measureRun) this.draftPose.set(pose);
+      });
+    }, 250);
+  }
+
   reset(step: Step = 'intro') {
     this.bitmap?.close();
     this.bitmap = null;
     this.hasImage.set(false);
     this.face.set(null);
+    this.measureRun++;
+    this.draftPose.set(undefined);
     this.step.set(step);
   }
 }
