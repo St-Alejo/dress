@@ -19,6 +19,50 @@ export async function loadBitmap(file: Blob): Promise<ImageBitmap> {
   return createImageBitmap(file, { imageOrientation: 'from-image' });
 }
 
+/** Recorte cuadrado de la imagen (px) donde buscar el rostro. */
+export interface FaceTile {
+  x: number;
+  y: number;
+  size: number;
+}
+
+/** Puntuación mínima para aceptar un rostro hallado en un recorte. */
+export const MIN_FACE_SCORE = 0.5;
+
+/**
+ * Recortes cuadrados donde buscar el rostro.
+ *
+ * BlazeFace (short range) está entrenado con selfies y redimensiona la entrada a un cuadrado de 128 px:
+ * en una foto de cuerpo entero vertical la cara queda diminuta y deformada, así que no la encuentra o
+ * devuelve una caja desplazada (que recortaría a media altura del pecho). Por eso se busca en cuadrados
+ * de la parte superior: uno del ancho completo (selfies, primeros planos) y otros más pequeños (cuerpo
+ * entero), en el centro y a los lados, arriba y algo más abajo.
+ */
+export function faceSearchTiles(width: number, height: number): FaceTile[] {
+  const side = Math.min(width, height);
+  const tiles: FaceTile[] = [];
+  const seen = new Set<string>();
+  for (const size of [side, Math.round(side * 0.6)]) {
+    const xs = [Math.round((width - size) / 2), 0, width - size];
+    const ys = [0, Math.min(height - size, Math.round(size / 2))];
+    for (const y of ys) {
+      for (const x of xs) {
+        const key = `${x},${y},${size}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          tiles.push({ x, y, size });
+        }
+      }
+    }
+  }
+  return tiles;
+}
+
+/** Caja hallada dentro de un recorte, llevada a px de la imagen completa. */
+export function tileBoxToImage(tile: FaceTile, box: FaceBox): FaceBox {
+  return { x: box.x + tile.x, y: box.y + tile.y, width: box.width, height: box.height };
+}
+
 /** Rostro principal (en px de la imagen) o null. Carga el detector solo si hace falta. */
 export async function detectFace(bitmap: ImageBitmap): Promise<FaceBox | null> {
   try {
@@ -28,14 +72,25 @@ export async function detectFace(bitmap: ImageBitmap): Promise<FaceBox | null> {
       baseOptions: { modelAssetPath: '/models/blaze_face_short_range.tflite' },
       runningMode: 'IMAGE',
     });
-    const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    canvas.getContext('2d')!.drawImage(bitmap, 0, 0);
-    const res = detector.detect(canvas);
-    detector.close();
-    const box = res.detections.sort((a, b) => (b.categories[0]?.score ?? 0) - (a.categories[0]?.score ?? 0))[0]?.boundingBox;
-    return box ? { x: box.originX, y: box.originY, width: box.width, height: box.height } : null;
+    try {
+      let best: { score: number; box: FaceBox } | null = null;
+      const canvas = document.createElement('canvas');
+      for (const tile of faceSearchTiles(bitmap.width, bitmap.height)) {
+        canvas.width = tile.size;
+        canvas.height = tile.size;
+        canvas.getContext('2d')!.drawImage(bitmap, tile.x, tile.y, tile.size, tile.size, 0, 0, tile.size, tile.size);
+        for (const d of detector.detect(canvas).detections) {
+          const score = d.categories[0]?.score ?? 0;
+          if (d.boundingBox && score >= MIN_FACE_SCORE && (!best || score > best.score)) {
+            const { originX, originY, width, height } = d.boundingBox;
+            best = { score, box: tileBoxToImage(tile, { x: originX, y: originY, width, height }) };
+          }
+        }
+      }
+      return best?.box ?? null;
+    } finally {
+      detector.close();
+    }
   } catch {
     return null;
   }
