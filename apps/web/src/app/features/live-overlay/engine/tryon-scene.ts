@@ -74,6 +74,7 @@ function applyAdjust(pos: Float32Array, a: Adjust, body: Body): Float32Array {
  */
 export class TryOnScene {
   private items: Prepared[] = [];
+  private garmentsRun = 0;
   private readonly gl: GarmentRenderer | null;
   private readonly ctx2d: CanvasRenderingContext2D | null;
 
@@ -86,16 +87,23 @@ export class TryOnScene {
     return !!this.gl;
   }
 
-  /** Prepara las prendas (en orden de capas). Las que no tienen recorte o anclas se ignoran. */
-  async setGarments(garments: GarmentItem[]): Promise<void> {
+  /**
+   * Prepara las prendas (en orden de capas). Las que no tienen recorte o anclas se ignoran.
+   * Devuelve `false` si mientras cargaban llegó otra llamada: gana siempre la última, aunque
+   * sus imágenes lleguen antes que las de la anterior.
+   */
+  async setGarments(garments: GarmentItem[]): Promise<boolean> {
+    const run = ++this.garmentsRun;
     const wearable = garments.filter(canWear).sort((a, b) => (LAYER_ORDER[a.category] ?? 9) - (LAYER_ORDER[b.category] ?? 9));
     const loaded = await Promise.all(wearable.map(async (garment) => ({ garment, image: await loadImage(garment.images.cutout!) })));
+    if (run !== this.garmentsRun) return false;
     this.items = loaded.flatMap(({ garment, image }) => {
       const mesh = buildMesh(garment.anchors!, image.naturalWidth, image.naturalHeight, alphaSampler(image), this.gl ? 24 : 12);
       const sides: (Prepared['side'])[] = garment.anchors!.kind === 'footwear' ? ['right', 'left'] : [undefined];
       return sides.map((side) => ({ garment, image, mesh, out: new Float32Array(mesh.rest.length), side }));
     });
     this.gl?.setGarments(this.items.map(({ image, mesh }) => ({ image, mesh })));
+    return true;
   }
 
   get garmentCount(): number {

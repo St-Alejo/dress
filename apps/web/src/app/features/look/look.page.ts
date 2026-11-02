@@ -68,7 +68,7 @@ type Stage = 'model' | 'camera';
                 <div class="mt-4"><app-body-picker /></div>
               } @else {
                 @if (cameraGarment(); as g) {
-                  <app-live-tryon [garment]="g" [outfit]="wearable()" />
+                  <app-live-tryon [garment]="g" [outfit]="wearable()" [realistic]="false" [sizePicker]="false" />
                 } @else {
                   <p class="border border-line p-8 text-center text-[13px] text-ink-2">{{ 'look.cameraEmpty' | transloco }}</p>
                 }

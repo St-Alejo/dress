@@ -66,8 +66,8 @@ export class ApproxViewComponent {
     this.scene ??= new TryOnScene(this.canvas().nativeElement);
     const key = garments.map((g) => g.id).join(',');
     if (key !== this.loaded) {
-      await this.scene.setGarments(garments);
-      if (run !== this.run) return; // llegó otro cambio mientras cargaban las imágenes
+      const applied = await this.scene.setGarments(garments);
+      if (!applied || run !== this.run) return; // llegó otro cambio mientras cargaban las imágenes
       this.loaded = key;
     }
     this.scene.setOcclusion(occlusionFromPose(pose, person), pose.seg.width, pose.seg.height);

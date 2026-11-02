@@ -25,7 +25,9 @@ export class PoseService {
 
   async init(model: PoseModel = 'full', mode: 'VIDEO' | 'IMAGE' = 'VIDEO'): Promise<void> {
     if (this.landmarker && this.model === model) return;
+    // Sin detector mientras carga el nuevo: el bucle no llama a uno ya cerrado (se congelaría).
     this.landmarker?.close();
+    this.landmarker = null;
     const vision = await import('@mediapipe/tasks-vision');
     const fileset = await vision.FilesetResolver.forVisionTasks('/mediapipe/wasm');
     const create = (delegate: 'GPU' | 'CPU') =>

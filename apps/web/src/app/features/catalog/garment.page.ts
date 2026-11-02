@@ -106,7 +106,7 @@ import { describeLook } from '../look/look-description';
                   </div>
                 }
                 @case ('live-overlay') {
-                  <app-live-tryon [garment]="g" [recommendedSize]="store.chosenSize() ?? undefined" (poseRatios)="onPoseRatios($event)" (realisticFrame)="onRealisticFrame($event)" />
+                  <app-live-tryon [garment]="g" [recommendedSize]="store.chosenSize() ?? undefined" [realistic]="store.wearable()" (poseRatios)="onPoseRatios($event)" (realisticFrame)="onRealisticFrame($event)" />
                 }
                 @case ('photorealistic') {
                   <app-photo-tryon (fallbackTo)="setMode($event)" />

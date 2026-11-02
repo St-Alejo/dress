@@ -70,6 +70,37 @@ const WRAP = 0.8;
 const WRAP_EASE = 1.08;
 /** Ancho visible del pecho respecto de la distancia entre articulaciones de hombro. */
 const CHEST = 0.9;
+/** Hombros/torso (articulaciones) típico de frente: mediana de los 12 modelos del catálogo (0,59–0,86). */
+const SHOULDERS_PER_TORSO = 0.68;
+/** Por debajo de esta relación hombros/torso la persona está de perfil. */
+const PROFILE_RATIO = 0.3;
+
+export type Facing = 'front' | 'back' | 'side' | 'unknown';
+
+/**
+ * Hacia dónde mira la persona. De frente, su hombro izquierdo queda a la DERECHA de la imagen
+ * (sin espejo). De espaldas se invierten; de perfil los hombros casi se tocan respecto del
+ * torso. En esos dos casos vestir la foto de frente de la prenda la dejaría en espejo o aplastada.
+ */
+export function facing(body: Body | null): Facing {
+  const ls = body?.leftShoulder;
+  const rs = body?.rightShoulder;
+  if (!body || !seen(ls) || !seen(rs)) return 'unknown';
+  const across = ls.p[0] - rs.p[0];
+  if (seen(body.leftHip) && seen(body.rightHip)) {
+    const torso = dist(mid(ls.p, rs.p), mid(body.leftHip.p, body.rightHip.p));
+    if (torso > 0 && Math.abs(across) / torso < PROFILE_RATIO) return 'side';
+  }
+  // De espaldas la nariz se oculta aunque las orejas se vean.
+  const noseHidden = !!body.nose && body.nose.v < 0.2 && seen(body.leftEar) && seen(body.rightEar);
+  return across < 0 || noseHidden ? 'back' : 'front';
+}
+
+/** Solo se viste el torso o las piernas de quien mira a la cámara (o si no se sabe). */
+export const facesCamera = (body: Body | null): boolean => {
+  const f = facing(body);
+  return f === 'front' || f === 'unknown';
+};
 
 export interface Mesh {
   /** Posiciones en px del recorte (x, y intercalados). */
@@ -305,7 +336,7 @@ export function upperPose(anchors: GarmentAnchors, width: number, height: number
   const brs = sub(bodyMid, half);
   const k = dist(bls, brs) / (dist(ls, rs) || 1);
   const gMid = mid(ls, rs);
-  const bHem = add(bodyMid, scale(down, dist(hem, gMid) * k * fit.length));
+  const bHem = add(bodyMid, scale(down, dist(hem, gMid) * k * torsoStretch(body) * fit.length));
   const base = affineFrom3([ls, rs, hem], [bls, brs, bHem]);
   if (!base) return null;
 
@@ -315,6 +346,19 @@ export function upperPose(anchors: GarmentAnchors, width: number, height: number
   const right = limbBones(base, rs, garmentElbow(anchors, rs, rc), rc, body.rightShoulder, body.rightElbow, body.rightWrist, k, twoPart);
   const left = limbBones(base, ls, garmentElbow(anchors, ls, lc), lc, body.leftShoulder, body.leftElbow, body.leftWrist, k, twoPart);
   return { base, right, left, scale: k, wrap: torsoWrap(p, base, body) };
+}
+
+/**
+ * El largo sale del ancho de hombros; con las caderas a la vista se corrige con el torso real
+ * (torso largo o corto, cámara alta o baja). Acotado: la prenda nunca se deforma de más.
+ */
+export function torsoStretch(body: Body): number {
+  const { leftShoulder: ls, rightShoulder: rs, leftHip: lh, rightHip: rh } = body;
+  if (!seen(ls) || !seen(rs) || !seen(lh) || !seen(rh)) return 1;
+  const shoulders = dist(ls.p, rs.p);
+  if (shoulders < 1) return 1;
+  const torso = dist(mid(ls.p, rs.p), mid(lh.p, rh.p));
+  return clamp((torso * SHOULDERS_PER_TORSO) / shoulders, 0.85, 1.2);
 }
 
 /**
@@ -450,6 +494,8 @@ export function footPose(anchors: GarmentAnchors, width: number, height: number,
 }
 
 export function poseFor(anchors: GarmentAnchors, style: string | undefined, width: number, height: number, body: Body, fit: Fit = NEUTRAL_FIT, side?: 'left' | 'right'): Pose | null {
+  // De espaldas o de perfil, la foto de frente de la prenda quedaría en espejo: no se dibuja.
+  if ((anchors.kind === 'upper' || anchors.kind === 'lower' || anchors.kind === 'skirt') && !facesCamera(body)) return null;
   if (anchors.kind === 'upper') return upperPose(anchors, width, height, body, fit);
   if (anchors.kind === 'lower' || anchors.kind === 'skirt') return lowerPose(anchors, width, height, body, fit);
   if (anchors.kind === 'footwear' && side) return footPose(anchors, width, height, body, side);

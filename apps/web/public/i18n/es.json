@@ -136,6 +136,7 @@
     "ratiosReady": "Proporciones listas para afinar tu talla (opcional).",
     "hint": {
       "no-body": "Colócate frente a la cámara",
+      "turn-front": "Ponte de frente: de espaldas o de perfil la prenda no se puede vestir",
       "too-far": "Acércate un poco",
       "too-close": "Aléjate un poco",
       "show-hips": "Que se vean tus hombros y tu cadera",
@@ -160,6 +161,9 @@
     "adjust": "Ajustar",
     "up": "Subir la prenda",
     "down": "Bajar la prenda",
+    "left": "Mover la prenda a la izquierda",
+    "right": "Mover la prenda a la derecha",
+    "stage": "Cámara con la prenda puesta",
     "smaller": "Achicar la prenda",
     "bigger": "Agrandar la prenda",
     "reset": "Restablecer"

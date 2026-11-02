@@ -21,7 +21,7 @@ import type { Body } from './engine/rig';
 import { fitForSize } from './engine/size-fit';
 import { type Adjust, NO_ADJUST, TryOnScene } from './engine/tryon-scene';
 import { CameraService, type CameraError } from './camera.service';
-import { canOverlay, fitHintFor, needsFor, poseRatiosFrom, type FitHint } from './overlay-geometry';
+import { canOverlay, needsFor, outfitHint, poseRatiosFrom, type FitHint } from './overlay-geometry';
 import { PoseService } from './pose.service';
 
 const HINT_INTERVAL_MS = 300;
@@ -47,6 +47,8 @@ const ADJUST_KEY = 'vestirse.live.adjust.';
   template: `
     <div
       #stage
+      tabindex="-1"
+      [attr.aria-label]="'live.stage' | transloco"
       class="relative mx-auto touch-none overflow-hidden bg-black aspect-[3/4] w-full max-w-[min(100%,56vh)] select-none"
       (pointerdown)="dragStart($event)"
       (pointermove)="dragMove($event)"
@@ -91,7 +93,7 @@ const ADJUST_KEY = 'vestirse.live.adjust.';
                 <p class="text-sm">{{ 'live.unsupportedGarment' | transloco }}</p>
               }
               @default {
-                <p class="text-sm">{{ 'live.error.' + state() | transloco }}</p>
+                <p class="text-sm" role="alert">{{ 'live.error.' + state() | transloco }}</p>
                 <button type="button" class="btn" (click)="start()">{{ 'common.retry' | transloco }}</button>
               }
             }
@@ -102,7 +104,7 @@ const ADJUST_KEY = 'vestirse.live.adjust.';
 
     @if (state() === 'running') {
       <div class="mt-3 space-y-3">
-        @if (sizes().length > 1) {
+        @if (sizePicker() && sizes().length > 1) {
           <div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'live.size' | transloco">
             <span class="text-xs text-muted">{{ 'live.size' | transloco }}</span>
             @for (s of sizes(); track s) {
@@ -114,17 +116,24 @@ const ADJUST_KEY = 'vestirse.live.adjust.';
         }
         <div class="flex flex-wrap items-center gap-2">
           <button type="button" class="btn" (click)="capture()">{{ 'live.capture' | transloco }}</button>
-          <button type="button" class="btn btn-primary" (click)="requestRealistic()" [disabled]="countdown() > 0">{{ 'live.realistic' | transloco }}</button>
+          @if (realistic()) {
+            <button type="button" class="btn btn-primary" (click)="requestRealistic()" [disabled]="countdown() > 0">{{ 'live.realistic' | transloco }}</button>
+          }
           <span class="mx-1 h-5 w-px bg-line" aria-hidden="true"></span>
           <span class="text-xs text-muted">{{ 'live.adjust' | transloco }}</span>
           <button type="button" class="btn btn-sm" (click)="nudge(0, -8)" [attr.aria-label]="'live.up' | transloco">↑</button>
           <button type="button" class="btn btn-sm" (click)="nudge(0, 8)" [attr.aria-label]="'live.down' | transloco">↓</button>
+          <!-- El escenario se ve en espejo: «izquierda» en pantalla es +x en el lienzo. -->
+          <button type="button" class="btn btn-sm" (click)="nudge(8, 0)" [attr.aria-label]="'live.left' | transloco">←</button>
+          <button type="button" class="btn btn-sm" (click)="nudge(-8, 0)" [attr.aria-label]="'live.right' | transloco">→</button>
           <button type="button" class="btn btn-sm" (click)="zoom(-0.04)" [attr.aria-label]="'live.smaller' | transloco">−</button>
           <button type="button" class="btn btn-sm" (click)="zoom(0.04)" [attr.aria-label]="'live.bigger' | transloco">+</button>
           <button type="button" class="btn btn-sm" (click)="resetAdjust()">{{ 'live.reset' | transloco }}</button>
           <button type="button" class="btn ml-auto" (click)="stop()">{{ 'live.stop' | transloco }}</button>
         </div>
-        <p class="text-xs text-muted">{{ 'live.realisticNote' | transloco }}</p>
+        @if (realistic()) {
+          <p class="text-xs text-muted">{{ 'live.realisticNote' | transloco }}</p>
+        }
         @if (ratios()) {
           <p class="text-xs text-muted">{{ 'live.ratiosReady' | transloco }}</p>
         }
@@ -137,6 +146,10 @@ export class LiveTryOnComponent implements OnDestroy {
   /** Otras prendas del look que se visten a la vez (capas: abajo, arriba, abrigo). */
   readonly outfit = input<GarmentItem[]>([]);
   readonly recommendedSize = input<string | undefined>(undefined);
+  /** «Foto realista» solo donde la IA puede vestir la prenda (no calzado, accesorios ni looks). */
+  readonly realistic = input(true);
+  /** Botones de talla; en un look no hay talla recomendada por prenda y se ocultan. */
+  readonly sizePicker = input(true);
   /** Solo números (proporciones), nunca imagen. El padre decide si usarlos. */
   readonly poseRatios = output<PoseRatios>();
   /** Fotograma sin espejo ni prenda, para la prueba con IA. Solo se emite tras pulsar el botón. */
@@ -146,6 +159,7 @@ export class LiveTryOnComponent implements OnDestroy {
   private readonly pose = inject(PoseService);
   private readonly videoRef = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('overlay');
+  private readonly stageRef = viewChild.required<ElementRef<HTMLElement>>('stage');
 
   readonly state = signal<'idle' | 'loading' | 'running' | 'unsupported-garment' | CameraError | 'model'>('idle');
   readonly hint = signal<FitHint>('no-body');
@@ -157,6 +171,8 @@ export class LiveTryOnComponent implements OnDestroy {
   readonly sizes = computed(() => this.garment().sizeChart.map((s) => s.size));
   readonly size = signal<string | undefined>(undefined);
   private readonly wearing = computed(() => [this.garment(), ...this.outfit().filter((g) => g.id !== this.garment().id)]);
+  /** El encuadre que pide el look entero, no solo la prenda principal. */
+  private readonly needs = computed(() => this.wearing().map(needsFor));
 
   private scene: TryOnScene | null = null;
   private readonly tracker = new BodyTracker();
@@ -175,6 +191,7 @@ export class LiveTryOnComponent implements OnDestroy {
   private segCtx: CanvasRenderingContext2D | null = null;
   private lightCtx: CanvasRenderingContext2D | null = null;
   private occBuf: Uint8Array | null = null;
+  private countdownTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly onVisibility = () => {
     if (document.hidden) this.stop();
   };
@@ -220,9 +237,13 @@ export class LiveTryOnComponent implements OnDestroy {
     document.addEventListener('visibilitychange', this.onVisibility);
     this.state.set('running');
     this.rafId = requestAnimationFrame(this.loop);
+    // Quien usa teclado o lector de pantalla queda en el escenario, donde están los avisos.
+    this.stageRef().nativeElement.focus({ preventScroll: true });
   }
-
   stop() {
+    clearTimeout(this.countdownTimer);
+    this.countdownTimer = undefined;
+    this.countdown.set(0);
     cancelAnimationFrame(this.rafId);
     this.rafId = 0;
     document.removeEventListener('visibilitychange', this.onVisibility);
@@ -260,9 +281,10 @@ export class LiveTryOnComponent implements OnDestroy {
       const n = this.countdown() - 1;
       this.countdown.set(n);
       if (n > 0) {
-        setTimeout(tick, 1000);
+        this.countdownTimer = setTimeout(tick, 1000);
         return;
       }
+      this.countdownTimer = undefined;
       const video = this.videoRef().nativeElement;
       const c = document.createElement('canvas');
       c.width = video.videoWidth;
@@ -270,7 +292,8 @@ export class LiveTryOnComponent implements OnDestroy {
       c.getContext('2d')!.drawImage(video, 0, 0);
       this.realisticFrame.emit(c);
     };
-    setTimeout(tick, 1000);
+    clearTimeout(this.countdownTimer);
+    this.countdownTimer = setTimeout(tick, 1000);
   }
 
   nudge(dx: number, dy: number) {
@@ -326,23 +349,30 @@ export class LiveTryOnComponent implements OnDestroy {
   }
 
   private readonly loop = (now: number) => {
-    const video = this.videoRef().nativeElement;
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if (w && h && this.scene) {
-      this.frame++;
-      this.measureFps(now);
-      this.body = this.tracker.update(this.pose.detect(video), w, h, now);
-      if (this.body && this.occlusion() && this.frame % this.segEvery === 0) this.updateOcclusion(video, w, h);
-      if (this.frame % 15 === 1) this.updateLight(video);
-      this.gain = easeGain(this.gain, this.targetGain);
-      this.scene.setLight(this.gain);
-      const fits = Object.fromEntries(this.wearing().map((g) => [g.id, g.id === this.garment().id ? fitForSize(this.sizes(), this.recommendedSize(), this.size()) : { width: 1, length: 1 }]));
-      this.scene.render(this.body, w, h, fits, this.adjust);
-      this.pushThrottled(fitHintFor(this.body, w, needsFor(this.garment())), this.body ? poseRatiosFrom(this.body) : null);
+    try {
+      this.drawFrame(now);
+    } catch {
+      // Un fotograma que falla (modelo cambiando, GPU perdida) se salta; el bucle sigue vivo.
     }
     if (this.rafId) this.rafId = requestAnimationFrame(this.loop);
   };
+
+  private drawFrame(now: number) {
+    const video = this.videoRef().nativeElement;
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    if (!w || !h || !this.scene) return;
+    this.frame++;
+    this.measureFps(now);
+    this.body = this.tracker.update(this.pose.detect(video), w, h, now);
+    if (this.body && this.occlusion() && this.frame % this.segEvery === 0) this.updateOcclusion(video, w, h);
+    if (this.frame % 15 === 1) this.updateLight(video);
+    this.gain = easeGain(this.gain, this.targetGain);
+    this.scene.setLight(this.gain);
+    const fits = Object.fromEntries(this.wearing().map((g) => [g.id, g.id === this.garment().id ? fitForSize(this.sizes(), this.recommendedSize(), this.size()) : { width: 1, length: 1 }]));
+    this.scene.render(this.body, w, h, fits, this.adjust);
+    this.pushThrottled(outfitHint(this.body, w, this.needs()), this.body ? poseRatiosFrom(this.body) : null);
+  }
 
   private updateOcclusion(video: HTMLVideoElement, w: number, h: number) {
     if (!this.segCtx) {

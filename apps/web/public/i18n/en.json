@@ -136,6 +136,7 @@
     "ratiosReady": "Proportions ready to refine your size (optional).",
     "hint": {
       "no-body": "Stand in front of the camera",
+      "turn-front": "Face the camera: the garment can't be worn from the back or in profile",
       "too-far": "Come a little closer",
       "too-close": "Step back a little",
       "show-hips": "Make sure your shoulders and hips are visible",
@@ -160,6 +161,9 @@
     "adjust": "Adjust",
     "up": "Move up",
     "down": "Move down",
+    "left": "Move left",
+    "right": "Move right",
+    "stage": "Camera with the garment on",
     "smaller": "Make smaller",
     "bigger": "Make bigger",
     "reset": "Reset"

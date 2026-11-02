@@ -5,7 +5,7 @@ import { affineFrom3, apply, dist, limitTurn, similarity, type Pt } from './geom
 import { easeGain, sceneGain } from './lighting';
 import { occlusionMask, SEG, softenMask } from './occlusion';
 import { OneEuroFilter } from './one-euro';
-import { type Body, buildMesh, lowerPose, poseFor, skin, skinMesh, upperPose, vertexWeights } from './rig';
+import { type Body, buildMesh, facing, lowerPose, poseFor, skin, skinMesh, torsoStretch, upperPose, vertexWeights } from './rig';
 import { fitForSize } from './size-fit';
 import { bodyFromPose, decodeRle } from './static-pose';
 
@@ -263,6 +263,43 @@ describe('rig: pose', () => {
     expect(toeL[0]).toBeGreaterThan(apply(left.base, [180, 80])[0]); // el izquierdo, en espejo
     // El talón cae bajo su tobillo.
     expect(Math.abs(heelR[0] - 276)).toBeLessThan(40);
+  });
+});
+
+describe('rig: orientación y largo del torso', () => {
+  const back = (): Body => ({ ...standing(), leftShoulder: j(260, 150), rightShoulder: j(380, 150), leftHip: j(280, 300), rightHip: j(360, 300) });
+  const profile = (): Body => ({ ...standing(), leftShoulder: j(330, 150), rightShoulder: j(310, 150), leftHip: j(325, 300), rightHip: j(315, 300) });
+
+  it('distingue de frente, de espaldas y de perfil', () => {
+    expect(facing(standing())).toBe('front');
+    expect(facing(back())).toBe('back');
+    expect(facing(profile())).toBe('side');
+    expect(facing({ ...standing(), nose: j(320, 100, 0.05) })).toBe('back'); // orejas sí, nariz no
+    expect(facing({})).toBe('unknown');
+  });
+
+  it('de espaldas o de perfil no viste torso ni piernas (quedarían en espejo), sí el calzado', () => {
+    for (const body of [back(), profile()]) {
+      expect(poseFor(TEE, 'tshirt', W, H, body)).toBeNull();
+      expect(poseFor(PANTS, 'jeans', 200, 400, body)).toBeNull();
+    }
+    expect(poseFor({ version: 1, kind: 'footwear', aspect: 2, points: {} }, 'sneakers', 200, 100, back())).not.toBeNull();
+  });
+
+  it('el largo de la prenda sigue al torso real, acotado', () => {
+    const long = { ...standing(), leftHip: j(360, 340), rightHip: j(280, 340) }; // torso 190 px, hombros 120
+    expect(torsoStretch(long)).toBeCloseTo((190 * 0.68) / 120, 3);
+    expect(torsoStretch({ ...standing(), leftHip: j(360, 600), rightHip: j(280, 600) })).toBe(1.2);
+    const hemY = (body: Body) => apply(upperPose(TEE, W, H, body)!.base, [W / 2, 0.97 * H])[1];
+    expect(hemY(long)).toBeGreaterThan(hemY(standing()) + 20);
+    // Los hombros no se mueven: solo cambia el largo.
+    expect(apply(upperPose(TEE, W, H, long)!.base, [0.75 * W, 0.08 * H])[1]).toBeCloseTo(150, 0);
+  });
+
+  it('sin caderas a la vista el largo sale solo de los hombros', () => {
+    const body = standing();
+    delete body.leftHip;
+    expect(torsoStretch(body)).toBe(1);
   });
 });
 

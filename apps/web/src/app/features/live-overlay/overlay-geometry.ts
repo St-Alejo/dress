@@ -1,9 +1,9 @@
 import type { GarmentItem, PoseRatios } from '@vestirse/shared-types';
 import { dist } from './engine/geometry';
-import type { Body, Joint } from './engine/rig';
+import { type Body, type Joint, facesCamera } from './engine/rig';
 import { canWear } from './engine/tryon-scene';
 
-export type FitHint = 'no-body' | 'too-far' | 'too-close' | 'show-hips' | 'show-legs' | 'show-feet' | 'show-head' | 'good';
+export type FitHint = 'no-body' | 'turn-front' | 'too-far' | 'too-close' | 'show-hips' | 'show-legs' | 'show-feet' | 'show-head' | 'good';
 
 const VISIBLE = 0.5;
 const seen = (j?: Joint): j is Joint => !!j && j.v >= VISIBLE;
@@ -31,12 +31,23 @@ export function fitHintFor(body: Body | null, canvasWidth: number, needs: Needs 
     return seen(body?.leftAnkle) && seen(body?.rightAnkle) ? 'good' : body ? 'show-feet' : 'no-body';
   }
   if (!body || !seen(ls) || !seen(rs)) return 'no-body';
+  if (!facesCamera(body)) return 'turn-front';
   const rel = dist(ls.p, rs.p) / canvasWidth;
   if (rel > 0.5) return 'too-close';
   if (rel < 0.08) return 'too-far';
   if (needs === 'head' && !(seen(body.leftEar) && seen(body.rightEar))) return 'show-head';
   if ((needs === 'hips' || needs === 'legs') && !(seen(body.leftHip) && seen(body.rightHip))) return 'show-hips';
   if (needs === 'legs' && !(seen(body.leftKnee) && seen(body.rightKnee))) return 'show-legs';
+  return 'good';
+}
+
+/** Un look necesita lo de todas sus prendas: el primer aviso pendiente, empezando por lo más básico. */
+export function outfitHint(body: Body | null, canvasWidth: number, needs: readonly Needs[]): FitHint {
+  if (needs.length === 0) return fitHintFor(body, canvasWidth);
+  for (const n of new Set(needs)) {
+    const hint = fitHintFor(body, canvasWidth, n);
+    if (hint !== 'good') return hint;
+  }
   return 'good';
 }
 
