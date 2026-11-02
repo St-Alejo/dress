@@ -54,6 +54,14 @@ def test_fashn_maps_category_and_photo_type_and_returns_png():
     assert (call["category"], call["garment_photo_type"]) == ("one-pieces", "model")
 
 
+@pytest.mark.parametrize(("category", "segmentation_free"), [("top", False), ("outerwear", True), ("dress", True)])
+def test_fashn_segments_tops_so_short_sleeves_replace_long_ones(category, segmentation_free):
+    clients: list[FakeClient] = []
+    provider = HfSpaceProvider(SPACES["hf-fashn"], None, factory(clients))
+    asyncio.run(provider.generate(request(category)))
+    assert clients[0].calls[0]["segmentation_free"] is segmentation_free
+
+
 @pytest.mark.parametrize("shape", ["dict", "tuple"])
 def test_accepts_the_result_shapes_of_other_spaces(shape):
     provider = HfSpaceProvider(SPACES["hf-leffa"], None, factory([], shape=shape))

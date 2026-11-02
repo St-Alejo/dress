@@ -66,7 +66,11 @@ def _fashn(person: str, garment: str, g: GarmentInput) -> dict[str, Any]:
         "num_timesteps": 30,
         "guidance_scale": 1.5,
         "seed": 42,
-        "segmentation_free": True,
+        # Sin segmentación, FASHN conserva la silueta de la ropa original: una camiseta de manga corta
+        # sobre una chaqueta de manga larga salía con mangas largas grises. Con segmentación borra la
+        # prenda de arriba antes de pintar y la manga queda corta. Las chaquetas sí van sin segmentar:
+        # se llevan encima de la ropa y conviene conservar su volumen.
+        "segmentation_free": g.category != "top",
     }
 
 
