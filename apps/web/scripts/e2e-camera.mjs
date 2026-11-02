@@ -1,7 +1,8 @@
 // Prueba de punta a punta de la cámara en vivo con una cámara falsa: Chrome reproduce un
 // video .y4m (hecho aquí a partir de una foto de modelo del catálogo, con un leve vaivén)
 // como si fuera la webcam. Comprueba que la prenda se dibuja sobre el torso y que el bucle
-// va a una velocidad usable, y guarda una captura por prenda.
+// va a una velocidad usable, y guarda una captura por prenda. Prueba también un pantalón y un
+// look de top + calzado en /look, y falla ante cualquier error de la página.
 //
 // Uso (con API y web en marcha, `npm run dev:api` y `npm run dev:web`):
 //   node apps/web/scripts/e2e-camera.mjs [--out docs/capturas] [--body b05] [--min-fps 12]
@@ -24,14 +25,27 @@ const BODY = arg('body', 'b05');
 const OUT = arg('out', '');
 const MIN_FPS = Number(arg('min-fps', '12'));
 
+/** Zonas del escenario (fracciones x0, x1, y0, y1) donde debe caer la tela de cada prenda. */
+const ZONES = { torso: [0.35, 0.65, 0.3, 0.55], legs: [0.38, 0.62, 0.62, 0.8], feet: [0.3, 0.7, 0.86, 0.98] };
+const red = ([r, g, b]) => r > 120 && r > g * 1.9 && r > b * 1.9;
+const lightBlue = ([r, g, b]) => b > 150 && b > r + 15 && g > r;
+const yellow = ([r, g, b]) => r > 150 && g > 120 && b < g * 0.6;
+const camel = ([r, g, b]) => r > 110 && r > b * 1.5 && g > b * 1.15 && r - g < 70;
+
 /**
- * Prendas a probar: nombre en el catálogo y color de su tela (el test cuenta píxeles de ese
- * color dentro del torso). Se eligen colores que la persona del video no lleva puestos.
+ * Casos: prendas del catálogo (varias = un look en /look) y, por zona, el color de su tela y la
+ * fracción mínima de píxeles de ese color. Colores que la persona del video no lleva puestos.
  */
 const CASES = [
-  { slug: '12-camara-cardigan', name: 'Cárdigan rojo de punto', fabric: ([r, g, b]) => r > 120 && r > g * 1.9 && r > b * 1.9, zone: 'torso' },
-  { slug: '12-camara-camisa', name: 'Camisa Oxford celeste', fabric: ([r, g, b]) => b > 150 && b > r + 15 && g > r, zone: 'torso' },
-  { slug: '12-camara-vestido', name: 'Vestido rojo plisado', fabric: ([r, g, b]) => r > 120 && r > g * 1.9 && r > b * 1.9, zone: 'torso' },
+  { slug: '12-camara-cardigan', names: ['Cárdigan rojo de punto'], checks: [{ zone: 'torso', fabric: red, min: 0.25 }] },
+  { slug: '12-camara-camisa', names: ['Camisa Oxford celeste'], checks: [{ zone: 'torso', fabric: lightBlue, min: 0.25 }] },
+  { slug: '12-camara-vestido', names: ['Vestido rojo plisado'], checks: [{ zone: 'torso', fabric: red, min: 0.25 }] },
+  { slug: '12-camara-pantalon', names: ['Pantalón pitillo amarillo'], checks: [{ zone: 'legs', fabric: yellow, min: 0.2 }] },
+  {
+    slug: '12-camara-look',
+    names: ['Cárdigan rojo de punto', 'Botines camel de tacón'],
+    checks: [{ zone: 'torso', fabric: red, min: 0.25 }, { zone: 'feet', fabric: camel, min: 0.05 }],
+  },
 ];
 
 const W = 640;
@@ -90,10 +104,10 @@ async function fakeVideo(photo, path) {
   closeSync(fd);
 }
 
-/** Fracción de píxeles de tela en la zona central del escenario (torso de la persona). */
-async function fabricShare(png, fabric) {
+/** Fracción de píxeles de tela en una zona del escenario. */
+async function fabricShare(png, fabric, zone) {
   const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  const [x0, x1, y0, y1] = [0.35, 0.65, 0.3, 0.55].map((t, i) => Math.round(t * (i < 2 ? info.width : info.height)));
+  const [x0, x1, y0, y1] = ZONES[zone].map((t, i) => Math.round(t * (i < 2 ? info.width : info.height)));
   let hit = 0;
   let all = 0;
   for (let py = y0; py < y1; py++) {
@@ -125,13 +139,16 @@ if (OUT) mkdirSync(OUT, { recursive: true });
 
 let failed = 0;
 for (const c of CASES) {
-  const g = list.find((x) => x.name === c.name);
-  if (!g) {
-    console.error(`✗ ${c.name}: no está en el catálogo`);
+  const found = c.names.map((n) => list.find((x) => x.name === n));
+  const label = c.names.join(' + ');
+  if (found.some((g) => !g)) {
+    console.error(`✗ ${label}: no está en el catálogo`);
     failed++;
     continue;
   }
-  await page.goto(`${WEB}/prenda/${g.id}`, { waitUntil: 'networkidle' });
+  const url = found.length > 1 ? `${WEB}/look?prendas=${found.map((g) => g.id).join(',')}` : `${WEB}/prenda/${found[0].id}`;
+  await page.goto(url, { waitUntil: 'networkidle' });
+  // En la ficha la cámara es la segunda pestaña de modos; en /look, la segunda del escenario.
   await page.getByRole('tab').nth(1).click();
   await page.locator('app-live-tryon button.btn-primary').first().click();
   const fps = page.locator('app-live-tryon .tabular-nums');
@@ -139,14 +156,15 @@ for (const c of CASES) {
   await page.waitForTimeout(6000);
   const stage = page.locator('app-live-tryon > div').first();
   const shot = await stage.screenshot();
-  const share = await fabricShare(shot, c.fabric);
   const rate = parseInt(await fps.innerText(), 10);
-  const ok = share > 0.25 && rate >= MIN_FPS;
+  const shares = await Promise.all(c.checks.map((k) => fabricShare(shot, k.fabric, k.zone)));
+  const ok = rate >= MIN_FPS && shares.every((v, i) => v >= c.checks[i].min);
   if (!ok) failed++;
-  console.log(`${ok ? '✓' : '✗'} ${c.name}: tela en el torso ${(share * 100).toFixed(0)} %, ${rate} fps`);
+  const detail = shares.map((v, i) => `${c.checks[i].zone} ${(v * 100).toFixed(0)} %`).join(', ');
+  console.log(`${ok ? '✓' : '✗'} ${label}: tela en ${detail}, ${rate} fps`);
   if (OUT) writeFileSync(join(OUT, `${c.slug}.png`), shot);
   // Al navegar a la siguiente ficha el componente se destruye y suelta la cámara.
 }
-if (errors.length) console.log('errores de la página:\n' + errors.slice(0, 5).join('\n'));
+if (errors.length) console.error('✗ errores de la página:\n' + errors.slice(0, 5).join('\n'));
 await browser.close();
-process.exit(failed ? 1 : 0);
+process.exit(failed || errors.length ? 1 : 0);

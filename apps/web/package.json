@@ -12,6 +12,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
+    "e2e:camera": "node scripts/e2e-camera.mjs",
     "test:invariants": "node scripts/check-invariants.mjs && ng test --watch=false --include=src/app/features/live-overlay/camera.service.spec.ts"
   },
   "dependencies": {
