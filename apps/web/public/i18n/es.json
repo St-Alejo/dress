@@ -194,6 +194,7 @@
     "generate": "Generar imagen",
     "generating": "Generando tu imagen…",
     "generatingHint": "Puedes seguir mirando la talla y las reseñas mientras tanto.",
+    "slow": "Está tardando más de lo normal; seguimos esperando el resultado.",
     "resultAlt": "Imagen generada de la prenda puesta sobre tu foto",
     "resultNote": "Imagen generada por IA: muestra cómo se ve, no cómo ajusta. La textura puede no ser exacta.",
     "fallback": {
@@ -201,7 +202,11 @@
       "body": "El servicio está lento o no disponible. Mientras tanto, puedes ver la prenda en un cuerpo similar o probártela en vivo.",
       "similar": "Ver en cuerpo similar",
       "live": "Probar en vivo",
-      "quota": "El motor gratuito agotó su cupo de hoy. Vuelve a intentarlo más tarde; mientras tanto puedes ver la prenda sobre un modelo."
+      "quota": "El motor gratuito agotó su cupo de hoy. Vuelve a intentarlo más tarde; mientras tanto puedes ver la prenda sobre un modelo.",
+      "notConfigured": "La prueba con IA no está activada en este servidor. Puedes ver la prenda en un cuerpo similar o probártela en vivo.",
+      "contentPolicy": "El motor no aceptó esta foto. Prueba con otra foto de cuerpo entero, de frente y con buena luz.",
+      "busy": "El motor falló varias veces seguidas. Espera un minuto y vuelve a intentarlo.",
+      "timeout": "Los motores tardaron demasiado en responder. Puedes reintentar en un momento."
     },
     "save": "Guardar en mi cuenta",
     "saved": "Guardado",
@@ -216,7 +221,8 @@
     "deleted": "Foto borrada.",
     "failed": {
       "title": "La generación no terminó",
-      "body": "Algo se interrumpió en el servidor. Tu foto sigue disponible: puedes reintentar."
+      "body": "Algo se interrumpió en el servidor. Tu foto sigue disponible: puedes reintentar.",
+      "missingPhoto": "Tu foto ya no está disponible (pudo vencer o borrarse). Súbela de nuevo para probar."
     },
     "before": "Tu foto",
     "after": "Con la prenda",

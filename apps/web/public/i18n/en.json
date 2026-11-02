@@ -194,6 +194,7 @@
     "generate": "Generate image",
     "generating": "Generating your image…",
     "generatingHint": "Feel free to check the size and reviews meanwhile.",
+    "slow": "This is taking longer than usual; we are still waiting for the result.",
     "resultAlt": "Generated image of the garment on your photo",
     "resultNote": "AI-generated image: shows how it looks, not how it fits. Texture may not be exact.",
     "fallback": {
@@ -201,7 +202,11 @@
       "body": "The service is slow or unavailable. Meanwhile, you can see the garment on a similar body or try it live.",
       "similar": "See on similar body",
       "live": "Try it live",
-      "quota": "The free engine has used up today's quota. Try again later; meanwhile you can see the garment on a model."
+      "quota": "The free engine has used up today's quota. Try again later; meanwhile you can see the garment on a model.",
+      "notConfigured": "AI try-on is not enabled on this server. You can see the garment on a similar body or try it live.",
+      "contentPolicy": "The engine did not accept this photo. Try another full-body, front-facing, well-lit photo.",
+      "busy": "The engine failed several times in a row. Wait a minute and try again.",
+      "timeout": "The engines took too long to respond. You can retry in a moment."
     },
     "save": "Save to my account",
     "saved": "Saved",
@@ -216,7 +221,8 @@
     "deleted": "Photo deleted.",
     "failed": {
       "title": "Generation didn't finish",
-      "body": "Something was interrupted on the server. Your photo is still available: you can retry."
+      "body": "Something was interrupted on the server. Your photo is still available: you can retry.",
+      "missingPhoto": "Your photo is no longer available (it may have expired or been deleted). Upload it again to try."
     },
     "before": "Your photo",
     "after": "With the garment",

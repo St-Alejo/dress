@@ -19,6 +19,7 @@ import { TryOnSessionStore } from '../../core/tryon-session.store';
 import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-group.component';
 import { canOverlay } from '../live-overlay/overlay-geometry';
 import { PrivacyChecklistComponent } from './privacy-checklist.component';
+import { failureCopy } from './failure-copy';
 import { canvasToJpeg, detectFace, loadBitmap, renderPrepared, type FaceBox, type FaceTreatment } from './photo-prep';
 
 type Step = 'intro' | 'checklist' | 'prepare' | 'uploading' | 'ready';
@@ -60,27 +61,33 @@ const EXPECTED_SECONDS = 35;
             <div class="h-0.5 bg-line overflow-hidden">
               <div class="h-full bg-ink transition-[width] duration-500" [style.width.%]="shownProgress() * 100"></div>
             </div>
-            <p class="text-xs text-muted">{{ 'photo.generatingHint' | transloco }}</p>
+            <p class="text-xs text-muted">{{ (gen.slow ? 'photo.slow' : 'photo.generatingHint') | transloco }}</p>
           </div>
         } @else if (gen.status === 'failed') {
+          @let copy = failure();
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.failed.title' | transloco }}</p>
-            <p class="text-sm text-ink-2">{{ 'photo.failed.body' | transloco }}</p>
+            <p class="text-sm text-ink-2">{{ copy.body | transloco }}</p>
             <div class="flex flex-wrap gap-2">
-              <button type="button" class="btn btn-primary" (click)="generate()">{{ 'common.retry' | transloco }}</button>
+              @if (copy.canRetry) {
+                <button type="button" class="btn btn-primary" (click)="generate()">{{ 'common.retry' | transloco }}</button>
+              }
               <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
             </div>
           </div>
         } @else if (gen.status === 'fallback') {
+          @let copy = failure();
           <div class="card p-5 space-y-3" role="alert">
             <p class="font-medium">{{ 'photo.fallback.title' | transloco }}</p>
-            <p class="text-sm text-ink-2">{{ (gen.fallbackReason === 'rate-limited' ? 'photo.fallback.quota' : 'photo.fallback.body') | transloco }}</p>
+            <p class="text-sm text-ink-2">{{ copy.body | transloco }}</p>
             <div class="flex flex-wrap gap-2">
               <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
               @if (liveAvailable()) {
                 <button type="button" class="btn" (click)="fallbackTo.emit('live-overlay')">{{ 'photo.fallback.live' | transloco }}</button>
               }
-              <button type="button" class="btn btn-ghost" (click)="generate()">{{ 'common.retry' | transloco }}</button>
+              @if (copy.canRetry) {
+                <button type="button" class="btn btn-ghost" (click)="generate()">{{ 'common.retry' | transloco }}</button>
+              }
             </div>
           </div>
         } @else {
@@ -188,6 +195,11 @@ export class PhotoTryOnComponent {
   readonly liveAvailable = computed(() => {
     const g = this.store.garment();
     return !!g && canOverlay(g);
+  });
+  /** Texto y opción de reintentar según el motivo por el que no terminó la prueba. */
+  readonly failure = computed(() => {
+    const gen = this.store.generation();
+    return failureCopy(gen.status === 'failed' ? 'failed' : 'fallback', gen.fallbackReason);
   });
   readonly treatments: FaceTreatment[] = ['keep', 'blur', 'crop'];
   readonly treatment = signal<FaceTreatment>('keep');
