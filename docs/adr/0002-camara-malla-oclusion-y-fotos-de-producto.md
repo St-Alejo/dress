@@ -69,6 +69,18 @@ reales de producto en toda la app y gasto cero.
   - El calzado propio del modelo asoma en algunas fotos.
   - Al pañuelo se le nota el recorte.
   - Las fotos de tienda de las botas incluyen el cinturón, a propósito.
+- **Mangas colgantes que sigan el brazo: probado y descartado (plan 5, fase 4).** Se prototipó con
+  anclas medidas a mano en g13 (suéter), g14 (buzo) y g16 (blazer):
+  - manga = lo que queda por fuera de la costura hombro→axila y, bajo la axila, de su borde interior
+    paralelo al eje hombro→puño;
+  - skinning de dos tramos hombro→codo→muñeca.
+  Con los brazos abajo se ve igual que la versión rígida. Con las manos en la cintura o un brazo en
+  alto, la manga gira hacia fuera y la franja entre torso y manga se estira en «alas de murciélago».
+  Además, el costado del torso que la manga tapa en la foto no existe y queda un hueco.
+  La versión rígida, con los brazos dibujados por delante gracias a la oclusión, se lee más limpia,
+  así que se queda. Hacerlo bien exigiría fotos con la manga separada del cuerpo, o rellenar el
+  costado oculto. Las anclas medidas de esas tres prendas sí se conservan: mejoran el hombro y el
+  ceñido de la versión rígida.
 - Las invariantes éticas no cambian:
   - El cuerpo de la persona nunca se deforma: el ajuste de holgura solo ensancha la prenda.
   - La foto nunca es obligatoria.

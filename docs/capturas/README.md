@@ -27,6 +27,8 @@ con una foto propia o de banco libre.
 | `10-ficha-zoom.png` | Zoom de la foto de producto, que sigue al puntero |
 | `11-look.png` | Armar look: camisa, jean y blazer sobre un modelo, con sugerencias por hueco |
 | `12-foto-propia-aproximada.png` | "Con tu foto": la prenda puesta al instante sobre la foto subida, con la pose medida en el navegador (sin IA) |
+| `13-mangas-rigidas.png` | Mangas colgantes rígidas (lo que queda) en g13, g14 y g16 sobre modelos con brazos abajo, en jarras y en alto |
+| `13-mangas-prototipo-descartado.png` | El prototipo de mangas que siguen el brazo, descartado por las «alas» (ver ADR 0002) |
 | `12-camara-*.png` | Cámara en vivo con una cámara falsa (foto de modelo con vaivén): cárdigan, camisa y vestido |
 
 ## Lo que falta capturar
