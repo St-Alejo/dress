@@ -6,7 +6,8 @@ from PIL import Image
 
 from src.contract import WorkerError
 from src.providers import GarmentInput, TransferRequest
-from src.providers.hf_space import SPACES, HfSpaceProvider, chain, classify
+from src.providers.base import TryOnProvider
+from src.providers.hf_space import SPACES, ChainProvider, HfSpaceProvider, chain, classify
 
 from .conftest import png
 
@@ -133,3 +134,42 @@ def test_chain_reports_the_last_error_when_every_engine_fails():
     with pytest.raises(WorkerError) as err:
         asyncio.run(chain(None, factory([], spaces)).generate(request("top")))
     assert err.value.code == "provider-error"
+
+
+class TimedEngine(TryOnProvider):
+    """Motor falso: anota el plazo que le dio la cadena, consume `takes` segundos del reloj y falla o responde."""
+
+    def __init__(self, name: str, clock: list[float], takes: float, fail: str | None = None) -> None:
+        self.name, self.clock, self.takes, self.fail = name, clock, takes, fail
+        self.supported = frozenset({"top", "bottom", "dress", "outerwear"})
+        self.timeout: float = 0.0
+        self.given: list[float] = []
+
+    async def _generate(self, req: TransferRequest) -> bytes:
+        self.given.append(self.timeout)
+        self.clock[0] += min(self.takes, self.timeout)
+        if self.fail:
+            raise WorkerError(self.fail, self.fail)
+        return b"png"
+
+
+def test_chain_splits_its_time_budget_so_later_engines_still_get_a_turn():
+    now = [0.0]
+    engines = [TimedEngine("a", now, 999, "timeout"), TimedEngine("b", now, 999, "timeout"), TimedEngine("c", now, 5)]
+    provider = ChainProvider(engines, budget_seconds=300, per_engine_seconds=120, clock=lambda: now[0])
+    assert asyncio.run(provider.generate(request("top"))) == b"png"
+    assert [e.given for e in engines] == [[120], [120], [60]]
+
+
+def test_chain_gives_up_when_the_budget_is_spent():
+    now = [0.0]
+    engines = [TimedEngine("a", now, 999, "timeout"), TimedEngine("b", now, 999, "timeout"), TimedEngine("c", now, 5)]
+    provider = ChainProvider(engines, budget_seconds=220, per_engine_seconds=120, clock=lambda: now[0])
+    with pytest.raises(WorkerError) as err:
+        asyncio.run(provider.generate(request("top")))
+    assert err.value.code == "timeout"
+    assert engines[2].given == []  # sin tiempo útil no se arranca otro motor
+
+
+def test_engine_timeout_defaults_to_its_spec():
+    assert HfSpaceProvider(SPACES["hf-fashn"], None).timeout == SPACES["hf-fashn"].seconds

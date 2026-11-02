@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import io
 import tempfile
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,6 +28,13 @@ from .base import GarmentInput, TransferRequest, TryOnProvider
 # Lado de trabajo de los modelos VTON (3:4). Fotos más pequeñas se amplían antes de enviar.
 PERSON_BOX = (864, 1296)
 GARMENT_BOX = (768, 1024)
+# Tiempo total de la cadena: por debajo del timeout de la API (GENERATION_TIMEOUT_SECONDS, 240 s)
+# para que el worker responda antes de que la API aborte. Cada motor tiene además un tope propio
+# para que, si el primero se cuelga, los siguientes aún tengan turno.
+CHAIN_BUDGET_SECONDS = 220
+ENGINE_MAX_SECONDS = 120
+# Por debajo de esto no vale la pena arrancar otro motor: no alcanzaría a terminar.
+MIN_ENGINE_SECONDS = 10
 
 ClientFactory = Callable[[str, str | None, str], Any]
 Call = Callable[[str, str, GarmentInput], dict[str, Any]]
@@ -39,7 +47,7 @@ class SpaceSpec:
     api_name: str
     supported: frozenset[str]
     call: Call
-    seconds: int = 240
+    seconds: int = CHAIN_BUDGET_SECONDS
 
 
 def _file(path: str) -> Any:
@@ -139,6 +147,8 @@ class HfSpaceProvider(TryOnProvider):
         self.supported = spec.supported
         self.token = token or None
         self._client_factory = client_factory
+        # La cadena lo acorta según el tiempo que le quede.
+        self.timeout: float = spec.seconds
 
     async def test(self) -> str:
         def connect() -> None:
@@ -157,7 +167,7 @@ class HfSpaceProvider(TryOnProvider):
         garment_img = _fit(garment.image, GARMENT_BOX, "la prenda")
         try:
             return await asyncio.wait_for(
-                asyncio.to_thread(self._run, person_img, garment_img, garment), self.spec.seconds
+                asyncio.to_thread(self._run, person_img, garment_img, garment), self.timeout
             )
         except Exception as exc:
             raise classify(exc) from exc
@@ -189,10 +199,19 @@ class ChainProvider(TryOnProvider):
     name = "hf-chain"
     max_garments = 1
 
-    def __init__(self, providers: list[TryOnProvider]) -> None:
+    def __init__(
+        self,
+        providers: list[TryOnProvider],
+        budget_seconds: float = CHAIN_BUDGET_SECONDS,
+        per_engine_seconds: float = ENGINE_MAX_SECONDS,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
         self.providers = providers
         self.supported = frozenset().union(*(p.supported for p in providers))
         self.last_used: str | None = None
+        self.budget_seconds = budget_seconds
+        self.per_engine_seconds = per_engine_seconds
+        self._clock = clock
 
     async def test(self) -> str:
         return await self.providers[0].test()
@@ -200,9 +219,16 @@ class ChainProvider(TryOnProvider):
     async def _generate(self, req: TransferRequest) -> bytes:
         category = req.garments[0].category
         last: WorkerError | None = None
+        deadline = self._clock() + self.budget_seconds
         for provider in self.providers:
             if category not in provider.supported:
                 continue
+            remaining = deadline - self._clock()
+            if remaining < MIN_ENGINE_SECONDS:
+                raise last or WorkerError("timeout", "los motores tardaron demasiado")
+            # Cada proveedor se crea por petición (registry), así que ajustar su plazo no afecta a otras.
+            if hasattr(provider, "timeout"):
+                provider.timeout = min(remaining, self.per_engine_seconds)
             try:
                 image = await provider.generate(req)
                 self.last_used = provider.name
@@ -214,5 +240,7 @@ class ChainProvider(TryOnProvider):
         raise last or WorkerError("unsupported", f"categoría no soportada: {category}")
 
 
-def chain(token: str | None, client_factory: ClientFactory = _default_client) -> ChainProvider:
-    return ChainProvider([HfSpaceProvider(SPACES[n], token, client_factory) for n in CHAIN_ORDER])
+def chain(
+    token: str | None, client_factory: ClientFactory = _default_client, budget_seconds: float = CHAIN_BUDGET_SECONDS
+) -> ChainProvider:
+    return ChainProvider([HfSpaceProvider(SPACES[n], token, client_factory) for n in CHAIN_ORDER], budget_seconds)

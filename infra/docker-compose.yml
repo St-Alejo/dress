@@ -42,6 +42,8 @@ services:
     environment:
       # El proveedor llega en cada petición (X-AI-Provider); este es solo el valor por defecto.
       DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-mock}
+      # Igual que en la API: la cadena de motores se ajusta para responder antes de ese plazo.
+      GENERATION_TIMEOUT_SECONDS: ${GENERATION_TIMEOUT_SECONDS:-240}
       WORKER_TOKEN: ${WORKER_TOKEN:-}
       MOCK_DELAY_SECONDS: ${MOCK_DELAY_SECONDS:-4}
       REPLICATE_API_TOKEN: ${REPLICATE_API_TOKEN:-}

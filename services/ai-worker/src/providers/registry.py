@@ -40,7 +40,10 @@ def default_registry() -> ProviderRegistry:
     r = ProviderRegistry()
     r.register("mock", lambda _c, s: MockProvider(s.mock_delay_seconds))
     # Mismos nombres que AiProvider en packages/shared-types.
-    r.register("hf-chain", lambda c, s: chain(c.api_key or s.hf_token))
+    r.register(
+        "hf-chain",
+        lambda c, s: chain(c.api_key or s.hf_token, budget_seconds=max(30, s.generation_timeout_seconds - 20)),
+    )
     for spec in SPACES.values():
         r.register(spec.name, lambda c, s, spec=spec: HfSpaceProvider(spec, c.api_key or s.hf_token))
     r.register(

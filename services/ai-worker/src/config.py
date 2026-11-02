@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     default_provider: str = "mock"
     mock_delay_seconds: float = 4.0
     max_upload_bytes: int = 10 * 1024 * 1024
+    # El mismo valor que usa la API para abortar: el worker debe responder antes.
+    generation_timeout_seconds: int = 240
     # Token gratuito de Hugging Face para los Spaces (vacío = anónimo, con menos cuota de GPU).
     hf_token: str = ""
     # Groq: visión para el control de calidad de la foto y el etiquetado de prendas.

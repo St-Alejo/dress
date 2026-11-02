@@ -83,3 +83,12 @@ def test_replicate_polls_until_success():
     respx.get("https://r.cdn/out.png").mock(return_value=httpx.Response(200, content=png()))
     provider = ReplicateProvider("t", "owner/model:abc", poll_interval=0)
     assert asyncio.run(provider.generate(req("bottom"))).startswith(b"\x89PNG")
+
+
+def test_chain_budget_follows_the_api_timeout():
+    from src.config import Settings
+    from src.providers import Credentials
+    from src.providers.registry import default_registry
+
+    provider = default_registry().build(Credentials(provider="hf-chain"), Settings(generation_timeout_seconds=180))
+    assert provider.budget_seconds == 160
