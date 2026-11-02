@@ -5,8 +5,8 @@ Probador virtual de tres capas, implementado a partir de [`docs/README-virtual-t
 | Capa | Qué hace | Dónde corre |
 |---|---|---|
 | **Cuerpo similar** (por defecto) | Foto real del producto y, sobre 12 modelos reales XS–4XL, la prenda puesta al instante con el motor de malla (vista aproximada) o con IA a petición (una vez por modelo y prenda) | Navegador; la prueba IA queda en el catálogo |
-| **Track A · Cámara en vivo** | Pose y segmentación (MediaPipe) + malla con huesos en WebGL2: la manga sigue al brazo, la mano tapa la prenda, luz del video y talla visible. Botón "Foto realista" opcional, con consentimiento | 100 % navegador; ningún frame sale del dispositivo salvo con "Foto realista" |
-| **Track B · Con tu foto** | Prueba virtual por difusión (FASHN VTON 1.5 en Hugging Face, con Leffa e IDM-VTON de respaldo; o *mock*) | Cola BullMQ → microservicio Python |
+| **Track A · Cámara en vivo** | Pose y segmentación (MediaPipe) + malla con huesos en WebGL2: la manga sigue al brazo, la mano tapa la prenda, luz del video y talla visible. De espaldas o de perfil no viste en espejo: pide ponerse de frente. Botón "Foto realista" opcional, con consentimiento | 100 % navegador; ningún frame sale del dispositivo salvo con "Foto realista" |
+| **Track B · Con tu foto** | Al subir la foto, la prenda aparece puesta al instante con el motor de malla (pose medida en el navegador, sin IA) y el aviso de encuadre sale antes de subir. Luego, prueba por difusión (FASHN VTON 1.5 en Hugging Face, con Leffa e IDM-VTON de respaldo; o *mock*). Sin cupo o con fallo, queda la vista aproximada | Cola BullMQ → microservicio Python |
 | **Track C · ¿Es mi talla?** | Recomendación con confianza explícita, editable, calibrada por marca | Librería TS pura `packages/fit-engine` |
 
 Además:
@@ -18,8 +18,10 @@ Además:
 - **Ficha:** galería con la foto, el recorte y la prenda en tres tallas, zoom, "Combina con" y una
   descripción textual de la vista para lectores de pantalla.
 
-Decisiones: [ADR 0001](docs/adr/0001-fotos-reales-y-motor-gratuito.md) (fotos reales y motor gratuito) y
-[ADR 0002](docs/adr/0002-camara-malla-oclusion-y-fotos-de-producto.md) (cámara con malla y oclusión).
+Decisiones: [ADR 0001](docs/adr/0001-fotos-reales-y-motor-gratuito.md) (fotos reales y motor gratuito),
+[ADR 0002](docs/adr/0002-camara-malla-oclusion-y-fotos-de-producto.md) (cámara con malla y oclusión; incluye
+el prototipo descartado de mangas colgantes) y [ADR 0003](docs/adr/0003-vision-opcional-con-claude.md)
+(visión opcional con Claude).
 
 ## Puesta en marcha
 
@@ -130,8 +132,9 @@ levantar la infraestructura (`WORKER_TOKEN=... npm run infra:up`).
 npm test                  # fit-engine, shared-types (tipos), api (jest), web (vitest)
 npm run test:invariants   # solo las invariantes éticas
 cd services/ai-worker && pytest
-node apps/web/scripts/e2e-camera.mjs   # e2e de la cámara (app levantada y Chrome): cámara falsa .y4m,
-                                       # exige tela en el torso y ≥ 12 fps; --out guarda capturas
+npm run e2e:camera -w apps/web   # e2e de la cámara (app levantada y Chrome): cámara falsa .y4m, tela en
+                                 # torso, piernas y pies (pantalón y look top+calzado), ≥ 12 fps y cero
+                                 # errores de página; --out guarda capturas, --api si la API no va en :3000
 ```
 
 Las capturas del recorrido están en [`docs/capturas/`](docs/capturas/README.md).
