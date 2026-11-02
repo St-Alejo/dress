@@ -19,13 +19,14 @@ export interface GenerationJob {
 }
 
 /**
- * Reintentos con backoff exponencial (5 s, 10 s) para fallos transitorios del proveedor.
+ * Un reintento (a los 5 s) para fallos transitorios del proveedor. Con dos intentos de
+ * GENERATION_TIMEOUT_SECONDS el peor caso ronda los 8 min, por debajo del plazo del cliente.
  * El jobId es idempotente por solicitud: si el mismo pedido se encola dos veces, BullMQ lo ignora.
  */
 export function generationJobOptions(sessionId: string, requestedAt: Date) {
   return {
     jobId: `gen-${sessionId}-${requestedAt.getTime()}`,
-    attempts: 3,
+    attempts: 2,
     backoff: { type: 'exponential' as const, delay: 5_000 },
     removeOnComplete: true,
     removeOnFail: 100,

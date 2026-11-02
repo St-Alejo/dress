@@ -470,7 +470,7 @@
     "fitEstimate": "We couldn't calculate your size.",
     "sizeOverride": "Your chosen size wasn't saved.",
     "generate": "Couldn't start the generation.",
-    "generationTimeout": "Generation is taking too long. You can retry or use the similar model.",
+    "generationSlow": "Generation is taking longer than usual. It is still running: we will show the result as soon as it arrives.",
     "deletePhoto": "Couldn't delete the photo. Please try again.",
     "saveResult": "Couldn't save the result.",
     "reviewSubmit": "Couldn't send your review.",

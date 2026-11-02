@@ -23,6 +23,8 @@ interface GenerationState {
   progress: number;
   startedAt?: number;
   fallbackReason?: string;
+  /** Pasó el plazo habitual y se sigue esperando: el servidor siempre termina (reaper). */
+  slow?: boolean;
 }
 
 const REMEMBER_KEY = 'measurements';
@@ -30,8 +32,12 @@ const SESSIONS_KEY = 'tryon-sessions';
 const WEARABLE: ReadonlySet<GarmentCategory> = new Set(['top', 'bottom', 'dress', 'outerwear']);
 /** Estados en los que la generación ya no avanza sola. */
 export const SETTLED: ReadonlySet<GenerationStatus> = new Set(['done', 'fallback', 'failed', 'idle']);
-/** Si ni el socket ni el sondeo traen novedades en este tiempo, se deja de esperar. */
-export const POLL_DEADLINE_MS = 6 * 60_000;
+/**
+ * Plazo habitual: por encima del peor caso del servidor (2 intentos de 240 s más el backoff).
+ * Pasado este tiempo se avisa y se sigue sondeando despacio, sin dar la generación por fallida.
+ */
+export const POLL_DEADLINE_MS = 9 * 60_000;
+export const SLOW_POLL_MS = 30_000;
 
 /**
  * TryOnSessionStore — única fuente de verdad de la prueba en curso (sección 5).
@@ -303,8 +309,14 @@ export class TryOnSessionStore {
 
   private async pollUntilSettled(sessionId: string, signal: AbortSignal) {
     const deadline = Date.now() + POLL_DEADLINE_MS;
-    for (let attempt = 0; Date.now() < deadline; attempt++) {
-      await sleep(backoffDelay(attempt), signal);
+    for (let attempt = 0; ; attempt++) {
+      const late = Date.now() >= deadline;
+      if (late && !this.generation().slow) {
+        // El servidor sigue trabajando (o el reaper la cerrará): se avisa una vez y se espera más despacio.
+        this.generation.update((g) => ({ ...g, slow: true }));
+        this.notices.push('info', 'errors.generationSlow');
+      }
+      await sleep(late ? SLOW_POLL_MS : backoffDelay(attempt), signal);
       if (SETTLED.has(this.generation().status) || this.session()?.id !== sessionId) return;
       const s = await this.api.session(sessionId).catch(() => null);
       if (s && SETTLED.has(s.generationStatus ?? 'idle')) {
@@ -313,8 +325,5 @@ export class TryOnSessionStore {
         return;
       }
     }
-    // El servidor también rescata las atascadas; aquí solo se deja de esperar y se avisa.
-    this.generation.update((g) => ({ ...g, status: 'failed', progress: 1, fallbackReason: 'client-timeout' }));
-    this.notices.push('error', 'errors.generationTimeout');
   }
 }

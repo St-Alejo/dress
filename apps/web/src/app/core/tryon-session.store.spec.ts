@@ -5,7 +5,7 @@ import { ApiService } from './api.service';
 import { GenerationSocketService } from './generation-socket.service';
 import { AppError } from './http/app-error';
 import { NoticeStore } from './notice.store';
-import { TryOnSessionStore } from './tryon-session.store';
+import { POLL_DEADLINE_MS, SLOW_POLL_MS, TryOnSessionStore } from './tryon-session.store';
 
 const garment = { id: 'g1', name: 'Camisa', category: 'top', photoType: 'flat-lay', images: { photo: 'p.jpg' } } as GarmentItem;
 const fit: FitRecommendation = { recommendedSize: 'M', confidence: 'medium', basis: [] };
@@ -88,6 +88,27 @@ describe('TryOnSessionStore', () => {
     expect(reloaded.session()?.id).toBe('s1');
     expect(reloaded.generation().status).toBe('processing');
     expect(watch).toHaveBeenCalledWith('s1', expect.any(Function));
+  });
+
+  it('si la generación tarda más que el plazo, avisa y sigue esperando en vez de darla por fallida', async () => {
+    vi.useFakeTimers();
+    try {
+      const push = vi.spyOn(notices, 'push');
+      store.garment.set(garment);
+      api.generate.mockResolvedValue(session({ generationStatus: 'queued' }));
+      api.session.mockResolvedValue(session({ generationStatus: 'processing' }));
+      await store.generate();
+
+      await vi.advanceTimersByTimeAsync(POLL_DEADLINE_MS + 60_000);
+      expect(store.generation()).toMatchObject({ status: 'queued', slow: true });
+      expect(push).toHaveBeenCalledWith('info', 'errors.generationSlow');
+
+      api.session.mockResolvedValue(session({ generationStatus: 'done', resultImageUrl: '/r.png' }));
+      await vi.advanceTimersByTimeAsync(SLOW_POLL_MS + 1_000);
+      expect(store.generation().status).toBe('done');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('el estado failed del servidor se refleja con su motivo', async () => {

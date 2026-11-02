@@ -470,7 +470,7 @@
     "fitEstimate": "No pudimos calcular tu talla.",
     "sizeOverride": "No se guardó la talla elegida.",
     "generate": "No se pudo iniciar la generación.",
-    "generationTimeout": "La generación está tardando demasiado. Puedes reintentar o usar el modelo similar.",
+    "generationSlow": "La generación está tardando más de lo normal. Sigue en proceso: te mostramos el resultado en cuanto llegue.",
     "deletePhoto": "No se pudo borrar la foto. Vuelve a intentarlo.",
     "saveResult": "No se pudo guardar el resultado.",
     "reviewSubmit": "No se pudo enviar tu reseña.",
