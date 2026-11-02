@@ -1,9 +1,8 @@
-# Front Angular compilado y servido por nginx, con /api y websockets hacia la API.
+# Front Angular compilado y servido por nginx, con /api y websockets hacia la API (repo dress-back).
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/shared-types/package.json packages/shared-types/
-COPY packages/fit-engine/package.json packages/fit-engine/
 COPY apps/web/package.json apps/web/
 RUN npm ci --workspace apps/web --include-workspace-root
 COPY packages ./packages
