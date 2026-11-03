@@ -104,6 +104,7 @@
     "approxPreview": "Vista aproximada, sin IA",
     "approxHelp": "Es una vista aproximada al instante. La prueba con IA, con la caída y los pliegues reales, tarda hasta un minuto.",
     "approxFailed": "Con la pose de este modelo no se puede colocar la prenda; prueba con otro.",
+    "onePiece": "Este modelo lleva vestido en su foto: la IA no le cambia solo una parte. Mira la vista aproximada o elige otro modelo.",
     "generate": "Ver la prenda en este modelo",
     "generateHelp": "Aún no hay una prueba de esta prenda sobre este modelo. Generarla tarda hasta un minuto.",
     "generating": "Vistiendo al modelo… puede tardar hasta un minuto.",
@@ -547,7 +548,8 @@
     "onSize": "En talla {{size}}",
     "zoom": {
       "photo": "Ampliar la foto",
-      "cutout": "Ampliar la prenda sola"
+      "cutout": "Ampliar la prenda sola",
+      "ai": "Ampliar la prueba en talla {{size}}"
     },
     "zoomTitle": "Foto ampliada",
     "zoomHelp": "Toca o haz clic para acercar; mueve el puntero para recorrerla. Esc para cerrar."

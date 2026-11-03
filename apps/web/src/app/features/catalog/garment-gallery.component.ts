@@ -1,17 +1,20 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import type { GarmentItem, SimilarBodyModel } from '@vestirse/shared-types';
+import { aiCanDress, type GarmentCategory, type GarmentItem, type SimilarBodyModel } from '@vestirse/shared-types';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { canWear } from '../live-overlay/engine/tryon-scene';
 import { ApproxViewComponent } from './approx-view.component';
 
-/** Hasta tres modelos con tallas típicas distintas (la más chica, una media y la más grande). */
-export function spreadBySize(bodies: SimilarBodyModel[], sizes: string[], max = 3): SimilarBodyModel[] {
+/**
+ * Hasta tres modelos con tallas típicas distintas (la más chica, una media y la más grande).
+ * Con `category`, solo los que la IA puede vestir con esa prenda (ver aiCanDress).
+ */
+export function spreadBySize(bodies: SimilarBodyModel[], sizes: string[], max = 3, category?: GarmentCategory): SimilarBodyModel[] {
   const rank = (b: SimilarBodyModel) => {
     const i = sizes.indexOf(b.typicalSize);
     return i < 0 ? sizes.length : i;
   };
-  const posed = bodies.filter((b) => !!b.pose).sort((a, b) => rank(a) - rank(b) || a.id.localeCompare(b.id));
+  const posed = bodies.filter((b) => !!b.pose && (!category || aiCanDress(b, category))).sort((a, b) => rank(a) - rank(b) || a.id.localeCompare(b.id));
   if (posed.length <= max) return posed;
   const picks = Array.from({ length: max }, (_, k) => posed[Math.round((k * (posed.length - 1)) / (max - 1))]);
   return [...new Set(picks)];
@@ -31,7 +34,10 @@ export function restingBody(bodies: SimilarBodyModel[]): SimilarBodyModel | null
   return posed.reduce<SimilarBodyModel | null>((best, b) => (!best || spread(b) < spread(best) ? b : best), null);
 }
 
-type Shot = { kind: 'photo' | 'cutout'; src: string } | { kind: 'body'; body: SimilarBodyModel };
+type Shot =
+  | { kind: 'photo' | 'cutout'; src: string }
+  | { kind: 'ai'; src: string; size: string }
+  | { kind: 'body'; body: SimilarBodyModel };
 
 /**
  * Galería de la ficha: la foto real de producto, el recorte sobre fondo neutro y la prenda
@@ -52,6 +58,13 @@ type Shot = { kind: 'photo' | 'cutout'; src: string } | { kind: 'body'; body: Si
               </div>
               <figcaption class="mt-1 text-[11px] text-muted">{{ 'gallery.onSize' | transloco: { size: s.body.typicalSize } }}</figcaption>
             </figure>
+          } @else if (s.kind === 'ai') {
+            <button type="button" class="block w-[104px] text-left" (click)="open(s.src)" [attr.aria-label]="'gallery.zoom.ai' | transloco: { size: s.size }">
+              <span class="block h-[138px] overflow-hidden bg-[#f6f5f2]">
+                <img [src]="s.src" alt="" loading="lazy" class="h-full w-full object-cover" />
+              </span>
+              <span class="mt-1 flex items-center gap-1 text-[11px] text-muted"><ui-icon name="search" [size]="12" />{{ 'gallery.onSize' | transloco: { size: s.size } }}</span>
+            </button>
           } @else {
             <button type="button" class="block w-[104px] text-left" (click)="open(s.src)" [attr.aria-label]="('gallery.zoom.' + s.kind) | transloco">
               <span class="block h-[138px] overflow-hidden bg-[#f6f5f2]">
@@ -92,7 +105,11 @@ export class GarmentGalleryComponent {
     const out: Shot[] = [{ kind: 'photo', src: g.images.photo }];
     if (g.images.cutout) out.push({ kind: 'cutout', src: g.images.cutout });
     if (canWear(g)) {
-      for (const body of spreadBySize(this.bodies(), g.sizeChart.map((s) => s.size))) out.push({ kind: 'body', body });
+      // La prueba IA del modelo, si ya se generó; si no, la vista instantánea.
+      for (const body of spreadBySize(this.bodies(), g.sizeChart.map((s) => s.size), 3, g.category)) {
+        const ai = body.previewImages[g.id];
+        out.push(ai ? { kind: 'ai', src: ai, size: body.typicalSize } : { kind: 'body', body });
+      }
     }
     return out;
   });

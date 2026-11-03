@@ -104,6 +104,7 @@
     "approxPreview": "Approximate view, no AI",
     "approxHelp": "This is an instant approximate view. The AI try-on, with real drape and folds, takes up to a minute.",
     "approxFailed": "This garment cannot be placed with this model’s pose; try another one.",
+    "onePiece": "This model wears a dress in the photo: the AI cannot change just one part. See the approximate view or pick another model.",
     "generate": "See the garment on this model",
     "generateHelp": "There is no try-on of this garment on this model yet. Generating it takes up to a minute.",
     "generating": "Dressing the model… this can take up to a minute.",
@@ -547,7 +548,8 @@
     "onSize": "In size {{size}}",
     "zoom": {
       "photo": "Zoom the photo",
-      "cutout": "Zoom the garment only"
+      "cutout": "Zoom the garment only",
+      "ai": "Zoom the try-on in size {{size}}"
     },
     "zoomTitle": "Zoomed photo",
     "zoomHelp": "Tap or click to zoom in; move the pointer to look around. Esc to close."

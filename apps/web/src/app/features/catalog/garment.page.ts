@@ -87,6 +87,8 @@ import { describeLook } from '../look/look-description';
                     @if (!approxBody()) {
                       <p class="mt-3 text-[13px] text-ink-2">{{ 'body.notWearable' | transloco }}</p>
                     }
+                  } @else if (!store.aiCanDressBody()) {
+                    <p class="mt-3 text-[13px] text-ink-2">{{ 'body.onePiece' | transloco }}</p>
                   } @else if (!store.modelPreview()) {
                     <div class="mt-3 flex flex-wrap items-center gap-3">
                       <button type="button" class="btn btn-primary" [disabled]="store.modelPreviewState() === 'generating'" (click)="store.generateModelPreview()">

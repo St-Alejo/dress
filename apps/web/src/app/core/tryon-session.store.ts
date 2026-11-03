@@ -12,6 +12,7 @@ import type {
   TryOnMode,
   TryOnSession,
 } from '@vestirse/shared-types';
+import { aiCanDress } from '@vestirse/shared-types';
 import { ApiService } from './api.service';
 import { GenerationSocketService } from './generation-socket.service';
 import { AppError } from './http/app-error';
@@ -83,6 +84,12 @@ export class TryOnSessionStore {
   readonly previewImage = computed(() => this.modelPreview() ?? this.garment()?.images.photo ?? null);
   /** Calzado y accesorios no se pueden poner sobre una persona con los motores actuales. */
   readonly wearable = computed(() => WEARABLE.has(this.garment()?.category ?? 'accessory'));
+  /** La IA puede vestir la prenda sobre el modelo elegido (no, p. ej., una camiseta sobre un vestido). */
+  readonly aiCanDressBody = computed(() => {
+    const g = this.garment();
+    const body = this.selectedBody();
+    return !g || !body || aiCanDress(body, g.category);
+  });
   readonly modelPreviewState = signal<'idle' | 'generating' | 'busy' | 'failed'>('idle');
   readonly chosenSize = computed(() => {
     const f = this.fit();

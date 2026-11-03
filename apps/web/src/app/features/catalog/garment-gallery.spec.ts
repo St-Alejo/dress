@@ -16,6 +16,13 @@ describe('galería: modelos de tallas distintas', () => {
     const picked = spreadBySize([body('a', 'M', false), body('b', 'S'), body('c', 'L')], sizes);
     expect(picked.map((b) => b.id)).toEqual(['b', 'c']);
   });
+
+  it('para una parte de arriba o de abajo descarta a quien lleva vestido en la foto', () => {
+    const dressed = { ...body('v', 'XS'), onePiece: true } as SimilarBodyModel;
+    const all = [dressed, body('a', 'S'), body('b', 'M'), body('c', 'XL')];
+    expect(spreadBySize(all, sizes, 3, 'top').map((b) => b.id)).toEqual(['a', 'b', 'c']);
+    expect(spreadBySize(all, sizes, 3, 'outerwear')[0].id).toBe('v');
+  });
 });
 
 describe('modelo por defecto para la vista rápida', () => {
