@@ -23,6 +23,13 @@ describe('galería: modelos de tallas distintas', () => {
     expect(spreadBySize(all, sizes, 3, 'top').map((b) => b.id)).toEqual(['a', 'b', 'c']);
     expect(spreadBySize(all, sizes, 3, 'outerwear')[0].id).toBe('v');
   });
+
+  it('para una parte de abajo descarta a quien tiene las manos en los bolsillos', () => {
+    const pockets = { ...body('p', 'XL'), handsInPockets: true } as SimilarBodyModel;
+    const all = [body('a', 'XS'), body('b', 'M'), pockets];
+    expect(spreadBySize(all, sizes, 3, 'bottom').map((b) => b.id)).toEqual(['a', 'b']);
+    expect(spreadBySize(all, sizes, 3, 'top').map((b) => b.id)).toEqual(['a', 'b', 'p']);
+  });
 });
 
 describe('modelo por defecto para la vista rápida', () => {
