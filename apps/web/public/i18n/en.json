@@ -245,7 +245,8 @@
   },
   "limitation": {
     "complexPattern": "Complex print: the pattern may not be reproduced exactly in the generated image.",
-    "looseFit": "Loose garment: AI may only approximate how it drapes."
+    "looseFit": "Loose garment: AI may only approximate how it drapes.",
+    "wideLeg": "Wide-leg cut: the AI tries two versions and keeps the one that best keeps the wide leg."
   },
   "fit": {
     "title": "Is it my size?",

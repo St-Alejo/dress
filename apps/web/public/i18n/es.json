@@ -245,7 +245,8 @@
   },
   "limitation": {
     "complexPattern": "Estampado complejo: el patrón puede no reproducirse con exactitud en la imagen generada.",
-    "looseFit": "Prenda holgada: la IA puede representar la caída de forma aproximada."
+    "looseFit": "Prenda holgada: la IA puede representar la caída de forma aproximada.",
+    "wideLeg": "Corte ancho: la IA prueba dos versiones y elige la que mejor respeta la pierna ancha."
   },
   "fit": {
     "title": "¿Es mi talla?",
