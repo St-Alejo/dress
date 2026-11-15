@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AI_DRESSING_ORDER, AI_WEARABLE, type GarmentItem, type TryOnSession } from '@vestirse/shared-types';
 import { ApiService } from '../../core/api.service';
+import { AuthStore } from '../../core/auth.store';
 import { CartStore, defaultOutfit, toggleWorn } from '../../core/cart.store';
 import { NoticeStore } from '../../core/notice.store';
 import { ProfileStore } from '../../core/profile.store';
@@ -102,6 +103,15 @@ interface Line {
                         <img [src]="aiResult()" [alt]="'cart.ai.resultAlt' | transloco" class="absolute inset-0 h-full w-full object-contain" />
                       </div>
                       <div class="flex flex-wrap gap-3">
+                        @if (auth.user()) {
+                          @if (savedFavorite()) {
+                            <a routerLink="/favoritos" class="btn btn-primary"><ui-icon name="heart" [size]="16" /> {{ 'cart.ai.savedFavorite' | transloco }}</a>
+                          } @else {
+                            <button type="button" class="btn btn-primary" (click)="saveFavorite()" [disabled]="savingFavorite()">
+                              <ui-icon name="heart" [size]="16" /> {{ 'cart.ai.saveFavorite' | transloco }}
+                            </button>
+                          }
+                        }
                         <button type="button" class="btn" (click)="resetAi()">{{ 'cart.ai.again' | transloco }}</button>
                         <button type="button" class="btn" (click)="deleteAiPhoto()">{{ 'photo.delete' | transloco }}</button>
                       </div>
@@ -120,9 +130,15 @@ interface Line {
                           @for (g of aiGarments(); track g.id) {
                             <li class="border border-line px-2 py-1">{{ g.name }} · {{ sizeFor(g) }}</li>
                           }
+                          @for (g of aiShoes(); track g.id) {
+                            <li class="border border-line px-2 py-1">{{ g.name }} · {{ sizeFor(g) }}</li>
+                          }
                         </ul>
                       } @else {
                         <p class="border border-line p-6 text-center text-[13px] text-ink-2">{{ 'cart.ai.nothing' | transloco }}</p>
+                      }
+                      @if (aiGarments().length) {
+                        <p class="text-[12px] text-muted">{{ 'cart.ai.finishNote' | transloco }}</p>
                       }
                       @if (onlyInstant().length) {
                         <p class="text-[12px] text-muted">{{ 'cart.ai.instantOnly' | transloco }}</p>
@@ -205,6 +221,9 @@ export class CartPage {
   readonly cart = inject(CartStore);
   readonly session = inject(TryOnSessionStore);
   readonly profile = inject(ProfileStore);
+  readonly auth = inject(AuthStore);
+  readonly savingFavorite = signal(false);
+  readonly savedFavorite = signal(false);
 
   readonly slotOf = slotOf;
   readonly catalog = signal<GarmentItem[]>([]);
@@ -252,7 +271,9 @@ export class CartPage {
       .filter((g) => AI_WEARABLE.includes(g.category))
       .sort((a, b) => AI_DRESSING_ORDER[a.category] - AI_DRESSING_ORDER[b.category]),
   );
-  readonly onlyInstant = computed(() => this.worn().filter((g) => !AI_WEARABLE.includes(g.category)));
+  /** Los zapatos los pone el acabado con IA; los accesorios solo se ven en las vistas al instante. */
+  readonly aiShoes = computed(() => this.worn().filter((g) => g.category === 'footwear'));
+  readonly onlyInstant = computed(() => this.worn().filter((g) => !AI_WEARABLE.includes(g.category) && g.category !== 'footwear'));
   readonly canGenerate = computed(() => this.aiGarments().length > 0 && (this.photoSource() === 'profile' ? !!this.profile.photoUrl() : !!this.file() && this.ack()));
   readonly wornSummary = computed(() => {
     this.dictionary();
@@ -320,7 +341,8 @@ export class CartPage {
     this.aiResult.set(null);
     try {
       const photo = this.photoSource() === 'profile' ? await this.profile.photoBlob() : this.file()!;
-      const outfit = garments.map((g) => ({ garmentId: g.id, size: this.sizeFor(g) }));
+      this.savedFavorite.set(false);
+      const outfit = [...garments, ...this.aiShoes()].map((g) => ({ garmentId: g.id, size: this.sizeFor(g) }));
       const started = await this.api.startSession({ garmentId: garments[0].id, mode: 'photorealistic', outfit });
       this.aiSession = await this.api.uploadPhoto(started.id, photo);
       this.aiSession = await this.api.generate(started.id);
@@ -354,7 +376,21 @@ export class CartPage {
     if (!this.stopPolling) this.aiState.set('failed');
   }
 
+  async saveFavorite() {
+    if (!this.aiSession) return;
+    this.savingFavorite.set(true);
+    try {
+      await this.api.saveFavorite({ sessionId: this.aiSession.id });
+      this.savedFavorite.set(true);
+    } catch (err) {
+      this.notices.error(err, 'errors.saveResult');
+    } finally {
+      this.savingFavorite.set(false);
+    }
+  }
+
   resetAi() {
+    this.savedFavorite.set(false);
     this.aiState.set('idle');
     this.aiResult.set(null);
   }

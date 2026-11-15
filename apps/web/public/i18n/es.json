@@ -17,7 +17,8 @@
     "menu": "Menú",
     "credits": "Créditos de fotos",
     "look": "Armar look",
-    "cart": "Carrito"
+    "cart": "Carrito",
+    "favorites": "Mis favoritos"
   },
   "footer": {
     "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo.",
@@ -639,7 +640,7 @@
     "ai": {
       "lead": "La IA vestirá tu foto con estas {{count}} prendas, una tras otra:",
       "nothing": "Ponte al menos una camisa, pantalón, vestido o chaqueta para la versión con IA.",
-      "instantOnly": "Los zapatos y accesorios solo se ven en las vistas al instante: la IA aún no los viste.",
+      "instantOnly": "Los accesorios solo se ven en las vistas al instante: la IA aún no los viste.",
       "photo": "Foto",
       "useProfile": "Usar la foto de mi perfil",
       "useFile": "Subir una foto",
@@ -649,7 +650,30 @@
       "workingHint": "Cada prenda tarda alrededor de un minuto. Puedes seguir mirando el carrito.",
       "failed": "No se pudo generar el conjunto. Prueba otra foto o mira el probador al instante.",
       "resultAlt": "Tu foto con el conjunto puesto (generada con IA)",
-      "again": "Probar otro conjunto"
+      "again": "Probar otro conjunto",
+      "saveFavorite": "Guardar en favoritos",
+      "savedFavorite": "Guardado en tus favoritos",
+      "finishNote": "Al final, un retoque con IA pone los zapatos, da a la tela un aspecto real y muestra cómo te queda la talla elegida."
+    }
+  },
+  "favorites": {
+    "title": "Mis favoritos",
+    "lead": "Conjuntos que probaste con IA y guardaste: cómo se ve cada prenda puesta y en qué talla.",
+    "signIn": "Inicia sesión para ver tus conjuntos favoritos.",
+    "empty": "Aún no tienes favoritos. Prueba un conjunto con IA en el carrito y guárdalo.",
+    "goCart": "Ir al probador",
+    "filter": "Filtrar por persona",
+    "all": "Todos",
+    "imageAlt": "Prueba con IA del conjunto {{title}}",
+    "size": "Talla {{size}}",
+    "recommended": "recomendada {{size}}",
+    "remove": "Quitar de favoritos",
+    "disclaimer": "Imágenes generadas con IA a partir de una foto real: orientan sobre la caída y la talla, no sustituyen probarse la prenda.",
+    "verdict": {
+      "true": "Su talla",
+      "large": "Talla grande",
+      "oversize": "Oversize",
+      "small": "Talla justa"
     }
   }
 }

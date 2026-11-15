@@ -26,6 +26,7 @@ export const ICONS = {
   link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
   bag: 'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2',
   look: 'M9 4l3 2 3-2 4 3-2 3h-2v10H9V10H7L5 7z',
+  heart: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
 } as const;
 
 export type IconName = keyof typeof ICONS;

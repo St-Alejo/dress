@@ -17,7 +17,8 @@
     "menu": "Menu",
     "credits": "Photo credits",
     "look": "Build a look",
-    "cart": "Bag"
+    "cart": "Bag",
+    "favorites": "My favorites"
   },
   "footer": {
     "promise": "We never alter your silhouette. Your live camera never leaves your device.",
@@ -639,7 +640,7 @@
     "ai": {
       "lead": "The AI will dress your photo with these {{count}} items, one after another:",
       "nothing": "Wear at least a shirt, trousers, dress or jacket for the AI version.",
-      "instantOnly": "Shoes and accessories only show in the instant views: the AI cannot dress them yet.",
+      "instantOnly": "Accessories only show in the instant views: the AI cannot dress them yet.",
       "photo": "Photo",
       "useProfile": "Use my profile photo",
       "useFile": "Upload a photo",
@@ -649,7 +650,30 @@
       "workingHint": "Each item takes about a minute. You can keep browsing your bag.",
       "failed": "Could not generate the outfit. Try another photo or use the instant fitting room.",
       "resultAlt": "Your photo wearing the outfit (AI-generated)",
-      "again": "Try another outfit"
+      "again": "Try another outfit",
+      "saveFavorite": "Save to favorites",
+      "savedFavorite": "Saved to your favorites",
+      "finishNote": "Finally, an AI retouch puts on the shoes, makes the fabric look real and shows how your chosen size fits."
+    }
+  },
+  "favorites": {
+    "title": "My favorites",
+    "lead": "Outfits you tried on with AI and saved: how each item looks when worn, and in which size.",
+    "signIn": "Sign in to see your favorite outfits.",
+    "empty": "No favorites yet. Try an outfit with AI in the cart and save it.",
+    "goCart": "Go to the fitting room",
+    "filter": "Filter by person",
+    "all": "All",
+    "imageAlt": "AI try-on of the outfit {{title}}",
+    "size": "Size {{size}}",
+    "recommended": "recommended {{size}}",
+    "remove": "Remove from favorites",
+    "disclaimer": "AI images generated from a real photo: a guide to drape and size, not a substitute for trying the item on.",
+    "verdict": {
+      "true": "Their size",
+      "large": "Size up",
+      "oversize": "Oversize",
+      "small": "Snug fit"
     }
   }
 }

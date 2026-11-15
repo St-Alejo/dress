@@ -47,6 +47,11 @@ import { NoticesComponent } from './shared/ui/notice.component';
           <button type="button" class="grid size-11 place-items-center text-ink-2 hover:text-ink" (click)="theme.cycle()" [attr.aria-label]="'nav.theme.' + theme.preference() | transloco">
             <ui-icon [name]="themeIcon()" [size]="18" />
           </button>
+          @if (auth.user()) {
+            <a routerLink="/favoritos" routerLinkActive="nav-active" class="grid size-11 place-items-center text-ink-2 hover:text-ink" [attr.aria-label]="'nav.favorites' | transloco">
+              <ui-icon name="heart" [size]="18" />
+            </a>
+          }
           <a routerLink="/carrito" routerLinkActive="nav-active" class="relative grid size-11 place-items-center text-ink-2 hover:text-ink" [attr.aria-label]="('nav.cart' | transloco) + (cart.count() ? ' (' + cart.count() + ')' : '')">
             <ui-icon name="bag" [size]="18" />
             @if (cart.count()) {
@@ -149,6 +154,7 @@ export class App {
     { path: '/look', label: 'nav.look' },
     { path: '/comparar', label: 'nav.compare' },
     { path: '/carrito', label: 'nav.cart' },
+    ...(this.auth.user() ? [{ path: '/favoritos', label: 'nav.favorites' }] : []),
     { path: '/cuenta', label: this.auth.user() ? 'nav.account' : 'nav.signIn' },
     { path: '/privacidad', label: 'nav.privacy' },
   ]);

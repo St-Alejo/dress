@@ -4,6 +4,7 @@ import type {
   AuthUser,
   BodyEstimate,
   BodyMeasurements,
+  FavoriteOutfit,
   Brand,
   FitFeeling,
   FitRecommendation,
@@ -142,6 +143,15 @@ export class ApiService {
     const form = new FormData();
     form.append('photo', photo, 'photo.jpg');
     return this.send<ProfilePhotoResult>('POST', '/profile/photo', form);
+  }
+  favorites() {
+    return this.get<{ favorites: FavoriteOutfit[] }>('/favorites');
+  }
+  saveFavorite(body: { sessionId: string; title?: string; wearer?: string }) {
+    return this.send<FavoriteOutfit>('POST', '/favorites', body);
+  }
+  deleteFavorite(id: string) {
+    return this.send<{ deleted: boolean }>('DELETE', `/favorites/${id}`);
   }
   remeasureProfile() {
     return this.send<ProfilePhotoResult>('POST', '/profile/measure');
