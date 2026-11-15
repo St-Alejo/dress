@@ -296,7 +296,10 @@
       "brandRunsLarge": "Ajustado: quienes compran esta marca suelen elegir una talla menos",
       "outsideChart": "Tus medidas quedan fuera de la tabla de esta prenda: tómalo como una aproximación",
       "insufficientData": "No hay datos suficientes para esta prenda: tómalo solo como punto de partida",
-      "estimatedFromPhoto": "Medidas estimadas con IA a partir de tu foto (aproximadas)"
+      "estimatedFromPhoto": "Medidas estimadas con IA a partir de tu foto (aproximadas)",
+      "tapeMeasured": "Basado en tus medidas",
+      "estimatedFromWeight": "Contornos estimados por tu estatura y peso",
+      "garmentMeasurements": "Comparado con las medidas reales de la prenda en cada talla"
     }
   },
   "fabric": {

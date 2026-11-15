@@ -296,7 +296,10 @@
       "brandRunsLarge": "Adjusted: shoppers of this brand usually pick one size down",
       "outsideChart": "Your measurements fall outside this garment's chart: treat it as an approximation",
       "insufficientData": "Not enough data for this garment: treat it only as a starting point",
-      "estimatedFromPhoto": "Measurements estimated by AI from your photo (approximate)"
+      "estimatedFromPhoto": "Measurements estimated by AI from your photo (approximate)",
+      "tapeMeasured": "Based on your measurements",
+      "estimatedFromWeight": "Body estimated from your height and weight",
+      "garmentMeasurements": "Compared with the garment's real measurements in each size"
     }
   },
   "fabric": {
