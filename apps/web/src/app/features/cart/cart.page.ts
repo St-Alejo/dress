@@ -170,10 +170,10 @@ interface Line {
                     <div class="mt-2 flex flex-wrap items-center gap-3">
                       <label class="text-[12px] text-ink-2">
                         {{ 'cart.size' | transloco }}
-                        <select class="ml-1 border border-line bg-paper px-2 py-1" [value]="line.size ?? ''" (change)="setSize(line.index, $event)">
+                        <select class="ml-1 border border-line bg-paper px-2 py-1" (change)="setSize(line.index, $event)">
                           @if (!line.size) { <option value="" disabled>—</option> }
                           @for (s of line.garment.sizeChart; track s.size) {
-                            <option [value]="s.size">{{ s.size }}</option>
+                            <option [value]="s.size" [selected]="s.size === line.size">{{ s.size }}</option>
                           }
                         </select>
                       </label>
