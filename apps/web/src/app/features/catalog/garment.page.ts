@@ -4,7 +4,9 @@ import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { PoseRatios, TryOnMode } from '@vestirse/shared-types';
+import { CartStore } from '../../core/cart.store';
 import { ComparisonStore } from '../../core/comparison/comparison.store';
+import { NoticeStore } from '../../core/notice.store';
 import { canvasToBlob } from '../../core/frame-export';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
 import { PricePipe } from '../../shared/price.pipe';
@@ -108,7 +110,7 @@ import { describeLook } from '../look/look-description';
                   </div>
                 }
                 @case ('live-overlay') {
-                  <app-live-tryon [garment]="g" [recommendedSize]="store.chosenSize() ?? undefined" [realistic]="store.wearable()" (poseRatios)="onPoseRatios($event)" (realisticFrame)="onRealisticFrame($event)" />
+                  <app-live-tryon [garment]="g" [recommendedSize]="store.chosenSize() ?? undefined" [realistic]="store.wearable()" (poseRatios)="onPoseRatios($event)" (realisticFrame)="onRealisticFrame($event)" [measure]="true" [measuring]="store.measuring()" (measureFrame)="onMeasureFrame($event)" />
                 }
                 @case ('photorealistic') {
                   <app-photo-tryon (fallbackTo)="setMode($event)" />
@@ -129,6 +131,15 @@ import { describeLook } from '../look/look-description';
 
             <div class="border-b border-line py-6">
               <app-fit-panel />
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 border-b border-line py-6">
+              <button type="button" class="btn btn-primary" (click)="addToCart()">
+                <ui-icon name="bag" [size]="16" />{{ 'cart.add' | transloco }}@if (store.chosenSize(); as size) {<span> · {{ size }}</span>}
+              </button>
+              @if (inCart()) {
+                <a routerLink="/carrito" class="btn btn-ghost">{{ 'cart.open' | transloco: { n: cart.count() } }}</a>
+              }
             </div>
 
             <div class="flex flex-wrap items-center gap-4 border-b border-line py-6">
@@ -165,6 +176,8 @@ export class GarmentPage {
   readonly id = input.required<string>();
   readonly store = inject(TryOnSessionStore);
   readonly comparison = inject(ComparisonStore);
+  readonly cart = inject(CartStore);
+  private readonly notices = inject(NoticeStore);
   readonly modes: TryOnMode[] = ['similar-model', 'live-overlay', 'photorealistic'];
 
   private readonly transloco = inject(TranslocoService);
@@ -211,6 +224,11 @@ export class GarmentPage {
     return g ? describeLook([g], this.approxBody(), (k, p) => this.transloco.translate(k, p), { [g.id]: { size, fit: this.approxFits()[g.id] } }) : '';
   });
 
+  readonly inCart = computed(() => {
+    const g = this.store.garment();
+    return !!g && this.cart.items().some((i) => i.garmentId === g.id);
+  });
+
   readonly inComparison = computed(() => {
     const g = this.store.garment();
     return !!g && this.comparison.items().some((i) => i.garmentId === g.id);
@@ -248,6 +266,23 @@ export class GarmentPage {
     if (!blob) return;
     this.store.cameraFrame.set(blob);
     this.setMode('photorealistic');
+  }
+
+  /** «Medirme con IA» desde la cámara: un solo fotograma, enviado una vez y no guardado. */
+  async onMeasureFrame(frame: HTMLCanvasElement) {
+    const blob = await canvasToBlob(frame);
+    if (!blob) return;
+    const result = await this.store.measureWithAi({ photo: blob });
+    if (result === 'need-height') this.notices.info('measure.needHeight');
+    else if (result?.usable) this.notices.success('measure.done');
+    else if (result) this.notices.info('measure.unusable');
+  }
+
+  addToCart() {
+    const g = this.store.garment();
+    if (!g) return;
+    if (this.cart.add(g.id, this.store.chosenSize())) this.notices.success('cart.added');
+    else this.notices.info('cart.already');
   }
 
   toggleCompare() {

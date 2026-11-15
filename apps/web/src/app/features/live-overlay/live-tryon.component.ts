@@ -119,6 +119,9 @@ const ADJUST_KEY = 'vestirse.live.adjust.';
           @if (realistic()) {
             <button type="button" class="btn btn-primary" (click)="requestRealistic()" [disabled]="countdown() > 0">{{ 'live.realistic' | transloco }}</button>
           }
+          @if (measure()) {
+            <button type="button" class="btn" (click)="requestMeasure()" [disabled]="countdown() > 0 || measuring()">{{ (measuring() ? 'live.measuring' : 'live.measure') | transloco }}</button>
+          }
           <span class="mx-1 h-5 w-px bg-line" aria-hidden="true"></span>
           <span class="text-xs text-muted">{{ 'live.adjust' | transloco }}</span>
           <button type="button" class="btn btn-sm" (click)="nudge(0, -8)" [attr.aria-label]="'live.up' | transloco">↑</button>
@@ -133,6 +136,9 @@ const ADJUST_KEY = 'vestirse.live.adjust.';
         </div>
         @if (realistic()) {
           <p class="text-xs text-muted">{{ 'live.realisticNote' | transloco }}</p>
+        }
+        @if (measure()) {
+          <p class="text-xs text-muted">{{ 'live.measureNote' | transloco }}</p>
         }
         @if (ratios()) {
           <p class="text-xs text-muted">{{ 'live.ratiosReady' | transloco }}</p>
@@ -154,6 +160,10 @@ export class LiveTryOnComponent implements OnDestroy {
   readonly poseRatios = output<PoseRatios>();
   /** Fotograma sin espejo ni prenda, para la prueba con IA. Solo se emite tras pulsar el botón. */
   readonly realisticFrame = output<HTMLCanvasElement>();
+  /** «Medirme con IA»: un único fotograma limpio; el padre lo envía (una vez) para estimar medidas. */
+  readonly measure = input(false);
+  readonly measuring = input(false);
+  readonly measureFrame = output<HTMLCanvasElement>();
 
   private readonly camera = inject(CameraService);
   private readonly pose = inject(PoseService);
@@ -276,6 +286,15 @@ export class LiveTryOnComponent implements OnDestroy {
 
   /** Cuenta atrás de 3 s para ponerse en pose y entrega el fotograma limpio (sin codificar) al padre, que pide consentimiento. */
   requestRealistic() {
+    this.countdownFrame((c) => this.realisticFrame.emit(c));
+  }
+
+  /** Igual que la foto realista: cuenta atrás y un solo fotograma, nunca un flujo continuo. */
+  requestMeasure() {
+    this.countdownFrame((c) => this.measureFrame.emit(c));
+  }
+
+  private countdownFrame(emit: (frame: HTMLCanvasElement) => void) {
     this.countdown.set(3);
     const tick = () => {
       const n = this.countdown() - 1;
@@ -290,7 +309,7 @@ export class LiveTryOnComponent implements OnDestroy {
       c.width = video.videoWidth;
       c.height = video.videoHeight;
       c.getContext('2d')!.drawImage(video, 0, 0);
-      this.realisticFrame.emit(c);
+      emit(c);
     };
     clearTimeout(this.countdownTimer);
     this.countdownTimer = setTimeout(tick, 1000);

@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type {
   AuthUser,
+  BodyEstimate,
   BodyMeasurements,
   Brand,
   FitFeeling,
@@ -14,6 +15,9 @@ import type {
   GarmentPhotoType,
   GarmentSuggestion,
   MetricsSummary,
+  OutfitItem,
+  ProfilePhotoResult,
+  SavedProfile,
   PoseRatios,
   SimilarBodyModel,
   TryOnMode,
@@ -82,7 +86,7 @@ export class ApiService {
     for (const [k, v] of Object.entries(params ?? {})) if (v) p = p.set(k, v);
     return firstValueFrom(this.http.get<T>(this.base + path, { params: p }));
   }
-  private send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown) {
+  private send<T>(method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', path: string, body?: unknown) {
     return firstValueFrom(this.http.request<T>(method, this.base + path, { body }));
   }
   /** Alta con foto: los campos viajan como JSON en `data` junto al archivo. */
@@ -118,9 +122,42 @@ export class ApiService {
   overrideSize(body: { garmentId: string; recommendedSize: string; chosenSize: string; sessionId?: string }) {
     return this.send<{ userOverride: string }>('POST', '/fit/override', body);
   }
+  /** Medidas estimadas por la IA con una foto nueva (solo en memoria del servidor) o la ya subida a una sesión. */
+  measureBody(source: { photo: Blob } | { sessionId: string }, heightCm: number) {
+    const form = new FormData();
+    form.append('heightCm', String(heightCm));
+    if ('photo' in source) form.append('photo', source.photo, 'photo.jpg');
+    else form.append('sessionId', source.sessionId);
+    return this.send<BodyEstimate>('POST', '/fit/measure', form);
+  }
+
+  // Perfil guardado (solo con consentimiento explícito)
+  profile() {
+    return this.get<{ profile: SavedProfile | null }>('/profile');
+  }
+  saveProfile(body: Omit<SavedProfile, 'aiFields' | 'hasPhoto' | 'consentAt' | 'updatedAt'> & { consent: true }) {
+    return this.send<SavedProfile>('PUT', '/profile', body);
+  }
+  uploadProfilePhoto(photo: Blob) {
+    const form = new FormData();
+    form.append('photo', photo, 'photo.jpg');
+    return this.send<ProfilePhotoResult>('POST', '/profile/photo', form);
+  }
+  remeasureProfile() {
+    return this.send<ProfilePhotoResult>('POST', '/profile/measure');
+  }
+  profilePhoto() {
+    return firstValueFrom(this.http.get(`${this.base}/profile/photo`, { responseType: 'blob' }));
+  }
+  deleteProfilePhoto() {
+    return this.send<SavedProfile | null>('DELETE', '/profile/photo');
+  }
+  deleteProfile() {
+    return this.send<{ deleted: boolean }>('DELETE', '/profile');
+  }
 
   // Sesiones de prueba
-  startSession(body: { garmentId: string; mode: TryOnMode; bodyModelId?: string }) {
+  startSession(body: { garmentId: string; mode: TryOnMode; bodyModelId?: string; outfit?: OutfitItem[] }) {
     return this.send<TryOnSession>('POST', '/tryon/sessions', body);
   }
   session(id: string) {

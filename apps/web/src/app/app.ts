@@ -4,8 +4,10 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { Locale } from '@vestirse/shared-types';
 import { filter } from 'rxjs';
 import { AuthStore } from './core/auth.store';
+import { CartStore } from './core/cart.store';
 import { ComparisonStore } from './core/comparison/comparison.store';
 import { LOCALES, setLocale } from './core/i18n';
+import { ProfileStore } from './core/profile.store';
 import { ThemeService } from './core/theme';
 import { IconComponent, type IconName } from './shared/ui/icon.component';
 import { NoticesComponent } from './shared/ui/notice.component';
@@ -45,6 +47,12 @@ import { NoticesComponent } from './shared/ui/notice.component';
           <button type="button" class="grid size-11 place-items-center text-ink-2 hover:text-ink" (click)="theme.cycle()" [attr.aria-label]="'nav.theme.' + theme.preference() | transloco">
             <ui-icon [name]="themeIcon()" [size]="18" />
           </button>
+          <a routerLink="/carrito" routerLinkActive="nav-active" class="relative grid size-11 place-items-center text-ink-2 hover:text-ink" [attr.aria-label]="('nav.cart' | transloco) + (cart.count() ? ' (' + cart.count() + ')' : '')">
+            <ui-icon name="bag" [size]="18" />
+            @if (cart.count()) {
+              <span class="absolute right-1.5 top-1.5 grid size-4 place-items-center bg-ink text-[10px] text-paper tabular">{{ cart.count() }}</span>
+            }
+          </a>
           <a routerLink="/comparar" class="relative grid size-11 place-items-center md:hidden" [attr.aria-label]="'nav.compare' | transloco">
             <ui-icon name="compare" [size]="18" />
             @if (comparison.count()) {
@@ -128,6 +136,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
 export class App {
   readonly auth = inject(AuthStore);
   readonly comparison = inject(ComparisonStore);
+  readonly cart = inject(CartStore);
   readonly theme = inject(ThemeService);
   private readonly transloco = inject(TranslocoService);
   private readonly menu = viewChild.required<ElementRef<HTMLDialogElement>>('menu');
@@ -139,12 +148,15 @@ export class App {
     { path: '/', label: 'nav.catalog' },
     { path: '/look', label: 'nav.look' },
     { path: '/comparar', label: 'nav.compare' },
+    { path: '/carrito', label: 'nav.cart' },
     { path: '/cuenta', label: this.auth.user() ? 'nav.account' : 'nav.signIn' },
     { path: '/privacidad', label: 'nav.privacy' },
   ]);
 
   constructor() {
     void this.auth.refresh();
+    // El perfil se crea al arrancar: se carga al iniciar sesión y se olvida al salir.
+    inject(ProfileStore);
     document.documentElement.lang = this.locale();
     // Al navegar: se cierra el menú y el foco va al contenido (lectores de pantalla anuncian la nueva página).
     inject(Router)

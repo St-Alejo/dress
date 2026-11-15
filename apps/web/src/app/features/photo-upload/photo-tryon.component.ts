@@ -16,6 +16,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
+import { NoticeStore } from '../../core/notice.store';
+import { ProfileStore } from '../../core/profile.store';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
 import type { BodyPose } from '@vestirse/shared-types';
 import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-group.component';
@@ -131,6 +133,7 @@ const EXPECTED_SECONDS = 35;
         }
 
         <div class="flex flex-wrap items-center gap-2 text-sm">
+          <button type="button" class="btn" (click)="measure()" [disabled]="store.measuring()">{{ (store.measuring() ? 'live.measuring' : 'measure.thisPhoto') | transloco }}</button>
           @if (gen.status === 'done') {
             @if (auth.user()) {
               <button type="button" class="btn" (click)="store.saveResult()" [disabled]="saved()">
@@ -151,7 +154,12 @@ const EXPECTED_SECONDS = 35;
         @case ('intro') {
           <div class="card p-5 space-y-3">
             <p class="text-sm text-ink-2">{{ 'photo.intro' | transloco }}</p>
-            <button type="button" class="btn btn-primary" (click)="step.set('checklist')">{{ 'photo.start' | transloco }}</button>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn btn-primary" (click)="step.set('checklist')">{{ 'photo.start' | transloco }}</button>
+              @if (profile.photoUrl()) {
+                <button type="button" class="btn" (click)="useProfilePhoto()">{{ 'photo.useProfile' | transloco }}</button>
+              }
+            </div>
           </div>
         }
         @case ('checklist') {
@@ -210,7 +218,9 @@ const EXPECTED_SECONDS = 35;
 export class PhotoTryOnComponent {
   readonly store = inject(TryOnSessionStore);
   readonly auth = inject(AuthStore);
+  readonly profile = inject(ProfileStore);
   private readonly api = inject(ApiService);
+  private readonly notices = inject(NoticeStore);
   readonly fallbackTo = output<'similar-model' | 'live-overlay'>();
 
   readonly step = signal<Step>('intro');
@@ -350,6 +360,26 @@ export class PhotoTryOnComponent {
       this.step.set('prepare');
       this.error.set('photo.error.upload');
     }
+  }
+
+  /** La foto guardada en el perfil: pasa por la misma lista de privacidad y preparación. */
+  async useProfilePhoto() {
+    try {
+      await this.useImage(await this.profile.photoBlob());
+      this.step.set('checklist');
+    } catch {
+      this.error.set('photo.error.unreadable');
+    }
+  }
+
+  /** Estima medidas con la foto ya subida a la sesión (no se vuelve a enviar desde aquí). */
+  async measure() {
+    const s = this.store.session();
+    if (!s) return;
+    const result = await this.store.measureWithAi({ sessionId: s.id });
+    if (result === 'need-height') this.notices.info('measure.needHeight');
+    else if (result?.usable) this.notices.success('measure.done');
+    else if (result) this.notices.info('measure.unusable');
   }
 
   /** Sin consentimiento, el fotograma de la cámara se descarta: nunca se sube. */

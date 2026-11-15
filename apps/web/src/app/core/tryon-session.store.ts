@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import type {
+  BodyEstimate,
   BodyMeasurements,
   BodyPose,
   FitRecommendation,
@@ -18,6 +19,7 @@ import { GenerationSocketService } from './generation-socket.service';
 import { AppError } from './http/app-error';
 import { backoffDelay, sleep } from './http/backoff';
 import { localPrefs, tabPrefs } from './local-prefs';
+import { mergeAiMeasurements } from './measurements';
 import { NoticeStore } from './notice.store';
 
 interface GenerationState {
@@ -69,6 +71,10 @@ export class TryOnSessionStore {
    * hasta que acepta la lista de privacidad y lo sube; si no, se descarta sin salir del navegador.
    */
   readonly cameraFrame = signal<Blob | null>(null);
+
+  /** Última medición con IA (foto o fotograma de la cámara) y si hay una en curso. */
+  readonly aiEstimate = signal<BodyEstimate | null>(null);
+  readonly measuring = signal(false);
 
   readonly fit = signal<FitRecommendation | null>(null);
   readonly fitLoading = signal(false);
@@ -199,6 +205,37 @@ export class TryOnSessionStore {
     }
   }
 
+  /**
+   * Medidas que llegan de fuera del formulario (perfil guardado o IA): con prenda abierta se
+   * recalcula la talla al instante; sin prenda quedan listas para la próxima.
+   */
+  async adoptMeasurements(m: BodyMeasurements) {
+    if (this.garment()) return this.estimate(m);
+    this.measurements.set(m);
+    if (this.rememberMeasurements()) localPrefs.write(REMEMBER_KEY, m);
+  }
+
+  /**
+   * «Medirme con IA»: envía UNA foto (o usa la ya subida a la sesión) con la altura y aplica las
+   * medidas estimadas. Sin altura no se llama a la IA: devuelve 'need-height'.
+   */
+  async measureWithAi(source: { photo: Blob } | { sessionId: string }, heightCm?: number): Promise<BodyEstimate | 'need-height' | null> {
+    const height = heightCm ?? this.measurements()?.heightCm;
+    if (!height) return 'need-height';
+    this.measuring.set(true);
+    try {
+      const estimate = await this.api.measureBody(source, height);
+      this.aiEstimate.set(estimate);
+      if (estimate.usable) await this.adoptMeasurements(mergeAiMeasurements(this.measurements(), estimate, height));
+      return estimate;
+    } catch (err) {
+      this.notices.error(err, 'errors.measure');
+      return null;
+    } finally {
+      this.measuring.set(false);
+    }
+  }
+
   setRemember(remember: boolean) {
     this.rememberMeasurements.set(remember);
     if (remember && this.measurements()) localPrefs.write(REMEMBER_KEY, this.measurements());
@@ -208,6 +245,7 @@ export class TryOnSessionStore {
   forgetMeasurements() {
     this.setRemember(false);
     this.measurements.set(null);
+    this.aiEstimate.set(null);
     this.fit.set(null);
   }
 

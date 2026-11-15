@@ -10,10 +10,14 @@ import { LookStore } from '../../core/look.store';
 import { NoticeStore } from '../../core/notice.store';
 import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 import { SavedLooksComponent } from '../look/saved-looks.component';
+import { ProfileCardComponent } from './profile-card.component';
+
+/** Cuenta de demostración que crea `npm run db:seed:demo` en dress-back (no es un secreto). */
+const DEMO = { email: 'demo@vestirse.local', password: 'demo12345' };
 
 @Component({
   selector: 'app-account-page',
-  imports: [FormsModule, TranslocoPipe, RouterLink, TabsComponent, SavedLooksComponent],
+  imports: [FormsModule, TranslocoPipe, RouterLink, TabsComponent, SavedLooksComponent, ProfileCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-md px-4 pt-10 pb-16 space-y-8">
@@ -37,6 +41,8 @@ import { SavedLooksComponent } from '../look/saved-looks.component';
           </label>
           <button type="button" class="btn" (click)="logout()">{{ 'account.logout' | transloco }}</button>
         </div>
+
+        <app-profile-card class="block" />
 
         <div class="card p-5 space-y-3 border-danger">
           <h2 class="text-lg">{{ 'account.delete.title' | transloco }}</h2>
@@ -62,6 +68,10 @@ import { SavedLooksComponent } from '../look/saved-looks.component';
           </label>
           @if (error()) {<p class="text-sm text-danger" role="alert">{{ error()! | transloco }}</p>}
           <button type="submit" class="btn btn-primary w-full" [disabled]="busy()">{{ 'account.' + tab() | transloco }}</button>
+          @if (tab() === 'login') {
+            <button type="button" class="btn btn-ghost w-full" [disabled]="busy()" (click)="tryDemo()">{{ 'account.demo' | transloco }}</button>
+            <p class="text-center text-[12px] text-muted">{{ 'account.demoHint' | transloco }}</p>
+          }
         </form>
       }
 
@@ -125,6 +135,13 @@ export class AccountPage {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** Rellena y envía la cuenta demo (persona con foto y medidas ya cargadas). */
+  tryDemo() {
+    this.email = DEMO.email;
+    this.password = DEMO.password;
+    return this.submit();
   }
 
   async setConsent(value: boolean, event: Event) {

@@ -16,7 +16,8 @@
     "admin": "Admin panel",
     "menu": "Menu",
     "credits": "Photo credits",
-    "look": "Build a look"
+    "look": "Build a look",
+    "cart": "Bag"
   },
   "footer": {
     "promise": "We never alter your silhouette. Your live camera never leaves your device.",
@@ -168,7 +169,10 @@
     "stage": "Camera with the garment on",
     "smaller": "Make smaller",
     "bigger": "Make bigger",
-    "reset": "Reset"
+    "reset": "Reset",
+    "measure": "Measure me with AI",
+    "measuring": "Measuring…",
+    "measureNote": "“Measure me with AI” sends a single photo after a countdown to estimate chest, waist and hips. It is not stored; the video never leaves your device."
   },
   "photo": {
     "intro": "Upload a photo to see a realistic AI-generated image. It's optional: you can buy without it.",
@@ -241,7 +245,8 @@
       "too-dark": "The photo is dark or blurry. Try with more light.",
       "another": "Use another photo",
       "anyway": "Generate anyway"
-    }
+    },
+    "useProfile": "Use my profile photo"
   },
   "limitation": {
     "complexPattern": "Complex print: the pattern may not be reproduced exactly in the generated image.",
@@ -290,7 +295,8 @@
       "brandRunsSmall": "Adjusted: shoppers of this brand usually pick one size up",
       "brandRunsLarge": "Adjusted: shoppers of this brand usually pick one size down",
       "outsideChart": "Your measurements fall outside this garment's chart: treat it as an approximation",
-      "insufficientData": "Not enough data for this garment: treat it only as a starting point"
+      "insufficientData": "Not enough data for this garment: treat it only as a starting point",
+      "estimatedFromPhoto": "Measurements estimated by AI from your photo (approximate)"
     }
   },
   "fabric": {
@@ -384,7 +390,9 @@
       "clear": "Delete my looks from this browser",
       "empty": "Build my first look",
       "cleared": "Looks deleted from this browser."
-    }
+    },
+    "demo": "Try the demo account",
+    "demoHint": "Sign in as a sample person who already has a photo and measurements."
   },
   "privacy": {
     "title": "What happens to your data",
@@ -488,7 +496,9 @@
     "saveResult": "Couldn't save the result.",
     "reviewSubmit": "Couldn't send your review.",
     "consent": "Your preference wasn't saved.",
-    "deleteAccount": "Couldn't delete the account. Please try again."
+    "deleteAccount": "Couldn't delete the account. Please try again.",
+    "measure": "Could not estimate your measurements. Your size still comes from your height.",
+    "profile": "Could not save your profile."
   },
   "notice": {
     "dismiss": "Dismiss",
@@ -555,5 +565,88 @@
     },
     "zoomTitle": "Zoomed photo",
     "zoomHelp": "Tap or click to zoom in; move the pointer to look around. Esc to close."
+  },
+  "measure": {
+    "needHeight": "First enter your height in “Is it my size?”: the AI uses it as scale.",
+    "done": "Measurements estimated: your size has been updated.",
+    "unusable": "The AI could not measure with this photo. Check the notice and try another one.",
+    "thisPhoto": "Measure this photo with AI",
+    "aiTitle": "Measurements estimated by AI",
+    "aiNote": "They are approximate (±5 cm) and count less than the ones you type. You can correct them in “Edit measurements”.",
+    "shoulder": "Shoulders",
+    "unavailable": "AI measuring is not available right now. Your size comes from your height and measurements.",
+    "reason": {
+      "no-person": "We cannot see a person in the photo.",
+      "multiple-people": "There is more than one person: use a photo with just one.",
+      "not-full-body": "Measuring needs the whole body, from head to feet.",
+      "not-frontal": "To measure, stand facing the camera.",
+      "baggy-clothes": "Very loose clothes hide the silhouette: try more fitted clothes.",
+      "unknown": "Could not measure with this photo."
+    }
+  },
+  "profile": {
+    "title": "My profile",
+    "lead": "Optional. Save your photo and measurements so size, camera and photo try-on adapt to you instantly.",
+    "photoAlt": "Your profile photo",
+    "noPhoto": "No photo",
+    "addPhoto": "Add photo",
+    "changePhoto": "Change photo",
+    "measureAi": "Measure with AI",
+    "deletePhoto": "Delete photo",
+    "photoNote": "Full-body photo, facing forward. Only you can see it; it is deleted when you withdraw consent or delete your account.",
+    "aiApplied": "The AI estimated the missing measurements (marked “AI”).",
+    "weight": "Weight",
+    "aiBadge": "AI",
+    "aiBadgeHelp": "Estimated by AI from your photo. If you correct it, yours wins.",
+    "consent": "I consent to storing my photo and measurements in my account. I can withdraw it at any time and they are deleted.",
+    "create": "Save my profile",
+    "save": "Save changes",
+    "saved": "Profile saved: your size has been updated.",
+    "withdraw": "Withdraw consent and delete my profile",
+    "withdrawBody": "Your stored photo and measurements will be deleted. Your account stays active.",
+    "withdrawConfirm": "Yes, delete my profile",
+    "withdrawn": "Profile deleted.",
+    "error": {
+      "range": "A measurement is outside a reasonable range."
+    }
+  },
+  "cart": {
+    "title": "Bag",
+    "lead": "Try on together what you are buying: one item per area (shirt, trousers, jacket, shoes…).",
+    "empty": "Your bag is empty.",
+    "browse": "Browse the catalog",
+    "fittingRoom": "Fitting room",
+    "items": "Items",
+    "size": "Size",
+    "tryOn": "Try it on",
+    "wearing": "Wearing",
+    "clear": "Empty bag",
+    "oneBySlot": "You can buy two shirts, but the fitting room wears one per area: picking another replaces the previous one, and a dress takes both shirt and trousers.",
+    "wornSummary": "You are wearing: {{items}}.",
+    "wornNone": "You are not wearing anything: press “Try it on” on an item.",
+    "add": "Add to bag",
+    "open": "View bag ({{n}})",
+    "added": "Added to your bag.",
+    "already": "It is already in your bag in that size.",
+    "stage": {
+      "model": "On a model",
+      "camera": "On your camera",
+      "ai": "Realistic with AI"
+    },
+    "ai": {
+      "lead": "The AI will dress your photo with these {{count}} items, one after another:",
+      "nothing": "Wear at least a shirt, trousers, dress or jacket for the AI version.",
+      "instantOnly": "Shoes and accessories only show in the instant views: the AI cannot dress them yet.",
+      "photo": "Photo",
+      "useProfile": "Use my profile photo",
+      "useFile": "Upload a photo",
+      "privacy": "I understand the photo is used only for this try-on and deletes itself within 24 hours.",
+      "generate": "Generate realistic version",
+      "working": "Dressing item {{step}} of {{total}}…",
+      "workingHint": "Each item takes about a minute. You can keep browsing your bag.",
+      "failed": "Could not generate the outfit. Try another photo or use the instant fitting room.",
+      "resultAlt": "Your photo wearing the outfit (AI-generated)",
+      "again": "Try another outfit"
+    }
   }
 }

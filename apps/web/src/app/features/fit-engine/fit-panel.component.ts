@@ -18,7 +18,7 @@ import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-
       <div class="flex items-baseline justify-between gap-3">
         <h2 id="fit-title" class="text-[16px] font-medium">{{ 'fit.title' | transloco }}</h2>
         @if (store.measurements()) {
-          <button type="button" class="btn-ghost min-h-11 text-[12px] uppercase tracking-[0.06em] text-muted" (click)="editing.set(!editing())">
+          <button type="button" class="btn-ghost min-h-11 text-[12px] uppercase tracking-[0.06em] text-muted" (click)="toggleEditing()">
             {{ (editing() ? 'common.close' : 'fit.editMeasurements') | transloco }}
           </button>
         }
@@ -54,6 +54,25 @@ import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-
           }
           <button type="submit" class="btn btn-primary" [disabled]="store.fitLoading()">{{ 'fit.submit' | transloco }}</button>
         </form>
+      }
+
+      @if (store.aiEstimate(); as ai) {
+        <div class="border border-line p-3 text-[13px]" aria-live="polite">
+          @if (ai.usable && ai.measurements; as m) {
+            <p class="label-xs">{{ 'measure.aiTitle' | transloco }}</p>
+            <p class="mt-1 tabular">
+              @if (m.chestCm) {<span class="mr-3">{{ 'fit.chest' | transloco }} {{ m.chestCm }} cm</span>}
+              @if (m.waistCm) {<span class="mr-3">{{ 'fit.waist' | transloco }} {{ m.waistCm }} cm</span>}
+              @if (m.hipCm) {<span class="mr-3">{{ 'fit.hip' | transloco }} {{ m.hipCm }} cm</span>}
+              @if (m.shoulderCm) {<span>{{ 'measure.shoulder' | transloco }} {{ m.shoulderCm }} cm</span>}
+            </p>
+            <p class="mt-1 text-[12px] text-muted">{{ 'measure.aiNote' | transloco }}</p>
+          } @else if (ai.checked) {
+            <p>{{ 'measure.reason.' + (ai.reason ?? 'unknown') | transloco }}</p>
+          } @else {
+            <p>{{ 'measure.unavailable' | transloco }}</p>
+          }
+        </div>
       }
 
       @if (store.fit(); as fit) {
@@ -133,6 +152,18 @@ export class FitPanelComponent {
     return this.sizes().map((s) => ({ value: s, label: s, note: s === recommended ? '✓' : undefined }));
   });
 
+  /** Al abrir el formulario se cargan las medidas vigentes (pueden venir del perfil o de la IA). */
+  toggleEditing() {
+    if (!this.editing()) {
+      const m = this.store.measurements();
+      this.height = m?.heightCm ?? null;
+      this.chest = m?.chestCm ?? null;
+      this.waist = m?.waistCm ?? null;
+      this.hip = m?.hipCm ?? null;
+    }
+    this.editing.set(!this.editing());
+  }
+
   onSize(size: string | null) {
     if (size) void this.store.overrideSize(size);
   }
@@ -152,6 +183,9 @@ export class FitPanelComponent {
     if (this.chest) m.chestCm = Number(this.chest);
     if (this.waist) m.waistCm = Number(this.waist);
     if (this.hip) m.hipCm = Number(this.hip);
+    // Si solo se cambió la altura, las medidas de la IA siguen siendo estimadas (pesan menos).
+    const prev = this.store.measurements();
+    if (prev?.estimatedFromPose && m.chestCm === prev.chestCm && m.waistCm === prev.waistCm && m.hipCm === prev.hipCm) m.estimatedFromPose = true;
     try {
       await this.store.estimate(m);
       this.editing.set(false);

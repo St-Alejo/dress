@@ -16,7 +16,8 @@
     "admin": "Panel de administración",
     "menu": "Menú",
     "credits": "Créditos de fotos",
-    "look": "Armar look"
+    "look": "Armar look",
+    "cart": "Carrito"
   },
   "footer": {
     "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo.",
@@ -168,7 +169,10 @@
     "stage": "Cámara con la prenda puesta",
     "smaller": "Achicar la prenda",
     "bigger": "Agrandar la prenda",
-    "reset": "Restablecer"
+    "reset": "Restablecer",
+    "measure": "Medirme con IA",
+    "measuring": "Midiendo…",
+    "measureNote": "«Medirme con IA» envía una sola foto tras una cuenta atrás para estimar pecho, cintura y cadera. No se guarda; el vídeo nunca sale de tu dispositivo."
   },
   "photo": {
     "intro": "Sube una foto para ver una imagen realista generada con IA. Es opcional: puedes comprar sin hacerlo.",
@@ -241,7 +245,8 @@
       "too-dark": "La foto está oscura o borrosa. Prueba con más luz.",
       "another": "Usar otra foto",
       "anyway": "Generar de todos modos"
-    }
+    },
+    "useProfile": "Usar la foto de mi perfil"
   },
   "limitation": {
     "complexPattern": "Estampado complejo: el patrón puede no reproducirse con exactitud en la imagen generada.",
@@ -290,7 +295,8 @@
       "brandRunsSmall": "Ajustado: quienes compran esta marca suelen elegir una talla más",
       "brandRunsLarge": "Ajustado: quienes compran esta marca suelen elegir una talla menos",
       "outsideChart": "Tus medidas quedan fuera de la tabla de esta prenda: tómalo como una aproximación",
-      "insufficientData": "No hay datos suficientes para esta prenda: tómalo solo como punto de partida"
+      "insufficientData": "No hay datos suficientes para esta prenda: tómalo solo como punto de partida",
+      "estimatedFromPhoto": "Medidas estimadas con IA a partir de tu foto (aproximadas)"
     }
   },
   "fabric": {
@@ -384,7 +390,9 @@
       "clear": "Borrar mis looks de este navegador",
       "empty": "Armar mi primer look",
       "cleared": "Looks borrados de este navegador."
-    }
+    },
+    "demo": "Probar la cuenta demo",
+    "demoHint": "Entra con una persona de ejemplo que ya tiene foto y medidas."
   },
   "privacy": {
     "title": "Qué pasa con tus datos",
@@ -488,7 +496,9 @@
     "saveResult": "No se pudo guardar el resultado.",
     "reviewSubmit": "No se pudo enviar tu reseña.",
     "consent": "No se guardó tu preferencia.",
-    "deleteAccount": "No se pudo borrar la cuenta. Vuelve a intentarlo."
+    "deleteAccount": "No se pudo borrar la cuenta. Vuelve a intentarlo.",
+    "measure": "No se pudieron estimar las medidas. Tu talla sigue saliendo de tu estatura.",
+    "profile": "No se pudo guardar el perfil."
   },
   "notice": {
     "dismiss": "Cerrar aviso",
@@ -555,5 +565,88 @@
     },
     "zoomTitle": "Foto ampliada",
     "zoomHelp": "Toca o haz clic para acercar; mueve el puntero para recorrerla. Esc para cerrar."
+  },
+  "measure": {
+    "needHeight": "Primero indica tu estatura en «¿Es mi talla?»: la IA la usa como escala.",
+    "done": "Medidas estimadas: la talla se ha recalculado.",
+    "unusable": "La IA no pudo medir con esta foto. Revisa el aviso y prueba otra.",
+    "thisPhoto": "Medir con IA esta foto",
+    "aiTitle": "Medidas estimadas con IA",
+    "aiNote": "Son aproximadas (±5 cm) y pesan menos que las que escribes tú. Puedes corregirlas en «Editar medidas».",
+    "shoulder": "Hombros",
+    "unavailable": "La medición con IA no está disponible ahora. Tu talla sale de tu estatura y medidas.",
+    "reason": {
+      "no-person": "No vemos a una persona en la foto.",
+      "multiple-people": "Aparece más de una persona: usa una foto con una sola.",
+      "not-full-body": "Para medir hace falta el cuerpo entero, de la cabeza a los pies.",
+      "not-frontal": "Para medir, ponte de pie y de frente a la cámara.",
+      "baggy-clothes": "La ropa muy holgada tapa la silueta: prueba con ropa más ajustada.",
+      "unknown": "No se pudo medir con esta foto."
+    }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "lead": "Opcional. Guarda tu foto y tus medidas para que la talla, la cámara y la prueba con foto se ajusten a ti al instante.",
+    "photoAlt": "Foto de tu perfil",
+    "noPhoto": "Sin foto",
+    "addPhoto": "Añadir foto",
+    "changePhoto": "Cambiar foto",
+    "measureAi": "Medir con IA",
+    "deletePhoto": "Borrar foto",
+    "photoNote": "Foto de cuerpo entero, de frente. Solo tú la ves; se borra al retirar el consentimiento o borrar la cuenta.",
+    "aiApplied": "La IA ha estimado las medidas que faltaban (marcadas con «IA»).",
+    "weight": "Peso",
+    "aiBadge": "IA",
+    "aiBadgeHelp": "Estimada con IA a partir de tu foto. Si la corriges, manda la tuya.",
+    "consent": "Doy mi consentimiento para guardar mi foto y mis medidas en mi cuenta. Puedo retirarlo cuando quiera y se borran.",
+    "create": "Guardar mi perfil",
+    "save": "Guardar cambios",
+    "saved": "Perfil guardado: la talla se ha actualizado.",
+    "withdraw": "Retirar consentimiento y borrar mi perfil",
+    "withdrawBody": "Se borrarán tu foto y tus medidas guardadas. Tu cuenta sigue activa.",
+    "withdrawConfirm": "Sí, borrar mi perfil",
+    "withdrawn": "Perfil borrado.",
+    "error": {
+      "range": "Alguna medida está fuera de un rango razonable."
+    }
+  },
+  "cart": {
+    "title": "Carrito",
+    "lead": "Pruébate a la vez lo que vas a comprar: una prenda por zona (camisa, pantalón, chaqueta, zapatos…).",
+    "empty": "Tu carrito está vacío.",
+    "browse": "Ver el catálogo",
+    "fittingRoom": "Probador",
+    "items": "Prendas",
+    "size": "Talla",
+    "tryOn": "Probármela",
+    "wearing": "Puesta",
+    "clear": "Vaciar carrito",
+    "oneBySlot": "Puedes comprar dos camisas, pero en el probador solo se lleva una por zona: elegir otra sustituye a la anterior, y un vestido ocupa camisa y pantalón.",
+    "wornSummary": "Llevas puesto: {{items}}.",
+    "wornNone": "No llevas nada puesto: pulsa «Probármela» en una prenda.",
+    "add": "Añadir al carrito",
+    "open": "Ver carrito ({{n}})",
+    "added": "Añadido al carrito.",
+    "already": "Ya está en tu carrito con esa talla.",
+    "stage": {
+      "model": "En un modelo",
+      "camera": "En tu cámara",
+      "ai": "Realista con IA"
+    },
+    "ai": {
+      "lead": "La IA vestirá tu foto con estas {{count}} prendas, una tras otra:",
+      "nothing": "Ponte al menos una camisa, pantalón, vestido o chaqueta para la versión con IA.",
+      "instantOnly": "Los zapatos y accesorios solo se ven en las vistas al instante: la IA aún no los viste.",
+      "photo": "Foto",
+      "useProfile": "Usar la foto de mi perfil",
+      "useFile": "Subir una foto",
+      "privacy": "Entiendo que la foto se usa solo para esta prueba y se borra sola en 24 horas.",
+      "generate": "Generar versión realista",
+      "working": "Vistiendo prenda {{step}} de {{total}}…",
+      "workingHint": "Cada prenda tarda alrededor de un minuto. Puedes seguir mirando el carrito.",
+      "failed": "No se pudo generar el conjunto. Prueba otra foto o mira el probador al instante.",
+      "resultAlt": "Tu foto con el conjunto puesto (generada con IA)",
+      "again": "Probar otro conjunto"
+    }
   }
 }
