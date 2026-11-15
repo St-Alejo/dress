@@ -64,6 +64,35 @@ export function aiCanDress(body: Pick<SimilarBodyModel, 'onePiece' | 'handsInPoc
   return !(body.onePiece && (category === 'top' || category === 'bottom'));
 }
 
+/** Zonas del cuerpo de un conjunto: una prenda por zona. */
+export type OutfitSlot = 'top' | 'bottom' | 'outerwear' | 'footwear' | 'accessory';
+
+/** Zonas que ocupa cada categoría: un vestido ocupa arriba y abajo. */
+export function slotsOf(category: GarmentCategory): OutfitSlot[] {
+  return category === 'dress' ? ['top', 'bottom'] : [category];
+}
+
+/** Prendas que la IA (difusión) sabe poner; calzado y accesorios solo van en la vista instantánea. */
+export const AI_WEARABLE: readonly GarmentCategory[] = ['top', 'bottom', 'dress', 'outerwear'];
+
+/**
+ * Orden en que la IA viste un conjunto, de dentro hacia fuera: cada prenda se aplica sobre el
+ * resultado de la anterior (la chaqueta va encima de la camisa).
+ */
+export const AI_DRESSING_ORDER: Readonly<Record<GarmentCategory, number>> = {
+  bottom: 0, dress: 1, top: 2, outerwear: 3, footwear: 4, accessory: 5,
+};
+
+/** Zona repetida en un conjunto (p. ej. dos camisas, o vestido + pantalón), o null si es posible. */
+export function outfitConflict(categories: GarmentCategory[]): OutfitSlot | null {
+  const used = new Set<OutfitSlot>();
+  for (const slot of categories.flatMap(slotsOf)) {
+    if (used.has(slot)) return slot;
+    used.add(slot);
+  }
+  return null;
+}
+
 /**
  * Landmarks de MediaPipe (BlazePose, 33 puntos, normalizados 0–1) y segmentación selfie_multiclass
  * de la foto de un modelo, codificada por tramos [etiqueta, longitud, …] fila a fila.
@@ -261,6 +290,47 @@ export interface PhotoCheck {
   checked: boolean;
   ok: boolean;
   reason?: PhotoCheckReason | null;
+}
+
+export type BodyEstimateReason = 'no-person' | 'multiple-people' | 'not-full-body' | 'not-frontal' | 'baggy-clothes';
+
+/**
+ * Medidas estimadas por la IA a partir de una foto y la altura declarada, solo para
+ * recomendar talla. `checked: false` = no se pudo analizar (la talla sale de la altura).
+ * Las medidas que la persona escribe siempre mandan sobre estas.
+ */
+export interface BodyEstimate {
+  checked: boolean;
+  usable: boolean;
+  reason?: BodyEstimateReason | null;
+  measurements?: { chestCm?: number; waistCm?: number; hipCm?: number; shoulderCm?: number };
+  confidence?: 'low' | 'medium' | 'high';
+}
+
+export type ProfileMeasure = 'chestCm' | 'waistCm' | 'hipCm' | 'shoulderCm';
+
+/**
+ * Perfil corporal guardado en la cuenta, SOLO con consentimiento explícito (ADR 0004).
+ * `aiFields` dice qué medidas estimó la IA; las escritas por la persona no aparecen ahí.
+ */
+export interface SavedProfile {
+  heightCm: number;
+  weightKg?: number;
+  chestCm?: number;
+  waistCm?: number;
+  hipCm?: number;
+  shoulderCm?: number;
+  aiFields: ProfileMeasure[];
+  hasPhoto: boolean;
+  consentAt: string;
+  updatedAt: string;
+}
+
+/** Respuesta al subir la foto del perfil: aviso de encuadre y lo que midió la IA. */
+export interface ProfilePhotoResult {
+  profile: SavedProfile;
+  photoCheck?: PhotoCheck;
+  estimate: BodyEstimate;
 }
 
 /** Sugerencias de etiquetado de una prenda a partir de su foto (panel de admin). */
