@@ -34,6 +34,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
         <ul class="hidden items-center gap-8 md:flex">
           <li><a routerLink="/tienda" routerLinkActive="is-active" class="nav-link link-line">{{ 'nav.catalog' | transloco }}</a></li>
           <li><a routerLink="/look" routerLinkActive="is-active" class="nav-link link-line">{{ 'nav.look' | transloco }}</a></li>
+          <li><a routerLink="/favoritos" routerLinkActive="is-active" class="nav-link link-line">{{ 'nav.favorites' | transloco }}</a></li>
           <li>
             <a routerLink="/comparar" routerLinkActive="is-active" class="nav-link link-line">
               {{ 'nav.compare' | transloco }}@if (comparison.count()) {<span class="tabular"> ({{ comparison.count() }})</span>}
@@ -54,11 +55,9 @@ import { NoticesComponent } from './shared/ui/notice.component';
           <button type="button" class="icon-btn hidden sm:grid" (click)="sound.toggle()" [attr.aria-pressed]="sound.enabled()" [attr.aria-label]="'nav.sound' | transloco">
             <ui-icon [name]="sound.enabled() ? 'sound-on' : 'sound-off'" [size]="17" />
           </button>
-          @if (auth.user()) {
-            <a routerLink="/favoritos" routerLinkActive="is-active" class="icon-btn" [attr.aria-label]="'nav.favorites' | transloco">
-              <ui-icon name="heart" [size]="17" />
-            </a>
-          }
+          <a routerLink="/favoritos" routerLinkActive="is-active" class="icon-btn md:hidden" [attr.aria-label]="'nav.favorites' | transloco">
+            <ui-icon name="heart" [size]="17" />
+          </a>
           <a routerLink="/carrito" routerLinkActive="is-active" class="nav-link link-line ml-2 inline-flex h-11 items-center gap-1.5"
             [attr.aria-label]="('nav.cart' | transloco) + (cart.count() ? ' (' + cart.count() + ')' : '')">
             <span aria-hidden="true">{{ 'nav.bag' | transloco }}</span>
@@ -110,6 +109,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
           <ul class="mono space-y-2.5">
             <li><a routerLink="/tienda" class="link-line">{{ 'nav.catalog' | transloco }}</a></li>
             <li><a routerLink="/look" class="link-line">{{ 'nav.look' | transloco }}</a></li>
+            <li><a routerLink="/favoritos" class="link-line">{{ 'nav.favorites' | transloco }}</a></li>
             <li><a routerLink="/comparar" class="link-line">{{ 'nav.compare' | transloco }}</a></li>
             <li><a routerLink="/carrito" class="link-line">{{ 'nav.cart' | transloco }}</a></li>
           </ul>
@@ -243,7 +243,7 @@ export class App {
     { path: '/look', label: 'nav.look' },
     { path: '/comparar', label: 'nav.compare' },
     { path: '/carrito', label: 'nav.cart' },
-    ...(this.auth.user() ? [{ path: '/favoritos', label: 'nav.favorites' }] : []),
+    { path: '/favoritos', label: 'nav.favorites' },
     { path: '/cuenta', label: this.auth.user() ? 'nav.account' : 'nav.signIn' },
   ]);
 
