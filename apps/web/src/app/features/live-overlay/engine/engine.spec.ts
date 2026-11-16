@@ -5,7 +5,7 @@ import { affineFrom3, apply, dist, limitTurn, similarity, type Pt } from './geom
 import { easeGain, sceneGain } from './lighting';
 import { occlusionMask, SEG, softenMask } from './occlusion';
 import { OneEuroFilter } from './one-euro';
-import { type Body, buildMesh, facing, lowerPose, poseFor, skin, skinMesh, torsoStretch, upperPose, vertexWeights } from './rig';
+import { type Body, bodyOnly, buildMesh, facing, lowerPose, poseFor, skin, skinMesh, torsoStretch, upperPose, vertexWeights } from './rig';
 import { fitForSize } from './size-fit';
 import { bodyFromPose, decodeRle } from './static-pose';
 
@@ -226,6 +226,28 @@ describe('rig: pose', () => {
     expect(width(m)).toBeGreaterThan(width(n));
     // El cuerpo (entrada) no cambia: el rig nunca escribe en él.
     expect(body).toEqual(standing());
+  });
+
+  it('chaqueta colgada: cubre también los brazos, sin ceñirse y sin alargarse', () => {
+    const jacket: GarmentAnchors = { ...TEE, sleeve: 'hanging' };
+    const width = (p: NonNullable<ReturnType<typeof upperPose>>) => dist(apply(p.base, [0.25 * W, 0.08 * H]), apply(p.base, [0.75 * W, 0.08 * H]));
+    const hemY = (p: NonNullable<ReturnType<typeof upperPose>>) => apply(p.base, [0.5 * W, 0.97 * H])[1];
+    const asTop = upperPose(jacket, W, H, standing())!;
+    const asJacket = upperPose(jacket, W, H, standing(), undefined, true)!;
+    expect(width(asJacket) / width(asTop)).toBeCloseTo(1.2, 2);
+    expect(asJacket.wrap).toBeUndefined();
+    expect(hemY(asJacket)).toBeCloseTo(hemY(asTop), 3);
+  });
+
+  it('bodyOnly quita mangas y deja el torso de la prenda tapada', () => {
+    const mesh = buildMesh(TEE, W, H, () => true, 8);
+    const torso = bodyOnly(mesh);
+    expect(torso.indices.length).toBeGreaterThan(0);
+    expect(torso.indices.length).toBeLessThan(mesh.indices.length);
+    for (let t = 0; t < torso.indices.length; t += 3) {
+      const [a, b, c] = [torso.indices[t], torso.indices[t + 1], torso.indices[t + 2]];
+      expect((mesh.region[a] + mesh.region[b] + mesh.region[c]) / 3).toBeLessThanOrEqual(0.5);
+    }
   });
 
   it('skinMesh deja quietos los vértices del torso cuando solo se mueve un brazo', () => {

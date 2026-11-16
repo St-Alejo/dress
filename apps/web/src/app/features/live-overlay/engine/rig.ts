@@ -57,6 +57,11 @@ const seen = (j?: Joint): j is Joint => !!j && j.v >= VISIBLE;
 
 /** Los hombros de MediaPipe son centros articulares: la costura del hombro queda un poco fuera. */
 const SHOULDER_SEAM = 1.1;
+/**
+ * Chaqueta fotografiada colgada: sus "hombros" medidos son el borde exterior de las mangas que caen
+ * a los lados, así que ese ancho debe cubrir hombros y brazos, no solo la costura del hombro.
+ */
+const HANGING_SPREAD = 1.2;
 /** Ancho del contorno de cadera respecto de la distancia entre articulaciones de cadera. */
 const HIP_CONTOUR = 1.7;
 /** Giro máximo de una manga o pernera respecto de su caída con el torso (radianes, ~40°). */
@@ -101,6 +106,17 @@ export const facesCamera = (body: Body | null): boolean => {
   const f = facing(body);
   return f === 'front' || f === 'unknown';
 };
+
+/** La misma malla sin mangas ni perneras: para la prenda que queda tapada por otra capa encima. */
+export function bodyOnly(mesh: Mesh): Mesh {
+  const keep: number[] = [];
+  const { indices, region } = mesh;
+  for (let t = 0; t < indices.length; t += 3) {
+    const [a, b, c] = [indices[t], indices[t + 1], indices[t + 2]];
+    if ((region[a] + region[b] + region[c]) / 3 <= 0.5) keep.push(a, b, c);
+  }
+  return { ...mesh, indices: Uint16Array.from(keep) };
+}
 
 export interface Mesh {
   /** Posiciones en px del recorte (x, y intercalados). */
@@ -322,7 +338,7 @@ function limbBones(base: Affine, gStart: Pt, gMid: Pt, gEnd: Pt, start: Joint | 
  * Pose de una prenda de arriba (o vestido) para un cuerpo. Basta con ver los hombros: sin
  * caderas, la prenda cae en perpendicular a la línea de hombros con su largo real.
  */
-export function upperPose(anchors: GarmentAnchors, width: number, height: number, body: Body, fit: Fit = NEUTRAL_FIT): Pose | null {
+export function upperPose(anchors: GarmentAnchors, width: number, height: number, body: Body, fit: Fit = NEUTRAL_FIT, outer = false): Pose | null {
   const p = anchorPx(anchors, width, height);
   const rs = p['rightShoulder'];
   const ls = p['leftShoulder'];
@@ -331,12 +347,16 @@ export function upperPose(anchors: GarmentAnchors, width: number, height: number
   const hem = p['leftHem'] && p['rightHem'] ? mid(p['leftHem'], p['rightHem']) : ([(rs[0] + ls[0]) / 2, height] as Pt);
 
   const bodyMid = mid(body.leftShoulder.p, body.rightShoulder.p);
-  const half = scale(sub(body.leftShoulder.p, body.rightShoulder.p), (SHOULDER_SEAM * fit.width) / 2);
+  // Chaqueta o abrigo fotografiado colgado: sus mangas caen pegadas al cuerpo y van sobre los brazos.
+  const draped = outer && anchors.sleeve === 'hanging';
+  const spread = draped ? HANGING_SPREAD : 1;
+  const half = scale(sub(body.leftShoulder.p, body.rightShoulder.p), (SHOULDER_SEAM * spread * fit.width) / 2);
   const bls = add(bodyMid, half);
   const brs = sub(bodyMid, half);
   const k = dist(bls, brs) / (dist(ls, rs) || 1);
   const gMid = mid(ls, rs);
-  const bHem = add(bodyMid, scale(down, dist(hem, gMid) * k * torsoStretch(body) * fit.length));
+  // El ensanche de las mangas colgando no alarga la prenda: el largo sigue al torso.
+  const bHem = add(bodyMid, scale(down, dist(hem, gMid) * (k / spread) * torsoStretch(body) * fit.length));
   const base = affineFrom3([ls, rs, hem], [bls, brs, bHem]);
   if (!base) return null;
 
@@ -345,7 +365,10 @@ export function upperPose(anchors: GarmentAnchors, width: number, height: number
   const lc = p['leftCuff'] ?? ls;
   const right = limbBones(base, rs, garmentElbow(anchors, rs, rc), rc, body.rightShoulder, body.rightElbow, body.rightWrist, k, twoPart);
   const left = limbBones(base, ls, garmentElbow(anchors, ls, lc), lc, body.leftShoulder, body.leftElbow, body.leftWrist, k, twoPart);
-  return { base, right, left, scale: k, wrap: torsoWrap(p, base, body) };
+  // En esa chaqueta el ancho del recorte es torso + mangas: ceñirlo al pecho la convertiría en un
+  // chaleco estrecho, así que se deja con su forma.
+  const wrap = draped ? undefined : torsoWrap(p, base, body);
+  return { base, right, left, scale: k, wrap };
 }
 
 /**
@@ -493,10 +516,10 @@ export function footPose(anchors: GarmentAnchors, width: number, height: number,
   return { base, right: [base, base], left: [base, base], scale: len / (dist(heel, toe) || 1) };
 }
 
-export function poseFor(anchors: GarmentAnchors, style: string | undefined, width: number, height: number, body: Body, fit: Fit = NEUTRAL_FIT, side?: 'left' | 'right'): Pose | null {
+export function poseFor(anchors: GarmentAnchors, style: string | undefined, width: number, height: number, body: Body, fit: Fit = NEUTRAL_FIT, side?: 'left' | 'right', outer = false): Pose | null {
   // De espaldas o de perfil, la foto de frente de la prenda quedaría en espejo: no se dibuja.
   if ((anchors.kind === 'upper' || anchors.kind === 'lower' || anchors.kind === 'skirt') && !facesCamera(body)) return null;
-  if (anchors.kind === 'upper') return upperPose(anchors, width, height, body, fit);
+  if (anchors.kind === 'upper') return upperPose(anchors, width, height, body, fit, outer);
   if (anchors.kind === 'lower' || anchors.kind === 'skirt') return lowerPose(anchors, width, height, body, fit);
   if (anchors.kind === 'footwear' && side) return footPose(anchors, width, height, body, side);
   return placementPose(anchors, style, width, height, body);

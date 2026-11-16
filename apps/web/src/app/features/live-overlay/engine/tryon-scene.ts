@@ -1,7 +1,7 @@
 import type { GarmentItem } from '@vestirse/shared-types';
 import { GarmentRenderer } from './garment-renderer';
 import { affineFrom3 } from './geometry';
-import { type Body, type Fit, LAYER_ORDER, type Mesh, NEUTRAL_FIT, buildMesh, poseFor, skinMesh } from './rig';
+import { type Body, type Fit, LAYER_ORDER, type Mesh, NEUTRAL_FIT, bodyOnly, buildMesh, poseFor, skinMesh } from './rig';
 
 /** Prenda lista para dibujar: su imagen, su malla y los datos que el rig necesita. */
 interface Prepared {
@@ -97,8 +97,12 @@ export class TryOnScene {
     const wearable = garments.filter(canWear).sort((a, b) => (LAYER_ORDER[a.category] ?? 9) - (LAYER_ORDER[b.category] ?? 9));
     const loaded = await Promise.all(wearable.map(async (garment) => ({ garment, image: await loadImage(garment.images.cutout!) })));
     if (run !== this.garmentsRun) return false;
+    // Bajo una chaqueta, las mangas de la camiseta o del vestido quedan tapadas por las de la chaqueta:
+    // se dibuja solo su cuerpo para que no asomen por fuera.
+    const covered = wearable.some((g) => g.category === 'outerwear');
     this.items = loaded.flatMap(({ garment, image }) => {
-      const mesh = buildMesh(garment.anchors!, image.naturalWidth, image.naturalHeight, alphaSampler(image), this.gl ? 24 : 12);
+      const full = buildMesh(garment.anchors!, image.naturalWidth, image.naturalHeight, alphaSampler(image), this.gl ? 24 : 12);
+      const mesh = covered && (garment.category === 'top' || garment.category === 'dress') ? bodyOnly(full) : full;
       const sides: (Prepared['side'])[] = garment.anchors!.kind === 'footwear' ? ['right', 'left'] : [undefined];
       return sides.map((side) => ({ garment, image, mesh, out: new Float32Array(mesh.rest.length), side }));
     });
@@ -127,7 +131,7 @@ export class TryOnScene {
     let shadow = 6;
     const positions = this.items.map((it) => {
       if (!body) return null;
-      const pose = poseFor(it.garment.anchors!, it.garment.style, it.mesh.width, it.mesh.height, body, fits[it.garment.id] ?? NEUTRAL_FIT, it.side);
+      const pose = poseFor(it.garment.anchors!, it.garment.style, it.mesh.width, it.mesh.height, body, fits[it.garment.id] ?? NEUTRAL_FIT, it.side, it.garment.category === 'outerwear');
       if (!pose) return null;
       if (it.side !== 'left') placed++; // un par cuenta como una prenda
       shadow = Math.max(3, Math.min(14, pose.scale * it.mesh.width * 0.012));
