@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, injec
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { AI_DRESSING_ORDER, AI_WEARABLE, type GarmentItem, type TryOnSession } from '@vestirse/shared-types';
+import { AI_DRESSING_ORDER, aiCanWear, type GarmentItem, type TryOnSession } from '@vestirse/shared-types';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { CartStore, defaultOutfit, toggleWorn } from '../../core/cart.store';
@@ -268,12 +268,12 @@ export class CartPage {
   readonly cameraGarment = computed(() => this.dressable().find(canOverlay) ?? null);
   readonly aiGarments = computed(() =>
     this.worn()
-      .filter((g) => AI_WEARABLE.includes(g.category))
+      .filter(aiCanWear)
       .sort((a, b) => AI_DRESSING_ORDER[a.category] - AI_DRESSING_ORDER[b.category]),
   );
   /** Los zapatos los pone el acabado con IA; los accesorios solo se ven en las vistas al instante. */
   readonly aiShoes = computed(() => this.worn().filter((g) => g.category === 'footwear'));
-  readonly onlyInstant = computed(() => this.worn().filter((g) => !AI_WEARABLE.includes(g.category) && g.category !== 'footwear'));
+  readonly onlyInstant = computed(() => this.worn().filter((g) => !aiCanWear(g) && g.category !== 'footwear'));
   readonly canGenerate = computed(() => this.aiGarments().length > 0 && (this.photoSource() === 'profile' ? !!this.profile.photoUrl() : !!this.file() && this.ack()));
   readonly wornSummary = computed(() => {
     this.dictionary();

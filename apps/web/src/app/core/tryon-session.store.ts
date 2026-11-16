@@ -4,7 +4,6 @@ import type {
   BodyMeasurements,
   BodyPose,
   FitRecommendation,
-  GarmentCategory,
   GarmentItem,
   GenerationStatus,
   PhotoCheck,
@@ -13,7 +12,7 @@ import type {
   TryOnMode,
   TryOnSession,
 } from '@vestirse/shared-types';
-import { aiCanDress } from '@vestirse/shared-types';
+import { aiCanDress, aiCanWear } from '@vestirse/shared-types';
 import { ApiService } from './api.service';
 import { GenerationSocketService } from './generation-socket.service';
 import { AppError } from './http/app-error';
@@ -33,7 +32,6 @@ interface GenerationState {
 
 const REMEMBER_KEY = 'measurements';
 const SESSIONS_KEY = 'tryon-sessions';
-const WEARABLE: ReadonlySet<GarmentCategory> = new Set(['top', 'bottom', 'dress', 'outerwear']);
 /** Estados en los que la generación ya no avanza sola. */
 export const SETTLED: ReadonlySet<GenerationStatus> = new Set(['done', 'fallback', 'failed', 'idle']);
 /**
@@ -89,7 +87,11 @@ export class TryOnSessionStore {
   });
   readonly previewImage = computed(() => this.modelPreview() ?? this.garment()?.images.photo ?? null);
   /** Calzado y accesorios no se pueden poner sobre una persona con los motores actuales. */
-  readonly wearable = computed(() => WEARABLE.has(this.garment()?.category ?? 'accessory'));
+  /** La IA puede vestir la prenda (no calzado ni accesorios, ni un cárdigan abierto sin nada debajo). */
+  readonly wearable = computed(() => {
+    const g = this.garment();
+    return !!g && aiCanWear(g);
+  });
   /** La IA puede vestir la prenda sobre el modelo elegido (no, p. ej., una camiseta sobre un vestido). */
   readonly aiCanDressBody = computed(() => {
     const g = this.garment();
