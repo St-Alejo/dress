@@ -16,7 +16,7 @@ import { ChoiceGroupComponent, type ChoiceOption } from '../../shared/ui/choice-
   template: `
     <section class="space-y-5" aria-labelledby="fit-title">
       <div class="flex items-baseline justify-between gap-3">
-        <h2 id="fit-title" class="text-[16px] font-medium">{{ 'fit.title' | transloco }}</h2>
+        <h2 id="fit-title" class="headline text-[20px]">{{ 'fit.title' | transloco }}</h2>
         @if (store.measurements()) {
           <button type="button" class="btn-ghost min-h-11 text-[12px] uppercase tracking-[0.06em] text-muted" (click)="toggleEditing()">
             {{ (editing() ? 'common.close' : 'fit.editMeasurements') | transloco }}

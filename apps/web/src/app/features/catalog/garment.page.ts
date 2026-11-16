@@ -9,6 +9,8 @@ import { ComparisonStore } from '../../core/comparison/comparison.store';
 import { NoticeStore } from '../../core/notice.store';
 import { canvasToBlob } from '../../core/frame-export';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
+import { SoundService } from '../../core/sound';
+import { RevealDirective } from '../../shared/motion/reveal.directive';
 import { PricePipe } from '../../shared/price.pipe';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton.component';
@@ -33,17 +35,61 @@ import { describeLook } from '../look/look-description';
  */
 @Component({
   selector: 'app-garment-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, FitPanelComponent, GarmentGalleryComponent, PairsWithComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, RevealDirective, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, FitPanelComponent, GarmentGalleryComponent, PairsWithComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     /* Mismo fondo que el lienzo de las fotos de catálogo: la foto no se ve "pegada". */
     .stage {
       background: #f6f5f2;
+      border-radius: var(--radius-card);
+    }
+    .badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border-radius: 9999px;
+      background: rgb(255 255 255 / 0.92);
+      padding: 4px 10px;
+      color: #0b0b0b;
+    }
+    /* Bloques plegables al estilo de una ficha de moda: título mono y un + que gira. */
+    .acc {
+      border-top: 1px solid var(--line);
+    }
+    .acc > summary {
+      display: flex;
+      min-height: 56px;
+      cursor: pointer;
+      list-style: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .acc > summary::-webkit-details-marker {
+      display: none;
+    }
+    .acc > summary ui-icon {
+      transition: transform 0.5s var(--ease-film);
+    }
+    .acc[open] > summary ui-icon {
+      transform: rotate(45deg);
+    }
+    /* El título del panel ya está en el resumen: se oculta a la vista, no a los lectores de pantalla. */
+    .acc-body ::ng-deep h2:first-of-type {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .acc[open] > .acc-body {
+      animation: fade-up 0.6s var(--ease-out) both;
     }
   `,
   template: `
-    <div class="mx-auto max-w-screen-2xl px-4 pt-4 pb-16 md:px-8">
-      <nav [attr.aria-label]="'garment.breadcrumb' | transloco" class="flex min-h-11 items-center gap-2 text-[12px] uppercase tracking-[0.08em] text-muted">
+    <div class="mx-auto max-w-screen-2xl px-3 pt-4 pb-20 md:px-4">
+      <nav [attr.aria-label]="'garment.breadcrumb' | transloco" class="mono flex min-h-11 items-center gap-2 px-1 text-muted">
         <a routerLink="/tienda" class="inline-flex items-center gap-2 hover:text-ink"><ui-icon name="arrow-left" [size]="16" />{{ 'nav.catalog' | transloco }}</a>
         @if (store.garment(); as g) {
           <span aria-hidden="true">/</span><span>{{ 'category.' + g.category | transloco }}</span>
@@ -56,28 +102,29 @@ import { describeLook } from '../look/look-description';
           <button type="button" class="btn mt-4" (click)="load(id())">{{ 'common.retry' | transloco }}</button>
         </div>
       } @else if (store.garment(); as g) {
-        <div class="mt-2 grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
+        <div class="mt-2 grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-10">
           <!-- Escenario visual -->
-          <section class="min-w-0 space-y-4" [attr.aria-label]="'garment.stage' | transloco">
+          <section class="min-w-0 space-y-4" [attr.aria-label]="'garment.stage' | transloco" appReveal>
             <ui-tabs #tabs [items]="modeTabs()" [active]="store.mode()" (activeChange)="setMode($event)" [label]="'garment.stage' | transloco" [stretch]="true" />
 
             <div role="tabpanel" [id]="tabs.panelId(store.mode())" [attr.aria-labelledby]="tabs.tabId(store.mode())">
               @switch (store.mode()) {
                 @case ('similar-model') {
-                  <div class="stage relative h-[min(70vh,640px)] overflow-hidden">
+                  <div class="stage relative h-[min(78vh,720px)] overflow-hidden">
                     @if (!store.modelPreview() && approxBody(); as b) {
                       <app-approx-view class="block h-full" [body]="b" [garments]="approxGarments()" [fits]="approxFits()" (placed)="approxPlaced.set($event)" />
-                      <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.approxPreview' | transloco }}</p>
+                      <p class="badge mono">{{ 'body.approxPreview' | transloco }}</p>
                       <p class="sr-only" aria-live="polite">{{ approxDescription() }}</p>
                     } @else {
-                      <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain" />
+                      <img [src]="store.previewImage()" [alt]="g.name" class="absolute inset-0 h-full w-full object-contain p-[4%]" />
                     }
                     @if (store.modelPreview()) {
-                      <p class="absolute right-3 top-3 bg-paper/90 px-2 py-1 text-[11px] text-ink-2">{{ 'body.aiPreview' | transloco }}</p>
+                      <p class="badge mono">{{ 'body.aiPreview' | transloco }}</p>
                     }
+                    <p class="mono pointer-events-none absolute bottom-3 left-4 text-black/45">{{ g.brandName }} — {{ g.color }}</p>
                     @if (store.modelPreviewState() === 'generating') {
-                      <div class="absolute inset-0 flex items-center justify-center bg-paper/70" role="status">
-                        <p class="bg-paper px-4 py-3 text-[13px] shadow-sm">{{ 'body.generating' | transloco }}</p>
+                      <div class="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]" role="status">
+                        <p class="mono rounded-full bg-black px-4 py-2.5 text-white">{{ 'body.generating' | transloco }}</p>
                       </div>
                     }
                   </div>
@@ -117,54 +164,63 @@ import { describeLook } from '../look/look-description';
                 }
               }
             </div>
-            <p class="text-[12px] text-muted">{{ 'mode.note.' + store.mode() | transloco }}</p>
+            <p class="mono text-muted normal-case">{{ 'mode.note.' + store.mode() | transloco }}</p>
             <app-garment-gallery [garment]="g" [bodies]="store.bodyModels()" />
           </section>
 
           <!-- Información, talla y contexto -->
-          <section class="min-w-0 lg:sticky lg:top-20 lg:self-start">
-            <header class="border-b border-line pb-6">
-              <p class="label-xs">{{ g.brandName }}</p>
-              <h1 class="mt-2 text-[24px] md:text-[28px]">{{ g.name }}</h1>
-              <p class="mt-3 text-[16px] tabular">{{ g.priceCents | price }}</p>
+          <section class="min-w-0 lg:sticky lg:top-20 lg:self-start" appReveal [revealDelay]="120">
+            <header class="pb-7">
+              <p class="mono flex items-center gap-2 text-muted">
+                <span>{{ g.brandName }}</span><span aria-hidden="true">/</span><span>{{ 'category.' + g.category | transloco }}</span>
+              </p>
+              <h1 class="display mt-4 text-[clamp(36px,4.6vw,68px)]">{{ g.name }}</h1>
+              <div class="mono mt-5 flex items-center justify-between gap-4">
+                <p class="text-[14px] text-ink tabular">{{ g.priceCents | price }}</p>
+                <p class="text-muted">{{ g.color }}</p>
+              </div>
             </header>
 
-            <div class="border-b border-line py-6">
+            <div class="card p-5 md:p-6">
               <app-fit-panel />
             </div>
 
-            <div class="flex flex-wrap items-center gap-4 border-b border-line py-6">
-              <button type="button" class="btn btn-primary" (click)="addToCart()">
+            <div class="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
+              <button type="button" class="btn btn-primary h-14 text-[13px]" (click)="addToCart()">
                 <ui-icon name="bag" [size]="16" />{{ 'cart.add' | transloco }}@if (store.chosenSize(); as size) {<span> · {{ size }}</span>}
               </button>
-              @if (inCart()) {
-                <a routerLink="/carrito" class="btn btn-ghost">{{ 'cart.open' | transloco: { n: cart.count() } }}</a>
-              }
-            </div>
-
-            <div class="flex flex-wrap items-center gap-4 border-b border-line py-6">
-              <button type="button" class="btn" [class.btn-primary]="inComparison()" [attr.aria-pressed]="inComparison()" (click)="toggleCompare()">
+              <button type="button" class="btn h-14" [class.btn-primary]="inComparison()" [attr.aria-pressed]="inComparison()" (click)="toggleCompare()">
                 @if (inComparison()) {<ui-icon name="check" [size]="16" />}
                 {{ (inComparison() ? 'compare.remove' : 'compare.add') | transloco }}
               </button>
-              @if (comparison.count() > 0) {
-                <a routerLink="/comparar" class="btn btn-ghost">{{ 'compare.open' | transloco: { n: comparison.count() } }}</a>
-              }
             </div>
+            @if (inCart() || comparison.count() > 0) {
+              <div class="mono mt-3 flex flex-wrap gap-x-6 gap-y-2">
+                @if (inCart()) {
+                  <a routerLink="/carrito" class="link-line">{{ 'cart.open' | transloco: { n: cart.count() } }}</a>
+                }
+                @if (comparison.count() > 0) {
+                  <a routerLink="/comparar" class="link-line">{{ 'compare.open' | transloco: { n: comparison.count() } }}</a>
+                }
+              </div>
+            }
 
-            <div class="border-b border-line py-6">
-              <app-pairs-with [garment]="g" [bodyId]="store.selectedBodyId()" />
-            </div>
-
-            <div class="py-6">
-              <app-reviews-panel [garment]="g" />
+            <div class="mt-8 border-b border-line">
+              <details class="acc" open>
+                <summary class="mono">{{ 'look.goesWithTitle' | transloco }}<ui-icon name="plus" [size]="16" /></summary>
+                <div class="acc-body pb-6"><app-pairs-with [garment]="g" [bodyId]="store.selectedBodyId()" /></div>
+              </details>
+              <details class="acc">
+                <summary class="mono">{{ 'reviews.title' | transloco }}<ui-icon name="plus" [size]="16" /></summary>
+                <div class="acc-body pb-6"><app-reviews-panel [garment]="g" /></div>
+              </details>
             </div>
           </section>
         </div>
       } @else {
         <p class="sr-only" role="status">{{ 'common.loading' | transloco }}</p>
-        <div class="mt-2 grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12" aria-hidden="true">
-          <ui-skeleton class="h-[min(70vh,640px)]" />
+        <div class="mt-2 grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-10" aria-hidden="true">
+          <ui-skeleton class="block h-[min(78vh,720px)] overflow-hidden rounded-[16px]" />
           <div class="space-y-4"><ui-skeleton class="h-3 w-24" /><ui-skeleton class="h-7 w-2/3" /><ui-skeleton class="h-4 w-20" /><ui-skeleton class="mt-8 h-40" /></div>
         </div>
       }
@@ -178,6 +234,7 @@ export class GarmentPage {
   readonly comparison = inject(ComparisonStore);
   readonly cart = inject(CartStore);
   private readonly notices = inject(NoticeStore);
+  private readonly sound = inject(SoundService);
   readonly modes: TryOnMode[] = ['similar-model', 'live-overlay', 'photorealistic'];
 
   private readonly transloco = inject(TranslocoService);
@@ -281,6 +338,7 @@ export class GarmentPage {
   addToCart() {
     const g = this.store.garment();
     if (!g) return;
+    this.sound.play('shutter');
     if (this.cart.add(g.id, this.store.chosenSize())) this.notices.success('cart.added');
     else this.notices.info('cart.already');
   }
