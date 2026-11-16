@@ -1,32 +1,60 @@
 import { Directive, ElementRef, OnDestroy, OnInit, inject, input } from '@angular/core';
 
 /**
- * Un solo observador para toda la página (patrón Flyweight): cada elemento se registra y se olvida al
- * entrar. Con la cortinilla el elemento está recortado del todo y el navegador lo da por invisible,
- * así que se vigila un "testigo" (su contenedor) y al entrar este se revelan sus elementos.
+ * Registro compartido para toda la página (patrón Flyweight): cada elemento se apunta y se olvida al
+ * entrar en pantalla. Con la cortinilla el elemento está recortado del todo y el navegador lo da por
+ * invisible, así que se vigila un "testigo" (su contenedor) y al entrar este se revelan sus elementos.
+ *
+ * El IntersectionObserver es el camino normal; como respaldo (pestañas en segundo plano, saltos de
+ * scroll que no llegan a pintarse) se comprueba la posición una vez por fotograma al hacer scroll.
  */
+const pending = new Map<Element, Set<HTMLElement>>();
 let observer: IntersectionObserver | null = null;
-const targets = new WeakMap<Element, Set<HTMLElement>>();
-function shared(): IntersectionObserver | null {
-  if (observer || typeof IntersectionObserver === 'undefined') return observer;
-  observer = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        for (const el of targets.get(e.target) ?? []) el.classList.add('is-in');
-        targets.delete(e.target);
-        observer?.unobserve(e.target);
-      }
-    },
-    { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
-  );
-  return observer;
+let listening = false;
+let frame = 0;
+
+function reveal(witness: Element) {
+  for (const el of pending.get(witness) ?? []) el.classList.add('is-in');
+  pending.delete(witness);
+  observer?.unobserve(witness);
+}
+
+/** Revela todo testigo cuyo borde superior ya asomó por el 92 % inferior de la ventana. */
+function sweep() {
+  frame = 0;
+  const limit = window.innerHeight * 0.92;
+  for (const w of [...pending.keys()]) {
+    const r = w.getBoundingClientRect();
+    if (r.top < limit && r.bottom > 0) reveal(w);
+  }
+}
+
+function schedule() {
+  if (!frame) frame = requestAnimationFrame(sweep);
+}
+
+function setup(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (!observer && typeof IntersectionObserver !== 'undefined') {
+    observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) reveal(e.target);
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+    );
+  }
+  if (!listening) {
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    listening = true;
+  }
+  return true;
 }
 
 /**
  * Revela el elemento al entrar en pantalla: `appReveal` sube y aparece; `appReveal="clip"` abre una
- * cortinilla (para fotos). `revealDelay` escalona elementos vecinos. Sin IntersectionObserver
- * (o con menos movimiento pedido) el contenido se ve desde el principio.
+ * cortinilla (para fotos). `revealDelay` escalona elementos vecinos. Con menos movimiento pedido el
+ * contenido se ve desde el principio.
  */
 @Directive({ selector: '[appReveal]', host: { '[style.--reveal-delay]': 'revealDelay() + "ms"' } })
 export class RevealDirective implements OnInit, OnDestroy {
@@ -37,23 +65,24 @@ export class RevealDirective implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.el.classList.add(this.appReveal() === 'clip' ? 'reveal-clip' : 'reveal');
-    const io = shared();
-    if (!io || matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    if (!setup() || matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       this.el.classList.add('is-in');
       return;
     }
     this.witness = this.appReveal() === 'clip' ? (this.el.parentElement ?? this.el) : this.el;
-    const set = targets.get(this.witness) ?? new Set<HTMLElement>();
+    const set = pending.get(this.witness) ?? new Set<HTMLElement>();
     set.add(this.el);
-    targets.set(this.witness, set);
-    io.observe(this.witness);
+    pending.set(this.witness, set);
+    observer?.observe(this.witness);
+    // Lo que ya está en pantalla al montarse no espera a que alguien haga scroll.
+    schedule();
   }
 
   ngOnDestroy() {
-    const set = targets.get(this.witness);
+    const set = pending.get(this.witness);
     set?.delete(this.el);
     if (set && !set.size) {
-      targets.delete(this.witness);
+      pending.delete(this.witness);
       observer?.unobserve(this.witness);
     }
   }
