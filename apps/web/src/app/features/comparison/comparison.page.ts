@@ -26,7 +26,7 @@ import { IconComponent } from '../../shared/ui/icon.component';
         <div class="py-16 text-center">
           <ui-icon name="compare" [size]="28" class="text-muted" />
           <p class="mx-auto mt-4 max-w-sm text-ink-2">{{ 'compare.empty' | transloco }}</p>
-          <a routerLink="/" class="btn btn-primary mt-6">{{ 'nav.catalog' | transloco }}</a>
+          <a routerLink="/tienda" class="btn btn-primary mt-6">{{ 'nav.catalog' | transloco }}</a>
         </div>
       } @else {
         <ul class="-mx-4 mt-6 grid grid-cols-2 gap-px bg-line md:mx-0 lg:grid-cols-4">

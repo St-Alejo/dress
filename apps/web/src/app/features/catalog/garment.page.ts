@@ -44,7 +44,7 @@ import { describeLook } from '../look/look-description';
   template: `
     <div class="mx-auto max-w-screen-2xl px-4 pt-4 pb-16 md:px-8">
       <nav [attr.aria-label]="'garment.breadcrumb' | transloco" class="flex min-h-11 items-center gap-2 text-[12px] uppercase tracking-[0.08em] text-muted">
-        <a routerLink="/" class="inline-flex items-center gap-2 hover:text-ink"><ui-icon name="arrow-left" [size]="16" />{{ 'nav.catalog' | transloco }}</a>
+        <a routerLink="/tienda" class="inline-flex items-center gap-2 hover:text-ink"><ui-icon name="arrow-left" [size]="16" />{{ 'nav.catalog' | transloco }}</a>
         @if (store.garment(); as g) {
           <span aria-hidden="true">/</span><span>{{ 'category.' + g.category | transloco }}</span>
         }

@@ -65,7 +65,7 @@ interface Line {
       } @else if (!lines().length) {
         <div class="mt-8 border border-line p-10 text-center">
           <p class="text-[15px]">{{ 'cart.empty' | transloco }}</p>
-          <a routerLink="/" class="btn btn-primary mt-5">{{ 'cart.browse' | transloco }}</a>
+          <a routerLink="/tienda" class="btn btn-primary mt-5">{{ 'cart.browse' | transloco }}</a>
         </div>
       } @else {
         <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
