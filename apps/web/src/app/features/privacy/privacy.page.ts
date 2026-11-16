@@ -10,7 +10,7 @@ import { ApiService } from '../../core/api.service';
   template: `
     <article class="mx-auto max-w-2xl px-4 pt-10 pb-16">
       <header>
-        <h1 class="text-[28px] md:text-[32px]">{{ 'privacy.title' | transloco }}</h1>
+        <h1 class="display text-[clamp(44px,8vw,128px)]">{{ 'privacy.title' | transloco }}</h1>
       </header>
       <div class="mt-8 divide-y divide-line border-y border-line">
         @for (s of sections; track s) {

@@ -1,38 +1,48 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/hanken-grotesk';
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/jetbrains-mono';
 
 /*
- * Sistema visual de tienda sobria: blanco, tinta casi negra y un único acento
- * azul tinta para enlaces y estado activo. Esquinas rectas, sin sombras: la
- * estructura se marca con líneas finas (hairlines) y con la tipografía.
- * Nada en la interfaz juzga cuerpos: los tonos de "confianza" describen la
- * calidad del dato, nunca a la persona.
+ * Sistema visual "estudio": tienda editorial de moda con lenguaje de cámara.
+ * - Fondo claro de estudio, tarjetas gris perla con esquinas redondeadas y la foto como protagonista.
+ * - Tres voces tipográficas: titulares expandidos en mayúsculas (Archivo ancho), texto de interfaz
+ *   (Hanken Grotesk) y fichas técnicas en monoespaciada (JetBrains Mono).
+ * - Movimiento con intención: cintas de texto, carruseles, revelado al hacer scroll y cortinillas
+ *   de cine entre páginas. Todo se apaga con prefers-reduced-motion.
+ * Nada en la interfaz juzga cuerpos: los tonos de "confianza" describen la calidad del dato.
  *
- * Los nombres de variables se mantienen (--paper, --ink...) para que todas las
- * pantallas cambien a la vez; las clases utilitarias equivalentes son
- * bg-paper, text-ink, border-line, etc.
+ * Los nombres de variables se mantienen (--paper, --ink...) para que todas las pantallas cambien a la vez.
  */
 :root {
-  --paper: #ffffff;
+  --paper: #f7f7f5;
   --surface: #ffffff;
-  --surface-2: #f5f5f3;
-  --ink: #111111;
-  --ink-2: #444444;
-  --muted: #767676;
-  --line: #e5e5e5;
-  --line-strong: #111111;
-  --accent: #1f3a5f;
+  --surface-2: #ebebe8;
+  --stage: #e6e6e3;
+  --ink: #0b0b0b;
+  --ink-2: #3d3d3d;
+  --muted: #6f6f6c;
+  --line: #d9d9d5;
+  --line-strong: #0b0b0b;
+  --accent: #0b0b0b;
   --accent-ink: #ffffff;
-  --accent-soft: #eef2f7;
-  /* Confianza del dato: escala de grises, el nivel alto en tinta. */
-  --conf-high: #111111;
-  --conf-high-soft: #f0f0ee;
+  --accent-soft: #ebebe8;
+  /* Bloques oscuros (destacados, pie): iguales en ambos temas. */
+  --night: #0b0b0b;
+  --night-2: #1b1b1b;
+  --night-ink: #f2f2f0;
+  --conf-high: #0b0b0b;
+  --conf-high-soft: #ebebe8;
   --conf-medium: #555555;
-  --conf-medium-soft: #f0f0ee;
-  --conf-low: #767676;
-  --conf-low-soft: #f5f5f3;
+  --conf-medium-soft: #ebebe8;
+  --conf-low: #6f6f6c;
+  --conf-low-soft: #f0f0ee;
   --danger: #b42318;
-  --focus: #111111;
+  --focus: #0b0b0b;
+  --radius-card: 16px;
+  --radius-ctl: 8px;
+  --ease-film: cubic-bezier(0.77, 0, 0.18, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   color-scheme: light;
 }
 
@@ -41,25 +51,28 @@
 
 /* Sin @layer a propósito: una regla en capa perdería contra el :root claro (sin capa). */
 :root[data-theme='dark'] {
-  --paper: #0f0f0f;
+  --paper: #0b0b0b;
   --surface: #141414;
-  --surface-2: #1a1a1a;
-  --ink: #f2f2f2;
-  --ink-2: #c4c4c4;
-  --muted: #8f8f8f;
-  --line: #2a2a2a;
-  --line-strong: #f2f2f2;
-  --accent: #9db4d6;
-  --accent-ink: #0f0f0f;
-  --accent-soft: #1b2430;
-  --conf-high: #f2f2f2;
+  --surface-2: #1c1c1c;
+  --stage: #e6e6e3;
+  --ink: #f2f2f0;
+  --ink-2: #c4c4c0;
+  --muted: #8d8d89;
+  --line: #2a2a28;
+  --line-strong: #f2f2f0;
+  --accent: #f2f2f0;
+  --accent-ink: #0b0b0b;
+  --accent-soft: #1c1c1c;
+  --night: #000000;
+  --night-2: #161616;
+  --conf-high: #f2f2f0;
   --conf-high-soft: #1f1f1f;
   --conf-medium: #b0b0b0;
   --conf-medium-soft: #1f1f1f;
-  --conf-low: #8f8f8f;
+  --conf-low: #8d8d89;
   --conf-low-soft: #1a1a1a;
   --danger: #f08a80;
-  --focus: #f2f2f2;
+  --focus: #f2f2f0;
   color-scheme: dark;
 }
 
@@ -67,6 +80,7 @@
   --color-paper: var(--paper);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-stage: var(--stage);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
@@ -75,17 +89,23 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --color-night-ink: var(--night-ink);
   --color-danger: var(--danger);
   --font-sans: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: var(--font-sans);
-  /* Escala tipográfica corta: 11 / 12 / 14 / 16 / 20 / 28 / 40. */
+  --font-display: 'Archivo Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
   --text-2xs: 11px;
   --text-2xs--line-height: 1.35;
   --radius-xs: 2px;
+  --radius-card: var(--radius-card);
+  --radius-ctl: var(--radius-ctl);
 }
 
 html {
   font-size: 16px;
+  scrollbar-gutter: stable;
 }
 
 html,
@@ -101,6 +121,7 @@ body {
   min-height: 100dvh;
   font-size: 14px;
   line-height: 1.45;
+  overflow-x: clip;
 }
 
 h1,
@@ -114,6 +135,10 @@ h3 {
 
 a {
   text-underline-offset: 3px;
+}
+
+img {
+  -webkit-user-drag: none;
 }
 
 /* Precios y medidas alineados en columna. */
@@ -132,21 +157,67 @@ a {
 }
 
 @layer components {
+  /* Titular de cartel: ancho, en mayúsculas y apretado. Tamaño con utilidades text-[..]. */
+  .display {
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.035em;
+    line-height: 0.86;
+  }
+  /* Titular de sección: misma familia, más sobrio. */
+  .headline {
+    font-family: var(--font-display);
+    font-stretch: 112%;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  /* Ficha técnica: monoespaciada en mayúsculas, como una etiqueta de prenda. */
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+
   /* Etiqueta pequeña en mayúsculas: navegación, encabezados de sección, nombres de campo. */
   .label-xs,
   .eyebrow {
+    font-family: var(--font-mono);
     font-size: 11px;
     line-height: 1.35;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     font-weight: 500;
     color: var(--muted);
   }
 
-  /* Bloque con borde fino, sin radio ni sombra. */
+  /* Bloque contenedor: superficie con borde fino y esquinas suaves. */
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+  }
+
+  /* Foto de producto o campaña: gris de estudio, esquinas redondeadas. */
+  .shot {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--surface-2);
+    isolation: isolate;
+  }
+  .shot > img,
+  .shot > video {
+    transition: transform 0.9s var(--ease-out);
+  }
+  .group:hover .shot > img.zoomable,
+  .shot:hover > img.zoomable {
+    transform: scale(1.035);
   }
 
   .btn {
@@ -157,26 +228,32 @@ a {
     min-height: 44px;
     padding: 0 1.25rem;
     border: 1px solid var(--line-strong);
+    border-radius: var(--radius-ctl);
     background: transparent;
     color: var(--ink);
     font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     cursor: pointer;
     transition:
-      background 0.15s,
-      color 0.15s;
+      background 0.2s,
+      color 0.2s,
+      transform 0.2s var(--ease-out);
   }
   .btn:hover {
     background: var(--ink);
     color: var(--paper);
+  }
+  .btn:active {
+    transform: scale(0.98);
   }
   .btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     background: transparent;
     color: var(--ink);
+    transform: none;
   }
   .btn-primary {
     background: var(--ink);
@@ -189,6 +266,17 @@ a {
   .btn-primary:disabled {
     background: var(--ink);
     color: var(--paper);
+  }
+  /* Botón claro sobre fotos o bloques oscuros. */
+  .btn-light {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #0b0b0b;
+  }
+  .btn-light:hover {
+    background: #0b0b0b;
+    border-color: #0b0b0b;
+    color: #ffffff;
   }
   /* Acción secundaria como enlace de texto. */
   .btn-ghost {
@@ -205,7 +293,41 @@ a {
     text-decoration-thickness: 2px;
   }
 
-  /* Opción seleccionable (filtros, tallas, zonas): caja recta; activa = tinta. */
+  /* Botón redondo de control (carruseles, reproducir/pausa). */
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 9999px;
+    color: var(--ink);
+    transition:
+      border-color 0.2s,
+      background 0.2s,
+      color 0.2s;
+  }
+  .nav-btn:hover {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* Enlace con subrayado que crece de izquierda a derecha. */
+  .link-line {
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+    transition: background-size 0.4s var(--ease-out);
+    text-decoration: none;
+  }
+  .link-line:hover,
+  .link-line.is-active {
+    background-size: 100% 1px;
+  }
+
+  /* Opción seleccionable (filtros, tallas, zonas): caja suave; activa = tinta. */
   .chip {
     display: inline-flex;
     align-items: center;
@@ -214,11 +336,15 @@ a {
     min-width: 44px;
     padding: 0 0.875rem;
     border: 1px solid var(--line);
+    border-radius: var(--radius-ctl);
     background: var(--surface);
     color: var(--ink);
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 12px;
     cursor: pointer;
-    transition: border-color 0.15s;
+    transition:
+      border-color 0.15s,
+      background 0.15s;
   }
   .chip:hover:not(:disabled) {
     border-color: var(--line-strong);
@@ -239,8 +365,9 @@ a {
   .field {
     display: grid;
     gap: 0.375rem;
+    font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     font-weight: 500;
     color: var(--muted);
@@ -251,8 +378,10 @@ a {
     min-height: 44px;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--line);
+    border-radius: var(--radius-ctl);
     background: var(--surface);
     color: var(--ink);
+    font-family: var(--font-sans);
     font-size: 15px;
     letter-spacing: normal;
     text-transform: none;
@@ -277,6 +406,48 @@ a {
     accent-color: var(--ink);
   }
 
+  /* Cinta de texto infinita (el contenido va duplicado; se desplaza la mitad). */
+  .marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee var(--marquee-speed, 38s) linear infinite;
+  }
+  .marquee-host:hover .marquee.pausable,
+  .marquee.paused {
+    animation-play-state: paused;
+  }
+
+  /* Revelado al entrar en pantalla (lo activa la directiva appReveal). */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.9s var(--ease-out),
+      transform 0.9s var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .reveal.is-in {
+    opacity: 1;
+    transform: none;
+  }
+  /* Revelado de imagen: cortinilla que se abre de abajo arriba. */
+  .reveal-clip {
+    clip-path: inset(100% 0 0 0 round var(--radius-card));
+    transition: clip-path 1.2s var(--ease-film);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .reveal-clip.is-in {
+    clip-path: inset(0 0 0 0 round var(--radius-card));
+  }
+
+  /* Barra de desplazamiento oculta en carruseles horizontales (siguen siendo desplazables). */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;
@@ -289,12 +460,47 @@ a {
   }
 }
 
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* Cursor de mira: solo con ratón y si no se pidió menos movimiento (lo pinta CrosshairCursor). */
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html.has-crosshair,
+  html.has-crosshair a,
+  html.has-crosshair button {
+    cursor: none;
+  }
+  html.has-crosshair input,
+  html.has-crosshair textarea,
+  html.has-crosshair select {
+    cursor: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .reveal-clip {
+    clip-path: none;
   }
   ::view-transition-group(*),
   ::view-transition-old(*),
@@ -303,10 +509,41 @@ a {
   }
 }
 
-/* Cambio de página: fundido corto. Los cambios dentro de la misma página no se animan. */
-::view-transition-old(root),
+/*
+ * Cambio de página como un corte de película: la página que sale se oscurece y se aleja un poco;
+ * la nueva entra desde abajo abriendo una cortinilla. Los cambios dentro de la misma página no se animan.
+ */
+::view-transition-old(root) {
+  animation: vt-out 0.55s var(--ease-film) both;
+}
 ::view-transition-new(root) {
-  animation-duration: 180ms;
+  animation: vt-in 0.75s var(--ease-film) both;
+}
+@keyframes vt-out {
+  to {
+    opacity: 0.25;
+    transform: scale(0.97) translateY(-2%);
+    filter: blur(2px);
+  }
+}
+@keyframes vt-in {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translateY(6%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+/* La cabecera no participa en el corte: se queda quieta encima. */
+::view-transition-group(site-header),
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+}
+::view-transition-group(site-header) {
+  z-index: 2;
 }
 .vt-instant::view-transition-group(*),
 .vt-instant::view-transition-old(*),

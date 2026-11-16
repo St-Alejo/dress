@@ -14,7 +14,7 @@ import { IconComponent } from '../../shared/ui/icon.component';
     <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-8">
       <div class="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-6">
         <div>
-          <h1 class="text-[28px] md:text-[32px]">{{ 'compare.title' | transloco }}</h1>
+          <h1 class="display text-[clamp(44px,8vw,128px)]">{{ 'compare.title' | transloco }}</h1>
         </div>
         <div class="flex gap-2">
           <button type="button" class="btn" [disabled]="!store.canUndo()" (click)="store.undo()">{{ 'compare.undo' | transloco }}</button>
@@ -26,7 +26,7 @@ import { IconComponent } from '../../shared/ui/icon.component';
         <div class="py-16 text-center">
           <ui-icon name="compare" [size]="28" class="text-muted" />
           <p class="mx-auto mt-4 max-w-sm text-ink-2">{{ 'compare.empty' | transloco }}</p>
-          <a routerLink="/" class="btn btn-primary mt-6">{{ 'nav.catalog' | transloco }}</a>
+          <a routerLink="/tienda" class="btn btn-primary mt-6">{{ 'nav.catalog' | transloco }}</a>
         </div>
       } @else {
         <ul class="-mx-4 mt-6 grid grid-cols-2 gap-px bg-line md:mx-0 lg:grid-cols-4">

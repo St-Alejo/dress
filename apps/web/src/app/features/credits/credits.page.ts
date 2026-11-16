@@ -21,7 +21,7 @@ type CreditsFile = Record<'garments' | 'bodies', Record<string, PhotoCredit>>;
   template: `
     <article class="mx-auto max-w-screen-lg px-4 pt-10 pb-16 md:px-8">
       <header class="max-w-2xl">
-        <h1 class="text-[28px] md:text-[32px]">{{ 'credits.title' | transloco }}</h1>
+        <h1 class="display text-[clamp(44px,8vw,128px)]">{{ 'credits.title' | transloco }}</h1>
         <p class="mt-3 text-[14px] text-ink-2">{{ 'credits.lead' | transloco }}</p>
       </header>
       @for (group of groups(); track group.kind) {

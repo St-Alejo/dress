@@ -50,7 +50,7 @@ interface Line {
   template: `
     <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-8">
       <header class="max-w-2xl">
-        <h1 class="text-[28px] md:text-[40px]">{{ 'cart.title' | transloco }}</h1>
+        <h1 class="display text-[clamp(44px,8vw,128px)]">{{ 'cart.title' | transloco }}</h1>
         <p class="mt-3 max-w-xl text-[14px] text-ink-2">{{ 'cart.lead' | transloco }}</p>
       </header>
 
@@ -65,7 +65,7 @@ interface Line {
       } @else if (!lines().length) {
         <div class="mt-8 border border-line p-10 text-center">
           <p class="text-[15px]">{{ 'cart.empty' | transloco }}</p>
-          <a routerLink="/" class="btn btn-primary mt-5">{{ 'cart.browse' | transloco }}</a>
+          <a routerLink="/tienda" class="btn btn-primary mt-5">{{ 'cart.browse' | transloco }}</a>
         </div>
       } @else {
         <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">

@@ -29,7 +29,7 @@ const STANDARD_CHEST: Record<string, [number, number]> = {
   template: `
     <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 space-y-6 md:px-8">
       <header class="space-y-6">
-        <h1 class="text-[28px] md:text-[32px]">{{ 'admin.title' | transloco }}</h1>
+        <h1 class="display text-[clamp(44px,8vw,128px)]">{{ 'admin.title' | transloco }}</h1>
         <ui-tabs #adminTabs [items]="tabItems()" [(active)]="tab" [label]="'admin.title' | transloco" />
       </header>
 
