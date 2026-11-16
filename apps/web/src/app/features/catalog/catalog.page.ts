@@ -4,8 +4,9 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import type { Brand, GarmentCategory, GarmentItem, SimilarBodyModel } from '@vestirse/shared-types';
 import { ApiService } from '../../core/api.service';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
-import { PricePipe } from '../../shared/price.pipe';
+import { RevealDirective } from '../../shared/motion/reveal.directive';
 import { IconComponent } from '../../shared/ui/icon.component';
+import { ProductCardComponent } from '../../shared/ui/product-card.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { canWear } from '../live-overlay/engine/tryon-scene';
 import { ApproxViewComponent } from './approx-view.component';
@@ -37,81 +38,124 @@ const SWATCH: Record<ColorFamily, string> = {
   pink: '#e8a0b4',
 };
 
+/** Fotos de campaña que se intercalan en la retícula (solo sin filtros), como en una revista. */
+interface Story {
+  id: string;
+  image: string;
+  focus: string;
+  link: string;
+  query: Record<string, string> | null;
+}
+const STORIES: Story[] = [
+  { id: 'layers', image: 'campaign/hero-3-sm.webp', focus: 'center 35%', link: '/tienda', query: { cat: 'outerwear' } },
+  { id: 'look', image: 'campaign/look.webp', focus: 'center 30%', link: '/look', query: null },
+  { id: 'texture', image: 'campaign/textura.webp', focus: 'center', link: '/tienda', query: { cat: 'top' } },
+];
+/** Tras cuántas prendas va cada foto de campaña. */
+const STORY_EVERY = 7;
+
+interface Cell {
+  key: string;
+  garment?: GarmentItem;
+  story?: Story;
+}
+
+/** Prendas con fotos de campaña intercaladas cada `STORY_EVERY` (nunca al final de la lista). */
+export function interleaveStories(list: GarmentItem[], withStories: boolean): Cell[] {
+  const out: Cell[] = [];
+  list.forEach((g, i) => {
+    out.push({ key: g.id, garment: g });
+    const n = (i + 1) / STORY_EVERY;
+    if (withStories && Number.isInteger(n) && n <= STORIES.length && i < list.length - 1) {
+      const story = STORIES[n - 1];
+      out.push({ key: 'story-' + story.id, story });
+    }
+  });
+  return out;
+}
+
 @Component({
   selector: 'app-catalog-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, ApproxViewComponent],
+  imports: [RouterLink, TranslocoPipe, IconComponent, SkeletonComponent, ApproxViewComponent, ProductCardComponent, RevealDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-8">
-      <header class="max-w-2xl">
-        <h1 class="text-[28px] md:text-[40px]">{{ 'catalog.title' | transloco }}</h1>
-        <p class="mt-3 max-w-xl text-[14px] text-ink-2">{{ 'catalog.lead' | transloco }}</p>
+    <section class="mx-auto max-w-screen-2xl px-3 pt-6 pb-20 md:px-4">
+      <header class="grid gap-6 px-1 md:grid-cols-[1fr_minmax(0,28rem)] md:items-end">
+        <h1 class="display text-[clamp(64px,15vw,240px)]" appReveal>
+          {{ 'catalog.heading' | transloco }}<sup class="mono ml-2 align-top text-[13px] tracking-normal tabular">({{ garments().length }})</sup>
+        </h1>
+        <div class="pb-2" appReveal [revealDelay]="120">
+          <p class="headline text-[18px] md:text-[22px]">{{ 'catalog.title' | transloco }}</p>
+          <p class="mt-3 max-w-md text-[13px] leading-relaxed text-ink-2">{{ 'catalog.lead' | transloco }}</p>
+        </div>
       </header>
 
-      <div class="mt-8 flex flex-col gap-4 border-b border-line md:flex-row md:items-end md:justify-between">
-        <div class="-mb-px flex gap-6 overflow-x-auto" role="toolbar" [attr.aria-label]="'catalog.filters' | transloco">
-          <button type="button" class="filter-tab" [attr.aria-pressed]="!filters().category" (click)="set({ category: null })">{{ 'catalog.all' | transloco }}</button>
-          @for (c of categories; track c) {
-            <button type="button" class="filter-tab" [attr.aria-pressed]="filters().category === c" (click)="set({ category: c })">{{ 'category.' + c | transloco }}</button>
-          }
+      <div class="contents">
+        <div class="sticky top-[56px] z-20 -mx-3 mt-8 flex flex-col gap-3 bg-paper/85 px-3 py-3 backdrop-blur-md md:-mx-4 md:px-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1" role="toolbar" [attr.aria-label]="'catalog.filters' | transloco">
+            <button type="button" class="pill" [attr.aria-pressed]="!filters().category" (click)="set({ category: null })">{{ 'catalog.all' | transloco }}</button>
+            @for (c of categories; track c) {
+              <button type="button" class="pill" [attr.aria-pressed]="filters().category === c" (click)="set({ category: c })">{{ 'category.' + c | transloco }}</button>
+            }
+          </div>
+          <label class="relative lg:w-72">
+            <span class="sr-only">{{ 'catalog.search' | transloco }}</span>
+            <ui-icon name="search" [size]="15" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+            <input type="search" class="mono h-10 w-full rounded-full border border-line bg-transparent pl-10 pr-4 placeholder:text-muted focus:border-ink focus:outline-none"
+              [value]="filters().q" [placeholder]="'catalog.search' | transloco" (input)="set({ q: value($event) })" />
+          </label>
         </div>
-        <label class="relative pb-2 md:w-56">
-          <span class="sr-only">{{ 'catalog.search' | transloco }}</span>
-          <ui-icon name="search" [size]="16" class="pointer-events-none absolute left-0 top-[calc(50%-4px)] -translate-y-1/2 text-muted" />
-          <input type="search" class="min-h-10 w-full border-b border-line bg-transparent pl-6 text-[13px] placeholder:text-muted focus:border-ink focus:outline-none"
-            [value]="filters().q" [placeholder]="'catalog.search' | transloco" (input)="set({ q: value($event) })" />
-        </label>
+
+        <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <fieldset class="flex items-center gap-1.5">
+            <legend class="sr-only">{{ 'catalog.color' | transloco }}</legend>
+            @for (c of colors; track c) {
+              <button type="button" class="swatch" [style.background]="swatch[c]" [attr.aria-pressed]="filters().color === c"
+                [attr.aria-label]="'catalog.colorFamily.' + c | transloco" [title]="'catalog.colorFamily.' + c | transloco"
+                (click)="set({ color: filters().color === c ? null : c })"></button>
+            }
+          </fieldset>
+          <label class="select">
+            <span class="sr-only">{{ 'catalog.size' | transloco }}</span>
+            <select [value]="filters().size ?? ''" (change)="set({ size: value($event) || null })">
+              <option value="">{{ 'catalog.allSizes' | transloco }}</option>
+              @for (s of sizes(); track s) {<option [value]="s">{{ s }}</option>}
+            </select>
+            <ui-icon name="chevron-down" [size]="13" />
+          </label>
+          <label class="select">
+            <span class="sr-only">{{ 'catalog.price' | transloco }}</span>
+            <select [value]="filters().price ?? ''" (change)="set({ price: band(value($event)) })">
+              <option value="">{{ 'catalog.allPrices' | transloco }}</option>
+              @for (p of priceBands; track p) {<option [value]="p">{{ 'catalog.priceBand.' + p | transloco }}</option>}
+            </select>
+            <ui-icon name="chevron-down" [size]="13" />
+          </label>
+          <label class="select">
+            <span class="sr-only">{{ 'catalog.brand' | transloco }}</span>
+            <select [value]="filters().brandId ?? ''" (change)="set({ brandId: value($event) || null })">
+              <option value="">{{ 'catalog.allBrands' | transloco }}</option>
+              @for (b of brands(); track b.id) {<option [value]="b.id">{{ b.name }}</option>}
+            </select>
+            <ui-icon name="chevron-down" [size]="13" />
+          </label>
+          <label class="select md:ml-auto">
+            <span class="sr-only">{{ 'catalog.sort' | transloco }}</span>
+            <select [value]="filters().sort" (change)="set({ sort: sortOf(value($event)) })">
+              @for (s of sorts; track s) {<option [value]="s">{{ 'catalog.sortBy.' + s | transloco }}</option>}
+            </select>
+            <ui-icon name="chevron-down" [size]="13" />
+          </label>
+        </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-line py-3">
-        <fieldset class="flex items-center gap-1.5">
-          <legend class="sr-only">{{ 'catalog.color' | transloco }}</legend>
-          @for (c of colors; track c) {
-            <button type="button" class="swatch" [style.background]="swatch[c]" [attr.aria-pressed]="filters().color === c"
-              [attr.aria-label]="'catalog.colorFamily.' + c | transloco" [title]="'catalog.colorFamily.' + c | transloco"
-              (click)="set({ color: filters().color === c ? null : c })"></button>
-          }
-        </fieldset>
-        <label class="select">
-          <span class="sr-only">{{ 'catalog.size' | transloco }}</span>
-          <select [value]="filters().size ?? ''" (change)="set({ size: value($event) || null })">
-            <option value="">{{ 'catalog.allSizes' | transloco }}</option>
-            @for (s of sizes(); track s) {<option [value]="s">{{ s }}</option>}
-          </select>
-          <ui-icon name="chevron-down" [size]="14" />
-        </label>
-        <label class="select">
-          <span class="sr-only">{{ 'catalog.price' | transloco }}</span>
-          <select [value]="filters().price ?? ''" (change)="set({ price: band(value($event)) })">
-            <option value="">{{ 'catalog.allPrices' | transloco }}</option>
-            @for (p of priceBands; track p) {<option [value]="p">{{ 'catalog.priceBand.' + p | transloco }}</option>}
-          </select>
-          <ui-icon name="chevron-down" [size]="14" />
-        </label>
-        <label class="select">
-          <span class="sr-only">{{ 'catalog.brand' | transloco }}</span>
-          <select [value]="filters().brandId ?? ''" (change)="set({ brandId: value($event) || null })">
-            <option value="">{{ 'catalog.allBrands' | transloco }}</option>
-            @for (b of brands(); track b.id) {<option [value]="b.id">{{ b.name }}</option>}
-          </select>
-          <ui-icon name="chevron-down" [size]="14" />
-        </label>
-        <label class="select md:ml-auto">
-          <span class="sr-only">{{ 'catalog.sort' | transloco }}</span>
-          <select [value]="filters().sort" (change)="set({ sort: sortOf(value($event)) })">
-            @for (s of sorts; track s) {<option [value]="s">{{ 'catalog.sortBy.' + s | transloco }}</option>}
-          </select>
-          <ui-icon name="chevron-down" [size]="14" />
-        </label>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-2 py-3 text-[12px] text-muted">
+      <div class="mono flex flex-wrap items-center justify-between gap-2 px-1 py-4 text-muted">
         <div class="flex items-center gap-4">
           @if (!loading() && !error()) {
             <p class="tabular" aria-live="polite">{{ 'catalog.count' | transloco: { n: visible().length } }}</p>
           }
           @if (active() > 0) {
-            <button type="button" class="min-h-8 text-ink underline underline-offset-4" (click)="clear()">{{ 'catalog.clear' | transloco: { n: active() } }}</button>
+            <button type="button" class="link-line min-h-8 text-ink" (click)="clear()">{{ 'catalog.clear' | transloco: { n: active() } }}</button>
           }
         </div>
         @if (selectedBody(); as body) {
@@ -124,70 +168,92 @@ const SWATCH: Record<ColorFamily, string> = {
 
       @if (loading()) {
         <p class="sr-only" role="status">{{ 'common.loading' | transloco }}</p>
-        <ul class="-mx-4 grid grid-cols-2 gap-px bg-line md:mx-0 md:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
+        <ul class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
           @for (i of placeholders; track i) {
-            <li class="bg-paper pb-4"><ui-skeleton ratio="3 / 4" /><div class="mt-3 space-y-2 px-3"><ui-skeleton class="h-3 w-1/3" /><ui-skeleton class="h-3 w-2/3" /></div></li>
+            <li><ui-skeleton ratio="3 / 4" class="block overflow-hidden rounded-[16px]" /><div class="mt-3 space-y-2"><ui-skeleton class="h-3 w-2/3" /><ui-skeleton class="h-3 w-1/3" /></div></li>
           }
         </ul>
       } @else if (error()) {
-        <div class="border border-line p-8 text-center" role="alert">
+        <div class="card p-8 text-center" role="alert">
           <p>{{ 'common.loadError' | transloco }}</p>
           <button type="button" class="btn mt-4" (click)="load()">{{ 'common.retry' | transloco }}</button>
         </div>
       } @else if (visible().length === 0) {
-        <p class="border border-line p-8 text-center text-ink-2">{{ 'catalog.empty' | transloco }}</p>
+        <div class="card p-10 text-center">
+          <p class="headline text-[22px]">{{ 'catalog.empty' | transloco }}</p>
+          <button type="button" class="btn btn-ghost mt-5" (click)="clear()">{{ 'catalog.clear' | transloco: { n: active() } }}</button>
+        </div>
       } @else {
-        <ul class="-mx-4 grid grid-cols-2 gap-px bg-line md:mx-0 md:grid-cols-3 xl:grid-cols-4">
-          @for (g of visible(); track g.id) {
-            <li class="bg-paper">
-              <a [routerLink]="['/prenda', g.id]" class="group block pb-5" (pointerenter)="hover($event, g)" (pointerleave)="hovered.set(null)">
-                <div class="relative aspect-[3/4] overflow-hidden bg-surface-2">
-                  <img [src]="imageFor(g)" [attr.srcset]="srcsetFor(g)" [attr.sizes]="srcsetFor(g) ? cardSizes : null" [alt]="g.name" loading="lazy" decoding="async"
-                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+        <ul class="grid grid-flow-dense grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
+          @for (cell of cells(); track cell.key; let i = $index) {
+            @if (cell.garment; as g) {
+              <li appReveal [revealDelay]="(i % 4) * 70" (pointerenter)="hover($event, g)" (pointerleave)="hovered.set(null)">
+                <ui-product-card [garment]="g" [image]="previewFor(g)" [sizes]="cardSizes">
                   @if (hovered() === g.id && hoverBody(); as body) {
                     <div class="absolute inset-0 bg-[#f6f5f2]">
                       <app-approx-view class="block h-full" [body]="body" [garments]="[g]" />
-                      <span class="absolute bottom-2 left-2 bg-paper/90 px-2 py-0.5 text-[11px] text-ink">{{ 'catalog.onModel' | transloco }}</span>
+                      <span class="mono absolute bottom-2.5 left-2.5 rounded-full bg-white/90 px-2.5 py-1 text-black">{{ 'catalog.onModel' | transloco }}</span>
                     </div>
                   }
-                </div>
-                <div class="mt-3 space-y-0.5 px-3">
-                  <p class="label-xs">{{ g.brandName }}</p>
-                  <p class="text-[13px] leading-snug group-hover:underline">{{ g.name }}</p>
-                  <p class="text-[13px] tabular">{{ g.priceCents | price }}</p>
-                </div>
-              </a>
-            </li>
+                </ui-product-card>
+              </li>
+            } @else if (cell.story; as st) {
+              <li class="col-span-2" appReveal>
+                <a [routerLink]="st.link" [queryParams]="st.query" class="group shot block h-full min-h-[300px]" [attr.data-cursor]="'home.cursor.shop' | transloco">
+                  <img [src]="st.image" alt="" loading="lazy" decoding="async" class="zoomable absolute inset-0 h-full w-full object-cover" [style.object-position]="st.focus" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent"></div>
+                  <div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 text-white md:p-6">
+                    <div>
+                      <p class="mono opacity-80">{{ 'catalog.story.' + st.id + '.eyebrow' | transloco }}</p>
+                      <p class="display mt-2 text-[clamp(30px,4.4vw,64px)]">{{ 'catalog.story.' + st.id + '.title' | transloco }}</p>
+                    </div>
+                    <span class="grid size-11 shrink-0 place-items-center rounded-full bg-white text-black transition-transform duration-500 group-hover:rotate-45">
+                      <ui-icon name="arrow-up-right" [size]="16" />
+                    </span>
+                  </div>
+                </a>
+              </li>
+            }
           }
         </ul>
       }
     </section>
   `,
   styles: `
-    .filter-tab {
+    .pill {
       flex-shrink: 0;
-      min-height: 44px;
-      border-bottom: 2px solid transparent;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.08em;
+      height: 36px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 9999px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
-      color: var(--muted);
       white-space: nowrap;
+      transition:
+        background-color 0.3s var(--ease-out),
+        color 0.3s var(--ease-out),
+        border-color 0.3s var(--ease-out);
     }
-    .filter-tab:hover {
-      color: var(--ink);
-    }
-    .filter-tab[aria-pressed='true'] {
+    .pill:hover {
       border-color: var(--ink);
-      color: var(--ink);
+    }
+    .pill[aria-pressed='true'] {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
     }
     .swatch {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       border-radius: 9999px;
       border: 1px solid var(--line);
       outline-offset: 2px;
+      transition: transform 0.3s var(--ease-out);
+    }
+    .swatch:hover {
+      transform: scale(1.12);
     }
     .swatch[aria-pressed='true'] {
       outline: 2px solid var(--ink);
@@ -198,12 +264,15 @@ const SWATCH: Record<ColorFamily, string> = {
       align-items: center;
     }
     .select select {
-      min-height: 40px;
+      height: 36px;
       appearance: none;
-      border-bottom: 1px solid var(--line);
+      border: 1px solid var(--line);
+      border-radius: 9999px;
       background: transparent;
-      padding-right: 20px;
-      font-size: 13px;
+      padding: 0 30px 0 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
     }
     .select select:focus {
       border-color: var(--ink);
@@ -212,7 +281,7 @@ const SWATCH: Record<ColorFamily, string> = {
     .select ui-icon {
       pointer-events: none;
       position: absolute;
-      right: 0;
+      right: 11px;
       color: var(--muted);
     }
   `,
@@ -254,6 +323,8 @@ export class CatalogPage {
   readonly active = computed(() => activeCount(this.filters()));
   readonly sizes = computed(() => sizesIn(this.garments()));
   readonly visible = computed(() => filterGarments(this.garments(), this.filters()));
+  /** Con filtros u otro orden se muestran solo prendas: la campaña acompaña a la vista general. */
+  readonly cells = computed(() => interleaveStories(this.visible(), this.active() === 0 && this.filters().sort === 'relevance'));
   readonly selectedBody = computed(() => this.bodies().find((b) => b.id === this.store.selectedBodyId()) ?? null);
   /** El modelo elegido o, si no tiene pose, el de brazos más sueltos. */
   readonly hoverBody = computed(() => {
@@ -290,14 +361,9 @@ export class CatalogPage {
     if (ev.pointerType === 'mouse' && canWear(g)) this.hovered.set(g.id);
   }
 
-  /** Foto real de producto; si la persona eligió un modelo y ya hay una prueba sobre él, se muestra esa. */
-  imageFor(g: GarmentItem) {
-    return this.selectedBody()?.previewImages[g.id] ?? g.images.thumb ?? g.images.photo;
-  }
-
-  srcsetFor(g: GarmentItem): string | null {
-    if (this.selectedBody()?.previewImages[g.id] || !g.images.thumb) return null;
-    return `${g.images.thumb} 384w, ${g.images.photo} 768w`;
+  /** Si la persona eligió un modelo y ya hay una prueba sobre él, se muestra esa en lugar de la foto. */
+  previewFor(g: GarmentItem): string | null {
+    return this.selectedBody()?.previewImages[g.id] ?? null;
   }
 
   async load() {

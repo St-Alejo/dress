@@ -82,6 +82,21 @@
       "blue": "Azul",
       "purple": "Morado",
       "pink": "Rosa"
+    },
+    "heading": "Tienda",
+    "story": {
+      "layers": {
+        "eyebrow": "Abrigos y chaquetas",
+        "title": "Capas largas"
+      },
+      "look": {
+        "eyebrow": "Armar look",
+        "title": "Todo junto"
+      },
+      "texture": {
+        "eyebrow": "Prendas superiores",
+        "title": "Tejidos de cerca"
+      }
     }
   },
   "category": {

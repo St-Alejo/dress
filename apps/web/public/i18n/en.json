@@ -82,6 +82,21 @@
       "blue": "Blue",
       "purple": "Purple",
       "pink": "Pink"
+    },
+    "heading": "Shop",
+    "story": {
+      "layers": {
+        "eyebrow": "Coats and jackets",
+        "title": "Long layers"
+      },
+      "look": {
+        "eyebrow": "Build a look",
+        "title": "All together"
+      },
+      "texture": {
+        "eyebrow": "Tops",
+        "title": "Fabrics up close"
+      }
     }
   },
   "category": {
