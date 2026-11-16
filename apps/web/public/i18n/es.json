@@ -17,7 +17,7 @@
     "menu": "Menú",
     "credits": "Créditos de fotos",
     "look": "Armar look",
-    "cart": "Carrito",
+    "cart": "Bolsa",
     "favorites": "Mis favoritos",
     "home": "Inicio",
     "bag": "Bolsa",
@@ -638,7 +638,7 @@
     }
   },
   "cart": {
-    "title": "Carrito",
+    "title": "Tu bolsa",
     "lead": "Pruébate a la vez lo que vas a comprar: una prenda por zona (camisa, pantalón, chaqueta, zapatos…).",
     "empty": "Tu carrito está vacío.",
     "browse": "Ver el catálogo",

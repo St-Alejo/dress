@@ -638,7 +638,7 @@
     }
   },
   "cart": {
-    "title": "Bag",
+    "title": "Your bag",
     "lead": "Try on together what you are buying: one item per area (shirt, trousers, jacket, shoes…).",
     "empty": "Your bag is empty.",
     "browse": "Browse the catalog",

@@ -22,7 +22,7 @@ const DEMO = { email: 'demo@vestirse.local', password: 'demo12345' };
   template: `
     <section class="mx-auto max-w-md px-4 pt-10 pb-16 space-y-8">
       <header>
-        <h1 class="text-[28px] md:text-[32px]">{{ 'account.title' | transloco }}</h1>
+        <h1 class="display text-[clamp(44px,8vw,128px)]">{{ 'account.title' | transloco }}</h1>
         <p class="mt-3 text-[14px] text-ink-2">{{ 'account.optional' | transloco }}</p>
       </header>
 

@@ -238,10 +238,10 @@ export class HomePage {
 
   /** Colección: prendas con foto, intercalando categorías para que el carril no sea monótono. */
   readonly collection = computed(() => interleave(this.garments()).slice(0, 14));
-  /** Destacado: prendas que se ven mejor grandes (abrigos, vestidos, camisas con modelo). */
+  /** Destacado: piezas que lucen en grande (abrigos, vestidos, superiores y calzado con foto de producto), alternadas. */
   readonly featured = computed(() => {
-    const pick = this.garments().filter((g) => ['outerwear', 'dress', 'top'].includes(g.category) && g.photoType === 'model');
-    return (pick.length >= 5 ? pick : this.garments()).slice(0, 8);
+    const pick = this.garments().filter((g) => ['outerwear', 'dress', 'top', 'footwear'].includes(g.category) && g.photoType !== 'extracted');
+    return interleave(pick.length >= 5 ? pick : this.garments()).slice(0, 8);
   });
 
   constructor() {
