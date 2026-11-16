@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { Locale } from '@vestirse/shared-types';
 import { filter } from 'rxjs';
@@ -253,13 +253,21 @@ export class App {
     inject(ProfileStore);
     document.documentElement.lang = this.locale();
     // Al navegar: se cierra el menú y el foco va al contenido (lectores de pantalla anuncian la nueva página).
+    // El scroll lo decide la app y no el router: cambiar filtros o prendas del look (misma ruta, solo
+    // cambia la URL) no debe saltar arriba; con atrás/adelante el navegador recupera la posición.
+    let fromHistory = false;
     inject(Router)
-      .events.pipe(filter((e) => e instanceof NavigationEnd))
+      .events.pipe(filter((e) => e instanceof NavigationStart || e instanceof NavigationEnd))
       .subscribe((e) => {
+        if (e instanceof NavigationStart) {
+          fromHistory = e.navigationTrigger === 'popstate';
+          return;
+        }
         this.closeMenu();
         const path = e.urlAfterRedirects.split(/[?#]/)[0];
-        // Cambiar filtros (misma ruta) no es cambiar de página: ni foco ni sonido.
+        // Cambiar filtros (misma ruta) no es cambiar de página: ni scroll, ni foco, ni sonido.
         if (this.navigated && path !== this.path) {
+          if (!fromHistory) window.scrollTo({ top: 0, behavior: 'instant' });
           document.getElementById('main')?.focus({ preventScroll: true });
           this.sound.play('whoosh');
         }
