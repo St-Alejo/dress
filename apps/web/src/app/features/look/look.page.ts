@@ -11,6 +11,7 @@ import { PricePipe } from '../../shared/price.pipe';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
+import { AiOutfitComponent } from '../ai-outfit/ai-outfit.component';
 import { ApproxViewComponent } from '../catalog/approx-view.component';
 import { BodyPickerComponent } from '../catalog/body-picker.component';
 import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
@@ -20,7 +21,7 @@ import { LOOK_SLOTS, type LookSlot, slotOf, suggestionsFor } from './pairing';
 import { describeLook } from './look-description';
 import { SavedLooksComponent } from './saved-looks.component';
 
-type Stage = 'model' | 'camera';
+type Stage = 'model' | 'camera' | 'ai';
 
 /**
  * Armar un look: una prenda por hueco (arriba, abajo, abrigo, calzado, accesorio), vista al
@@ -29,7 +30,7 @@ type Stage = 'model' | 'camera';
  */
 @Component({
   selector: 'app-look-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent, SavedLooksComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent, SavedLooksComponent, AiOutfitComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-8">
@@ -48,7 +49,7 @@ type Stage = 'model' | 'camera';
         </div>
       } @else {
         <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
-          <section class="min-w-0 space-y-4" [attr.aria-label]="'look.stage' | transloco">
+          <section id="look-stage" class="min-w-0 space-y-4 scroll-mt-24" [attr.aria-label]="'look.stage' | transloco">
             <ui-tabs #tabs [items]="stageTabs()" [(active)]="stage" [label]="'look.stage' | transloco" [stretch]="true" />
             <div role="tabpanel" [id]="tabs.panelId(stage())" [attr.aria-labelledby]="tabs.tabId(stage())">
               @if (stage() === 'model') {
@@ -66,6 +67,8 @@ type Stage = 'model' | 'camera';
                 </div>
                 <p class="mt-2 text-[12px] text-muted" aria-live="polite">{{ description() }}</p>
                 <div class="mt-4"><app-body-picker /></div>
+              } @else if (stage() === 'ai') {
+                <app-ai-outfit [garments]="ordered()" />
               } @else {
                 @if (cameraGarment(); as g) {
                   <app-live-tryon [garment]="g" [outfit]="wearable()" [realistic]="false" [sizePicker]="false" />
@@ -130,7 +133,18 @@ type Stage = 'model' | 'camera';
           </section>
         </div>
       }
+
+      @if (!loading() && !error() && stage() !== 'ai') {
+        <!-- Siempre a mano: probarse el look (o una prenda) con IA de imagen. -->
+        <button type="button" class="ai-fab btn btn-primary fixed bottom-5 right-5 z-30 shadow-lg" (click)="openAi()">
+          <ui-icon name="sparkle" [size]="18" />
+          {{ (chosen().length ? 'aiLook.fab' : 'aiLook.fabEmpty') | transloco: { count: chosen().length } }}
+        </button>
+      }
     </section>
+  `,
+  styles: `
+    .ai-fab { border-radius: 999px; padding-inline: 1.25rem; }
   `,
 })
 export class LookPage {
@@ -155,7 +169,7 @@ export class LookPage {
 
   readonly stageTabs = computed<TabItem<Stage>[]>(() => {
     this.dictionary();
-    return (['model', 'camera'] as const).map((s) => ({ id: s, label: this.transloco.translate('look.stageTab.' + s) }));
+    return (['model', 'camera', 'ai'] as const).map((s) => ({ id: s, label: this.transloco.translate('look.stageTab.' + s) }));
   });
   /** Lo que el motor sabe vestir (con recorte y anclas), en el orden de los huecos. */
   readonly wearable = computed(() => this.ordered().filter(canWear));
@@ -171,7 +185,7 @@ export class LookPage {
     return describeLook(this.ordered(), this.session.selectedBody(), (k, p) => this.transloco.translate(k, p));
   });
 
-  private readonly ordered = computed(() => [...this.chosen()].sort((a, b) => LOOK_SLOTS.indexOf(slotOf(a.category)) - LOOK_SLOTS.indexOf(slotOf(b.category))));
+  readonly ordered = computed(() => [...this.chosen()].sort((a, b) => LOOK_SLOTS.indexOf(slotOf(a.category)) - LOOK_SLOTS.indexOf(slotOf(b.category))));
 
   constructor() {
     void this.load();
@@ -215,6 +229,12 @@ export class LookPage {
     const slot = slotOf(g.category);
     const rest = this.chosen().filter((c) => slotOf(c.category) !== slot && !(g.category === 'dress' && slotOf(c.category) === 'bottom'));
     this.update(this.chosenIn(slot)?.id === g.id ? rest : [...rest, g]);
+  }
+
+  /** Abre la prueba con IA y la trae a la vista (desde el botón flotante). */
+  openAi() {
+    this.stage.set('ai');
+    document.getElementById('look-stage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   clearSlot(slot: LookSlot) {

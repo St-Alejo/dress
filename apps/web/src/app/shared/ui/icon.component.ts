@@ -28,6 +28,7 @@ export const ICONS = {
   look: 'M9 4l3 2 3-2 4 3-2 3h-2v10H9V10H7L5 7z',
   heart: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
   crosshair: 'M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 2v6M12 16v6M2 12h6M16 12h6',
+  sparkle: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z',
   'arrow-right': 'M5 12h14M13 6l6 6-6 6',
   'arrow-up-right': 'M7 17L17 7M9 7h8v8',
   'chevron-left': 'M15 6l-6 6 6 6',

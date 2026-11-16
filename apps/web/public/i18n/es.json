@@ -276,7 +276,7 @@
     "complexPattern": "Estampado complejo: el patrón puede no reproducirse con exactitud en la imagen generada.",
     "looseFit": "Prenda holgada: la IA puede representar la caída de forma aproximada.",
     "wideLeg": "Corte ancho: la IA prueba dos versiones y elige la que mejor respeta la pierna ancha.",
-    "openFront": "Abierta por delante: la versión con IA pondría piel en el escote, así que esta prenda se ve con la vista aproximada y la cámara."
+    "openFront": "Abierta por delante: en la versión con IA se muestra con una camiseta lisa debajo."
   },
   "fit": {
     "title": "¿Es mi talla?",
@@ -545,7 +545,8 @@
     "stage": "Vista del look",
     "stageTab": {
       "model": "En un modelo",
-      "camera": "En tu cámara"
+      "camera": "En tu cámara",
+      "ai": "Con IA"
     },
     "pieces": "Prendas del look",
     "slot": {
@@ -806,5 +807,26 @@
       "eyebrow": "{{n}} prendas con foto real",
       "title": "La tienda"
     }
+  },
+  "aiLook": {
+    "badge": "Generada con IA (ChatGPT)",
+    "resultAlt": "La persona con las prendas elegidas puestas (imagen generada con IA)",
+    "again": "Probar otra combinación",
+    "working": "La IA te está vistiendo con {{count}} prenda(s)…",
+    "workingHint": "Tarda entre 30 segundos y un minuto. Usa tu foto, tus medidas y la talla de cada prenda.",
+    "failed": "No se pudo generar la imagen. Prueba con otra foto o con menos prendas.",
+    "nothing": "Elige al menos una prenda del look para probártela con IA.",
+    "lead": "Marca qué quieres probarte: una prenda o el look entero. Cada una va en la talla que elijas o en la recomendada para tu perfil.",
+    "sizeRecommended": "Tu talla ({{size}})",
+    "sizeAuto": "Recomendada",
+    "tooMany": "La IA viste hasta {{max}} prendas a la vez; las demás se quedan fuera.",
+    "useProfile": "Mi foto del perfil (con mis medidas)",
+    "useModel": "El modelo elegido",
+    "profileHint": "Guarda tu foto y tus medidas en tu perfil para que el resultado se parezca más a ti.",
+    "generateAll": "Probarme todo el look con IA",
+    "generateSome": "Probarme {{count}} prenda(s) con IA",
+    "note": "La imagen la genera la IA de ChatGPT con tu foto, tus medidas y la talla de cada prenda. La foto se borra sola en 24 horas.",
+    "fab": "Probarme el look con IA ({{count}})",
+    "fabEmpty": "Probarme con IA"
   }
 }

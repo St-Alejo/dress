@@ -1,18 +1,16 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { AI_DRESSING_ORDER, aiCanWear, type GarmentItem, type TryOnSession } from '@vestirse/shared-types';
+import type { GarmentItem } from '@vestirse/shared-types';
 import { ApiService } from '../../core/api.service';
-import { AuthStore } from '../../core/auth.store';
 import { CartStore, defaultOutfit, toggleWorn } from '../../core/cart.store';
-import { NoticeStore } from '../../core/notice.store';
-import { ProfileStore } from '../../core/profile.store';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
 import { PricePipe } from '../../shared/price.pipe';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
+import { AiOutfitComponent } from '../ai-outfit/ai-outfit.component';
 import { ApproxViewComponent } from '../catalog/approx-view.component';
 import { BodyPickerComponent } from '../catalog/body-picker.component';
 import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
@@ -21,10 +19,7 @@ import { canOverlay } from '../live-overlay/overlay-geometry';
 import { LOOK_SLOTS, slotOf } from '../look/pairing';
 
 type Stage = 'model' | 'camera' | 'ai';
-type AiState = 'idle' | 'working' | 'done' | 'failed';
 
-const POLL_MS = 3000;
-const POLL_LIMIT_MS = 12 * 60_000;
 
 interface Line {
   index: number;
@@ -36,11 +31,11 @@ interface Line {
  * Carrito con probador: se puede comprar dos camisas, pero el probador viste una prenda por
  * zona (otra camisa sustituye a la anterior; un vestido ocupa camisa y pantalón). Tres vistas:
  * al instante sobre un modelo, en la cámara (no sale del dispositivo) y una versión realista con
- * IA, que viste la foto prenda por prenda (zapatos y accesorios solo en las vistas instantáneas).
+ * IA de imagen (app-ai-outfit) con las tallas elegidas aquí.
  */
 @Component({
   selector: 'app-cart-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent, AiOutfitComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     .stage {
@@ -97,77 +92,7 @@ interface Line {
                   }
                 }
                 @case ('ai') {
-                  <div class="space-y-4">
-                    @if (aiState() === 'done' && aiResult()) {
-                      <div class="stage relative h-[min(70vh,640px)] overflow-hidden">
-                        <img [src]="aiResult()" [alt]="'cart.ai.resultAlt' | transloco" class="absolute inset-0 h-full w-full object-contain" />
-                      </div>
-                      <div class="flex flex-wrap gap-3">
-                        @if (auth.user()) {
-                          @if (savedFavorite()) {
-                            <a routerLink="/favoritos" class="btn btn-primary"><ui-icon name="heart" [size]="16" /> {{ 'cart.ai.savedFavorite' | transloco }}</a>
-                          } @else {
-                            <button type="button" class="btn btn-primary" (click)="saveFavorite()" [disabled]="savingFavorite()">
-                              <ui-icon name="heart" [size]="16" /> {{ 'cart.ai.saveFavorite' | transloco }}
-                            </button>
-                          }
-                        }
-                        <button type="button" class="btn" (click)="resetAi()">{{ 'cart.ai.again' | transloco }}</button>
-                        <button type="button" class="btn" (click)="deleteAiPhoto()">{{ 'photo.delete' | transloco }}</button>
-                      </div>
-                    } @else if (aiState() === 'working') {
-                      <div class="border border-line p-8 text-center" role="status" aria-live="polite">
-                        <p class="text-[14px]">{{ 'cart.ai.working' | transloco: { step: aiStep(), total: aiGarments().length } }}</p>
-                        <p class="mt-2 text-[12px] text-muted">{{ 'cart.ai.workingHint' | transloco }}</p>
-                      </div>
-                    } @else {
-                      @if (aiState() === 'failed') {
-                        <p class="border border-line p-4 text-[13px]" role="alert">{{ 'cart.ai.failed' | transloco }}</p>
-                      }
-                      @if (aiGarments().length) {
-                        <p class="text-[13px] text-ink-2">{{ 'cart.ai.lead' | transloco: { count: aiGarments().length } }}</p>
-                        <ul class="flex flex-wrap gap-2 text-[12px]">
-                          @for (g of aiGarments(); track g.id) {
-                            <li class="border border-line px-2 py-1">{{ g.name }} · {{ sizeFor(g) }}</li>
-                          }
-                          @for (g of aiShoes(); track g.id) {
-                            <li class="border border-line px-2 py-1">{{ g.name }} · {{ sizeFor(g) }}</li>
-                          }
-                        </ul>
-                      } @else {
-                        <p class="border border-line p-6 text-center text-[13px] text-ink-2">{{ 'cart.ai.nothing' | transloco }}</p>
-                      }
-                      @if (aiGarments().length) {
-                        <p class="text-[12px] text-muted">{{ 'cart.ai.finishNote' | transloco }}</p>
-                      }
-                      @if (onlyInstant().length) {
-                        <p class="text-[12px] text-muted">{{ 'cart.ai.instantOnly' | transloco }}</p>
-                      }
-
-                      <fieldset class="space-y-3 border-t border-line pt-4" [disabled]="!aiGarments().length">
-                        <legend class="label-xs">{{ 'cart.ai.photo' | transloco }}</legend>
-                        @if (profile.photoUrl(); as url) {
-                          <label class="flex items-center gap-3 text-[13px]">
-                            <input type="radio" name="ai-photo" [checked]="photoSource() === 'profile'" (change)="photoSource.set('profile')" />
-                            <img [src]="url" alt="" class="h-16 w-12 bg-surface-2 object-cover" />
-                            {{ 'cart.ai.useProfile' | transloco }}
-                          </label>
-                        }
-                        <label class="flex flex-wrap items-center gap-3 text-[13px]">
-                          <input type="radio" name="ai-photo" [checked]="photoSource() === 'file'" (change)="photoSource.set('file')" />
-                          {{ 'cart.ai.useFile' | transloco }}
-                          <input type="file" accept="image/jpeg,image/png,image/webp" class="text-[12px]" (change)="pickFile($event)" />
-                        </label>
-                        @if (photoSource() === 'file') {
-                          <label class="flex items-start gap-2 text-[12px] text-ink-2">
-                            <input type="checkbox" class="mt-0.5" [checked]="ack()" (change)="ack.set(!ack())" />
-                            {{ 'cart.ai.privacy' | transloco }}
-                          </label>
-                        }
-                        <button type="button" class="btn btn-primary" [disabled]="!canGenerate()" (click)="generate()">{{ 'cart.ai.generate' | transloco }}</button>
-                      </fieldset>
-                    }
-                  </div>
+                  <app-ai-outfit [garments]="ordered()" [sizes]="cartSizes()" />
                 }
               }
             </div>
@@ -215,15 +140,10 @@ interface Line {
 })
 export class CartPage {
   private readonly api = inject(ApiService);
-  private readonly notices = inject(NoticeStore);
   private readonly transloco = inject(TranslocoService);
   private readonly dictionary = toSignal(this.transloco.selectTranslation());
   readonly cart = inject(CartStore);
   readonly session = inject(TryOnSessionStore);
-  readonly profile = inject(ProfileStore);
-  readonly auth = inject(AuthStore);
-  readonly savingFavorite = signal(false);
-  readonly savedFavorite = signal(false);
 
   readonly slotOf = slotOf;
   readonly catalog = signal<GarmentItem[]>([]);
@@ -232,15 +152,6 @@ export class CartPage {
   readonly stage = signal<Stage>('model');
   /** Lo que lleva puesto el probador (ids), una prenda por zona. */
   readonly wornIds = signal<string[] | null>(null);
-
-  readonly photoSource = signal<'profile' | 'file'>('file');
-  readonly file = signal<Blob | null>(null);
-  readonly ack = signal(false);
-  readonly aiState = signal<AiState>('idle');
-  readonly aiStep = signal(1);
-  readonly aiResult = signal<string | null>(null);
-  private aiSession: TryOnSession | null = null;
-  private stopPolling = false;
 
   readonly stageTabs = computed<TabItem<Stage>[]>(() => {
     this.dictionary();
@@ -263,18 +174,11 @@ export class CartPage {
     return ids.map((id) => garments.find((g) => g.id === id)).filter((g): g is GarmentItem => !!g);
   });
   /** Ordenado por zona (arriba, abajo, abrigo...) como en "Armar look". */
-  private readonly ordered = computed(() => [...this.worn()].sort((a, b) => LOOK_SLOTS.indexOf(slotOf(a.category)) - LOOK_SLOTS.indexOf(slotOf(b.category))));
+  readonly ordered = computed(() => [...this.worn()].sort((a, b) => LOOK_SLOTS.indexOf(slotOf(a.category)) - LOOK_SLOTS.indexOf(slotOf(b.category))));
   readonly dressable = computed(() => this.ordered().filter(canWear));
   readonly cameraGarment = computed(() => this.dressable().find(canOverlay) ?? null);
-  readonly aiGarments = computed(() =>
-    this.worn()
-      .filter(aiCanWear)
-      .sort((a, b) => AI_DRESSING_ORDER[a.category] - AI_DRESSING_ORDER[b.category]),
-  );
-  /** Los zapatos los pone el acabado con IA; los accesorios solo se ven en las vistas al instante. */
-  readonly aiShoes = computed(() => this.worn().filter((g) => g.category === 'footwear'));
-  readonly onlyInstant = computed(() => this.worn().filter((g) => !aiCanWear(g) && g.category !== 'footwear'));
-  readonly canGenerate = computed(() => this.aiGarments().length > 0 && (this.photoSource() === 'profile' ? !!this.profile.photoUrl() : !!this.file() && this.ack()));
+  /** Tallas elegidas en la bolsa, para la prueba con IA. */
+  readonly cartSizes = computed(() => Object.fromEntries(this.lines().filter((l) => l.size).map((l) => [l.garment.id, l.size!])));
   readonly wornSummary = computed(() => {
     this.dictionary();
     const names = this.ordered().map((g) => g.name);
@@ -283,13 +187,8 @@ export class CartPage {
 
   constructor() {
     void this.load();
-    // Con perfil y foto, la versión con IA parte de la foto del perfil.
-    effect(() => {
-      const url = this.profile.photoUrl();
-      untracked(() => this.photoSource.set(url ? 'profile' : 'file'));
-    });
-    inject(DestroyRef).onDestroy(() => (this.stopPolling = true));
   }
+
 
   async load() {
     this.loading.set(true);
@@ -321,92 +220,6 @@ export class CartPage {
     this.cart.setSize(index, (event.target as HTMLSelectElement).value);
   }
 
-  /** Talla para la IA: la elegida en el carrito o, si no hay, la del medio de la tabla. */
-  sizeFor(g: GarmentItem): string {
-    const chosen = this.lines().find((l) => l.garment.id === g.id && l.size)?.size;
-    return chosen ?? g.sizeChart[Math.floor(g.sizeChart.length / 2)]?.size ?? 'M';
-  }
-
-  pickFile(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
-    this.file.set(file);
-    if (file) this.photoSource.set('file');
-  }
-
-  async generate() {
-    const garments = this.aiGarments();
-    if (!this.canGenerate()) return;
-    this.aiState.set('working');
-    this.aiStep.set(1);
-    this.aiResult.set(null);
-    try {
-      const photo = this.photoSource() === 'profile' ? await this.profile.photoBlob() : this.file()!;
-      this.savedFavorite.set(false);
-      const outfit = [...garments, ...this.aiShoes()].map((g) => ({ garmentId: g.id, size: this.sizeFor(g) }));
-      const started = await this.api.startSession({ garmentId: garments[0].id, mode: 'photorealistic', outfit });
-      this.aiSession = await this.api.uploadPhoto(started.id, photo);
-      this.aiSession = await this.api.generate(started.id);
-      await this.poll(started.id, garments.length);
-    } catch (err) {
-      this.aiState.set('failed');
-      this.notices.error(err, 'errors.generate');
-    }
-  }
-
-  private async poll(id: string, steps: number) {
-    const deadline = Date.now() + POLL_LIMIT_MS;
-    const started = Date.now();
-    while (!this.stopPolling && Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, POLL_MS));
-      const s = await this.api.session(id).catch(() => null);
-      if (!s) continue;
-      this.aiSession = s;
-      // Avance aproximado: cada prenda tarda parecido en la GPU.
-      this.aiStep.set(Math.min(steps, 1 + Math.floor((Date.now() - started) / 50_000)));
-      if (s.generationStatus === 'done' && s.resultImageUrl) {
-        this.aiResult.set(s.resultImageUrl);
-        this.aiState.set('done');
-        return;
-      }
-      if (s.generationStatus === 'failed' || s.generationStatus === 'fallback') {
-        this.aiState.set('failed');
-        return;
-      }
-    }
-    if (!this.stopPolling) this.aiState.set('failed');
-  }
-
-  async saveFavorite() {
-    if (!this.aiSession) return;
-    this.savingFavorite.set(true);
-    try {
-      await this.api.saveFavorite({ sessionId: this.aiSession.id });
-      this.savedFavorite.set(true);
-    } catch (err) {
-      this.notices.error(err, 'errors.saveResult');
-    } finally {
-      this.savingFavorite.set(false);
-    }
-  }
-
-  resetAi() {
-    this.savedFavorite.set(false);
-    this.aiState.set('idle');
-    this.aiResult.set(null);
-  }
-
-  async deleteAiPhoto() {
-    const s = this.aiSession;
-    if (!s) return;
-    try {
-      await this.api.deletePhoto(s.id);
-      this.aiSession = null;
-      this.resetAi();
-      this.notices.success('photo.deleted');
-    } catch (err) {
-      this.notices.error(err, 'errors.deletePhoto');
-    }
-  }
 }
 
 function unique(garments: GarmentItem[]): GarmentItem[] {
