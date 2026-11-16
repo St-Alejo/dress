@@ -2,7 +2,7 @@
   "nav": {
     "skip": "Skip to content",
     "main": "Main navigation",
-    "catalog": "Catalog",
+    "catalog": "Shop",
     "compare": "Compare",
     "account": "My account",
     "signIn": "Sign in",
@@ -18,12 +18,20 @@
     "credits": "Photo credits",
     "look": "Build a look",
     "cart": "Bag",
-    "favorites": "My favorites"
+    "favorites": "My favorites",
+    "home": "Home",
+    "bag": "Bag",
+    "sound": "Interface sounds",
+    "soundOn": "Sound: on",
+    "soundOff": "Sound: off"
   },
   "footer": {
     "promise": "We never alter your silhouette. Your live camera never leaves your device.",
     "explore": "Explore",
-    "help": "Help"
+    "help": "Help",
+    "manifesto": "Virtual fitting room",
+    "settings": "Settings",
+    "madeWith": "Campaign made with AI · Garments in real photos"
   },
   "common": {
     "retry": "Try again",
@@ -674,6 +682,113 @@
       "large": "Size up",
       "oversize": "Oversize",
       "small": "Snug fit"
+    }
+  },
+  "intro": {
+    "studio": "Vestirse — Fitting studio",
+    "tagline": "Try it before you own it",
+    "skip": "Tap to enter"
+  },
+  "home": {
+    "play": "Play",
+    "pause": "Pause",
+    "shopAll": "Shop everything",
+    "cursor": {
+      "shop": "Shop",
+      "view": "View",
+      "try": "Try on",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "hero": {
+      "label": "Season campaign",
+      "season": "Fall campaign",
+      "tape": "Try it before you own it",
+      "cta": "Shop now",
+      "ctaLook": "Build a look",
+      "prev": "Previous",
+      "next": "Next",
+      "title": {
+        "motion": "Clothes that move with you",
+        "tailoring": "Every body, its own tailoring",
+        "stride": "Layers for the whole day"
+      },
+      "text": {
+        "motion": "Technical nylon, wide cargos and boots: see them on a body like yours before you buy.",
+        "tailoring": "Long coats and bombers in real sizes. Your size comes from your measurements, not a guess.",
+        "stride": "Trench coats, wide suits and hoodies: combine them in the fitting room and save your favorites."
+      },
+      "alt": {
+        "motion": "Model in a black technical jacket, cargo trousers and a grey scarf blowing in a grey studio",
+        "tailoring": "Two men back to back, one in a green bomber and one in a long grey coat",
+        "stride": "Three people walking in a cream trench coat, a black suit and a grey hoodie"
+      }
+    },
+    "collection": {
+      "eyebrow": "Season collection",
+      "title": "Just in"
+    },
+    "categories": {
+      "eyebrow": "Shop by zone",
+      "title": "Choose where to start"
+    },
+    "manifesto": {
+      "eyebrow": "How we try on",
+      "a": "Your body needs no fixing.",
+      "b": "Clothes get tried on",
+      "c": "and sizes get measured.",
+      "point": {
+        "one": {
+          "title": "No retouching",
+          "text": "We never slim or reshape your silhouette: the garment adapts to you, not the other way round."
+        },
+        "two": {
+          "title": "Honest sizing",
+          "text": "We recommend a size from your measurements and tell you how sure we are."
+        },
+        "three": {
+          "title": "Your photo is yours",
+          "text": "The live camera never leaves your device and your photos expire on their own."
+        }
+      }
+    },
+    "featured": {
+      "eyebrow": "Studio selection",
+      "title": "Featured",
+      "details": "View garment details"
+    },
+    "modes": {
+      "eyebrow": "Fitting room",
+      "title": "Three ways to try on",
+      "camera": {
+        "title": "Live",
+        "text": "With your camera: the garment follows your moves instantly."
+      },
+      "photo": {
+        "title": "With your photo",
+        "text": "Upload a full-body photo and see how it fits you."
+      },
+      "look": {
+        "title": "Build your look",
+        "text": "Combine top, bottom, jacket and shoes into one outfit."
+      }
+    },
+    "ai": {
+      "eyebrow": "AI fitting room",
+      "title": "From your photo to the full outfit",
+      "text": "The AI dresses you piece by piece, gives the fabric a real drape, puts the shoes on and shows whether the size fits snug or loose.",
+      "pick": "Choose an example",
+      "demo": {
+        "him": "Dinner with a blazer",
+        "her": "Party dress"
+      },
+      "before": "Before",
+      "after": "AI try-on",
+      "cta": "Try my outfit"
+    },
+    "store": {
+      "eyebrow": "{{n}} garments in real photos",
+      "title": "The shop"
     }
   }
 }

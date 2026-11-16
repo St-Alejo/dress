@@ -2,7 +2,7 @@
   "nav": {
     "skip": "Saltar al contenido",
     "main": "Navegación principal",
-    "catalog": "Catálogo",
+    "catalog": "Tienda",
     "compare": "Comparar",
     "account": "Mi cuenta",
     "signIn": "Entrar",
@@ -18,12 +18,20 @@
     "credits": "Créditos de fotos",
     "look": "Armar look",
     "cart": "Carrito",
-    "favorites": "Mis favoritos"
+    "favorites": "Mis favoritos",
+    "home": "Inicio",
+    "bag": "Bolsa",
+    "sound": "Sonidos de la interfaz",
+    "soundOn": "Sonido: activado",
+    "soundOff": "Sonido: desactivado"
   },
   "footer": {
     "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo.",
     "explore": "Explorar",
-    "help": "Ayuda"
+    "help": "Ayuda",
+    "manifesto": "Probador virtual",
+    "settings": "Ajustes",
+    "madeWith": "Campaña creada con IA · Prendas con foto real"
   },
   "common": {
     "retry": "Reintentar",
@@ -674,6 +682,113 @@
       "large": "Talla grande",
       "oversize": "Oversize",
       "small": "Talla justa"
+    }
+  },
+  "intro": {
+    "studio": "Vestirse — Estudio de prueba",
+    "tagline": "Pruébatelo antes de tenerlo",
+    "skip": "Toca para entrar"
+  },
+  "home": {
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "shopAll": "Ver toda la tienda",
+    "cursor": {
+      "shop": "Ver tienda",
+      "view": "Ver",
+      "try": "Probar",
+      "prev": "Anterior",
+      "next": "Siguiente"
+    },
+    "hero": {
+      "label": "Campaña de temporada",
+      "season": "Campaña otoño",
+      "tape": "Pruébatelo antes de tenerlo",
+      "cta": "Ver la tienda",
+      "ctaLook": "Armar un look",
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "title": {
+        "motion": "Ropa que se mueve contigo",
+        "tailoring": "Cada cuerpo, su sastrería",
+        "stride": "Capas para todo el día"
+      },
+      "text": {
+        "motion": "Nailon técnico, cargos anchos y botas: mírala puesta en un cuerpo como el tuyo antes de comprar.",
+        "tailoring": "Abrigos largos y bombers en tallas reales. La talla se calcula con tus medidas, no a ojo.",
+        "stride": "Gabardinas, trajes amplios y sudaderas: combínalos en el probador y guarda tus favoritos."
+      },
+      "alt": {
+        "motion": "Modelo con chaqueta técnica negra, pantalón cargo y bufanda gris al viento en un estudio gris",
+        "tailoring": "Dos hombres de espaldas, uno con bomber verde y otro con abrigo largo gris",
+        "stride": "Tres personas caminando con gabardina crema, traje negro y sudadera gris"
+      }
+    },
+    "collection": {
+      "eyebrow": "Colección de temporada",
+      "title": "Recién llegado"
+    },
+    "categories": {
+      "eyebrow": "Compra por zona",
+      "title": "Elige por dónde empezar"
+    },
+    "manifesto": {
+      "eyebrow": "Nuestra forma de probar",
+      "a": "Tu cuerpo no se corrige.",
+      "b": "La ropa se prueba",
+      "c": "y la talla se calcula.",
+      "point": {
+        "one": {
+          "title": "Sin retoques",
+          "text": "Nunca adelgazamos ni modificamos tu silueta: la prenda se adapta a ti, no al revés."
+        },
+        "two": {
+          "title": "Talla honesta",
+          "text": "Recomendamos la talla con tus medidas y te decimos qué tan seguros estamos."
+        },
+        "three": {
+          "title": "Tu foto es tuya",
+          "text": "La cámara en vivo no sale de tu dispositivo y tus fotos caducan solas."
+        }
+      }
+    },
+    "featured": {
+      "eyebrow": "Selección del estudio",
+      "title": "Destacado",
+      "details": "Ver detalles de la prenda"
+    },
+    "modes": {
+      "eyebrow": "Probador",
+      "title": "Tres formas de probarte",
+      "camera": {
+        "title": "En vivo",
+        "text": "Con tu cámara: la prenda sigue tus movimientos al instante."
+      },
+      "photo": {
+        "title": "Con tu foto",
+        "text": "Sube una foto de cuerpo entero y mira cómo te queda."
+      },
+      "look": {
+        "title": "Arma tu look",
+        "text": "Combina arriba, abajo, chaqueta y zapatos en un mismo conjunto."
+      }
+    },
+    "ai": {
+      "eyebrow": "Probador con IA",
+      "title": "De tu foto al conjunto completo",
+      "text": "La IA viste prenda por prenda, da a la tela caída real, te pone los zapatos y muestra si la talla te queda justa o holgada.",
+      "pick": "Elegir ejemplo",
+      "demo": {
+        "him": "Cena con blazer",
+        "her": "Vestido de fiesta"
+      },
+      "before": "Antes",
+      "after": "Prueba con IA",
+      "cta": "Probar mi conjunto"
+    },
+    "store": {
+      "eyebrow": "{{n}} prendas con foto real",
+      "title": "La tienda"
     }
   }
 }

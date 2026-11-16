@@ -27,6 +27,16 @@ export const ICONS = {
   bag: 'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2',
   look: 'M9 4l3 2 3-2 4 3-2 3h-2v10H9V10H7L5 7z',
   heart: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
+  crosshair: 'M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 2v6M12 16v6M2 12h6M16 12h6',
+  'arrow-right': 'M5 12h14M13 6l6 6-6 6',
+  'arrow-up-right': 'M7 17L17 7M9 7h8v8',
+  'chevron-left': 'M15 6l-6 6 6 6',
+  play: 'M7 5l12 7-12 7z',
+  pause: 'M8 5v14M16 5v14',
+  plus: 'M12 5v14M5 12h14',
+  minus: 'M5 12h14',
+  'sound-on': 'M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11',
+  'sound-off': 'M4 9h4l5-4v14l-5-4H4zM16 9l5 6M21 9l-5 6',
 } as const;
 
 export type IconName = keyof typeof ICONS;
