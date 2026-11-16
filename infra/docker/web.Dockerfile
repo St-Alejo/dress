@@ -11,7 +11,8 @@ RUN npm run build:packages && npm run build -w apps/web
 
 FROM nginx:1.29-alpine
 # La imagen oficial aplica envsubst a las plantillas al arrancar (PORT, API_UPSTREAM y el resolver DNS local).
-ENV PORT=80 API_UPSTREAM=api:3000 NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 NGINX_ENVSUBST_FILTER="^(PORT|API_UPSTREAM|NGINX_LOCAL_RESOLVERS)$"
+ENV PORT=80 API_UPSTREAM=api:3000 API_HOST='$host' NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 NGINX_RESOLVER_IPV6=off \
+    NGINX_ENVSUBST_FILTER="^(PORT|API_UPSTREAM|API_HOST|NGINX_LOCAL_RESOLVERS)$"
 COPY infra/docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/apps/web/dist/web/browser /usr/share/nginx/html
 EXPOSE 80
