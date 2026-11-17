@@ -94,7 +94,8 @@ import { NoticesComponent } from './shared/ui/notice.component';
       </div>
     </dialog>
 
-    <main id="main" tabindex="-1" class="outline-none">
+    <!-- min-h: mientras la ruta (diferida) carga, el pie queda bajo el pliegue y no salta (CLS) -->
+    <main id="main" tabindex="-1" class="outline-none min-h-svh">
       <router-outlet />
     </main>
 
