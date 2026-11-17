@@ -46,7 +46,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
           <a routerLink="/cuenta" routerLinkActive="is-active" class="nav-link link-line mr-4 hidden md:inline">
             {{ (auth.user() ? 'nav.account' : 'nav.signIn') | transloco }}
           </a>
-          <button type="button" class="nav-link hidden h-11 min-w-10 place-items-center sm:grid" (click)="toggleLocale()" [attr.aria-label]="'nav.language' | transloco">
+          <button type="button" class="nav-link hidden h-11 min-w-10 place-items-center sm:grid" (click)="toggleLocale()" [attr.aria-label]="(locale() === 'es' ? 'EN' : 'ES') + ' · ' + ('nav.language' | transloco)">
             {{ locale() === 'es' ? 'EN' : 'ES' }}
           </button>
           <button type="button" class="icon-btn hidden sm:grid" (click)="theme.cycle()" [attr.aria-label]="'nav.theme.' + theme.preference() | transloco">
@@ -59,7 +59,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
             <ui-icon name="heart" [size]="17" />
           </a>
           <a routerLink="/carrito" routerLinkActive="is-active" class="nav-link link-line ml-2 inline-flex h-11 items-center gap-1.5"
-            [attr.aria-label]="('nav.cart' | transloco) + (cart.count() ? ' (' + cart.count() + ')' : '')">
+            [attr.aria-label]="('nav.bag' | transloco) + ' ' + cart.count()">
             <span aria-hidden="true">{{ 'nav.bag' | transloco }}</span>
             <span class="count tabular" aria-hidden="true">{{ cart.count() }}</span>
           </a>
@@ -135,7 +135,7 @@ import { NoticesComponent } from './shared/ui/notice.component';
         <p class="display giant">Vestirse</p>
         <p class="display hidden pb-[0.6vw] text-[clamp(28px,6vw,96px)] md:block">©{{ year }}</p>
       </div>
-      <p class="mono mx-auto flex max-w-screen-2xl justify-between border-t border-white/10 px-4 py-4 text-night-ink/40 md:px-8">
+      <p class="mono mx-auto flex max-w-screen-2xl justify-between border-t border-white/10 px-4 py-4 text-night-ink/60 md:px-8">
         <span>© {{ year }} Vestirse</span><span>{{ 'footer.madeWith' | transloco }}</span>
       </p>
     </footer>
