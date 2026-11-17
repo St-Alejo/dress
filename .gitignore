@@ -13,3 +13,4 @@ apps/web/public/mediapipe/
 docs/imagenes/
 # Capturas con la foto de prueba de iStock: se quedan en local (no es de licencia libre)
 docs/capturas/04-camiseta-*.png
+.lighthouseci/
