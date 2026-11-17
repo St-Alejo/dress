@@ -26,7 +26,7 @@
     "soundOff": "Sound: off"
   },
   "footer": {
-    "promise": "We never alter your silhouette. Your live camera never leaves your device.",
+    "promise": "We never alter your silhouette. Your photos expire on their own.",
     "explore": "Explore",
     "help": "Help",
     "manifesto": "Virtual fitting room",
@@ -43,7 +43,7 @@
   },
   "catalog": {
     "title": "See clothes on a body like yours",
-    "lead": "Every garment shown with a real photo. Pick a model who looks like you, try the garment on with your photo or live, and find your size with an honest recommendation.",
+    "lead": "Every garment shown with a real photo. Pick a model who looks like you, try the garment on with your photo or with AI, and find your size with an honest recommendation.",
     "filters": "Catalog filters",
     "all": "All",
     "brand": "Brand",
@@ -233,11 +233,10 @@
     "resultNote": "AI-generated image: shows how it looks, not how it fits. Texture may not be exact.",
     "fallback": {
       "title": "We couldn't generate the image right now",
-      "body": "The service is slow or unavailable. Meanwhile, you can see the garment on a similar body or try it live.",
+      "body": "The service is slow or unavailable. Meanwhile, you can see the garment on a similar body.",
       "similar": "See on similar body",
-      "live": "Try it live",
       "quota": "The free engine has used up today's quota. Try again later; meanwhile you can see the garment on a model.",
-      "notConfigured": "AI try-on is not enabled on this server. You can see the garment on a similar body or try it live.",
+      "notConfigured": "AI try-on is not enabled on this server. You can see the garment on a similar body.",
       "contentPolicy": "The engine did not accept this photo. Try another full-body, front-facing, well-lit photo.",
       "busy": "The engine failed several times in a row. Wait a minute and try again.",
       "timeout": "The engines took too long to respond. You can retry in a moment."
@@ -428,10 +427,6 @@
       "title": "Similar body",
       "body": "We ask for nothing: no photo, no camera, no measurements. It's the default mode."
     },
-    "live": {
-      "title": "Live camera",
-      "body": "All processing happens in your browser. We only ask for video (never audio) and the camera turns off as soon as you leave. No image is sent to any server; the detection model is downloaded from our own site."
-    },
     "photo": {
       "title": "Your photo",
       "body": "Before uploading you can crop or blur your face, and we strip metadata (such as location). The photo and result delete themselves in {{hours}} hours unless you save the result to your account. You can delete it sooner whenever you want."
@@ -541,11 +536,10 @@
   },
   "look": {
     "title": "Build your look",
-    "lead": "Pick one garment per slot and see it on instantly, on a model similar to you or on your camera. Suggestions pair color and style with fixed rules; you decide.",
+    "lead": "Pick one garment per slot and see it on instantly on a model similar to you, or try the whole look on with AI. Suggestions pair color and style with fixed rules; you decide.",
     "stage": "Look preview",
     "stageTab": {
       "model": "On a model",
-      "camera": "On your camera",
       "ai": "With AI"
     },
     "pieces": "Garments in the look",
@@ -569,7 +563,6 @@
     "savedNotice": "Look saved in this browser.",
     "linkCopied": "Link copied.",
     "linkManual": "Couldn't copy: copy the address from the browser bar.",
-    "cameraEmpty": "Pick at least one garment with a cutout to see it on your camera.",
     "open": "Build a look with this garment",
     "goesWithTitle": "Goes with",
     "seeLook": "See the full look",
@@ -615,7 +608,7 @@
   },
   "profile": {
     "title": "My profile",
-    "lead": "Optional. Save your photo and measurements so size, camera and photo try-on adapt to you instantly.",
+    "lead": "Optional. Save your photo and measurements so size and photo try-on adapt to you instantly.",
     "photoAlt": "Your profile photo",
     "noPhoto": "No photo",
     "addPhoto": "Add photo",
@@ -659,7 +652,6 @@
     "already": "It is already in your bag in that size.",
     "stage": {
       "model": "On a model",
-      "camera": "On your camera",
       "ai": "Realistic with AI"
     },
     "ai": {
@@ -765,7 +757,7 @@
         },
         "three": {
           "title": "Your photo is yours",
-          "text": "The live camera never leaves your device and your photos expire on their own."
+          "text": "Your photos expire on their own and are never used for anything but your try-on."
         }
       }
     },
@@ -777,9 +769,9 @@
     "modes": {
       "eyebrow": "Fitting room",
       "title": "Three ways to try on",
-      "camera": {
-        "title": "Live",
-        "text": "With your camera: the garment follows your moves instantly."
+      "model": {
+        "title": "On a model",
+        "text": "See the garment on instantly on a model similar to you."
       },
       "photo": {
         "title": "With your photo",

@@ -25,7 +25,7 @@ import { ApiService } from '../../core/api.service';
 })
 export class PrivacyPage {
   readonly ttl = signal(24);
-  readonly sections = ['similar', 'live', 'photo', 'measurements', 'training', 'deletion', 'body'];
+  readonly sections = ['similar', 'photo', 'measurements', 'training', 'deletion', 'body'];
 
   constructor() {
     void inject(ApiService)

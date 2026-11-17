@@ -13,12 +13,10 @@ import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 import { AiOutfitComponent } from '../ai-outfit/ai-outfit.component';
 import { ApproxViewComponent } from '../catalog/approx-view.component';
 import { BodyPickerComponent } from '../catalog/body-picker.component';
-import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
 import { canWear } from '../live-overlay/engine/tryon-scene';
-import { canOverlay } from '../live-overlay/overlay-geometry';
 import { LOOK_SLOTS, slotOf } from '../look/pairing';
 
-type Stage = 'model' | 'camera' | 'ai';
+type Stage = 'model' | 'ai';
 
 
 interface Line {
@@ -35,7 +33,7 @@ interface Line {
  */
 @Component({
   selector: 'app-cart-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent, AiOutfitComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, AiOutfitComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     .stage {
@@ -83,13 +81,6 @@ interface Line {
                     }
                   </div>
                   <div class="mt-4"><app-body-picker /></div>
-                }
-                @case ('camera') {
-                  @if (cameraGarment(); as g) {
-                    <app-live-tryon [garment]="g" [outfit]="dressable()" [realistic]="false" [sizePicker]="false" />
-                  } @else {
-                    <p class="border border-line p-8 text-center text-[13px] text-ink-2">{{ 'look.cameraEmpty' | transloco }}</p>
-                  }
                 }
                 @case ('ai') {
                   <app-ai-outfit [garments]="ordered()" [sizes]="cartSizes()" />
@@ -155,7 +146,7 @@ export class CartPage {
 
   readonly stageTabs = computed<TabItem<Stage>[]>(() => {
     this.dictionary();
-    return (['model', 'camera', 'ai'] as const).map((s) => ({ id: s, label: this.transloco.translate('cart.stage.' + s) }));
+    return (['model', 'ai'] as const).map((s) => ({ id: s, label: this.transloco.translate('cart.stage.' + s) }));
   });
 
   readonly lines = computed<Line[]>(() => {
@@ -176,7 +167,6 @@ export class CartPage {
   /** Ordenado por zona (arriba, abajo, abrigo...) como en "Armar look". */
   readonly ordered = computed(() => [...this.worn()].sort((a, b) => LOOK_SLOTS.indexOf(slotOf(a.category)) - LOOK_SLOTS.indexOf(slotOf(b.category))));
   readonly dressable = computed(() => this.ordered().filter(canWear));
-  readonly cameraGarment = computed(() => this.dressable().find(canOverlay) ?? null);
   /** Tallas elegidas en la bolsa, para la prueba con IA. */
   readonly cartSizes = computed(() => Object.fromEntries(this.lines().filter((l) => l.size).map((l) => [l.garment.id, l.size!])));
   readonly wornSummary = computed(() => {

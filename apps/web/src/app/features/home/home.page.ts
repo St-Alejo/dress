@@ -22,7 +22,7 @@ const CATEGORY_TILES: Tile[] = [
 ];
 
 const MODES = [
-  { key: 'camera', image: 'campaign/probador.webp', link: '/tienda' },
+  { key: 'model', image: 'campaign/probador.webp', link: '/tienda' },
   { key: 'photo', image: 'campaign/hero-2-sm.webp', link: '/tienda' },
   { key: 'look', image: 'campaign/look.webp', link: '/look' },
 ] as const;

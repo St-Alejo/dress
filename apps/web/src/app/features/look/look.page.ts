@@ -14,14 +14,12 @@ import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 import { AiOutfitComponent } from '../ai-outfit/ai-outfit.component';
 import { ApproxViewComponent } from '../catalog/approx-view.component';
 import { BodyPickerComponent } from '../catalog/body-picker.component';
-import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
-import { canOverlay } from '../live-overlay/overlay-geometry';
 import { canWear } from '../live-overlay/engine/tryon-scene';
 import { LOOK_SLOTS, type LookSlot, slotOf, suggestionsFor } from './pairing';
 import { describeLook } from './look-description';
 import { SavedLooksComponent } from './saved-looks.component';
 
-type Stage = 'model' | 'camera' | 'ai';
+type Stage = 'model' | 'ai';
 
 /**
  * Armar un look: una prenda por hueco (arriba, abajo, abrigo, calzado, accesorio), vista al
@@ -30,7 +28,7 @@ type Stage = 'model' | 'camera' | 'ai';
  */
 @Component({
   selector: 'app-look-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, LiveTryOnComponent, SavedLooksComponent, AiOutfitComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, SavedLooksComponent, AiOutfitComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-8">
@@ -67,14 +65,8 @@ type Stage = 'model' | 'camera' | 'ai';
                 </div>
                 <p class="mt-2 text-[12px] text-muted" aria-live="polite">{{ description() }}</p>
                 <div class="mt-4"><app-body-picker /></div>
-              } @else if (stage() === 'ai') {
-                <app-ai-outfit [garments]="ordered()" />
               } @else {
-                @if (cameraGarment(); as g) {
-                  <app-live-tryon [garment]="g" [outfit]="wearable()" [realistic]="false" [sizePicker]="false" />
-                } @else {
-                  <p class="border border-line p-8 text-center text-[13px] text-ink-2">{{ 'look.cameraEmpty' | transloco }}</p>
-                }
+                <app-ai-outfit [garments]="ordered()" />
               }
             </div>
           </section>
@@ -169,11 +161,10 @@ export class LookPage {
 
   readonly stageTabs = computed<TabItem<Stage>[]>(() => {
     this.dictionary();
-    return (['model', 'camera', 'ai'] as const).map((s) => ({ id: s, label: this.transloco.translate('look.stageTab.' + s) }));
+    return (['model', 'ai'] as const).map((s) => ({ id: s, label: this.transloco.translate('look.stageTab.' + s) }));
   });
   /** Lo que el motor sabe vestir (con recorte y anclas), en el orden de los huecos. */
   readonly wearable = computed(() => this.ordered().filter(canWear));
-  readonly cameraGarment = computed(() => this.wearable().find(canOverlay) ?? null);
   readonly suggestions = computed(() => {
     const chosen = this.chosen();
     const catalog = this.catalog();

@@ -99,9 +99,6 @@ const EXPECTED_SECONDS = 35;
             <p class="text-sm text-ink-2">{{ copy.body | transloco }}</p>
             <div class="flex flex-wrap gap-2">
               <button type="button" class="btn" (click)="fallbackTo.emit('similar-model')">{{ 'photo.fallback.similar' | transloco }}</button>
-              @if (liveAvailable()) {
-                <button type="button" class="btn" (click)="fallbackTo.emit('live-overlay')">{{ 'photo.fallback.live' | transloco }}</button>
-              }
               @if (copy.canRetry) {
                 <button type="button" class="btn btn-ghost" (click)="generate()">{{ 'common.retry' | transloco }}</button>
               }

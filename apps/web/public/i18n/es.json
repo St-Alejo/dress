@@ -26,7 +26,7 @@
     "soundOff": "Sonido: desactivado"
   },
   "footer": {
-    "promise": "Nunca modificamos tu silueta. Tu cámara en vivo no sale de tu dispositivo.",
+    "promise": "Nunca modificamos tu silueta. Tus fotos caducan solas.",
     "explore": "Explorar",
     "help": "Ayuda",
     "manifesto": "Probador virtual",
@@ -43,7 +43,7 @@
   },
   "catalog": {
     "title": "Mira la ropa en un cuerpo como el tuyo",
-    "lead": "Todas las prendas con foto real. Elige un modelo parecido a ti, pruébate la prenda con tu foto o en vivo y encuentra tu talla con una recomendación honesta.",
+    "lead": "Todas las prendas con foto real. Elige un modelo parecido a ti, pruébate la prenda con tu foto o con IA y encuentra tu talla con una recomendación honesta.",
     "filters": "Filtros del catálogo",
     "all": "Todo",
     "brand": "Marca",
@@ -233,11 +233,10 @@
     "resultNote": "Imagen generada por IA: muestra cómo se ve, no cómo ajusta. La textura puede no ser exacta.",
     "fallback": {
       "title": "No pudimos generar la imagen ahora",
-      "body": "El servicio está lento o no disponible. Mientras tanto, puedes ver la prenda en un cuerpo similar o probártela en vivo.",
+      "body": "El servicio está lento o no disponible. Mientras tanto, puedes ver la prenda en un cuerpo similar.",
       "similar": "Ver en cuerpo similar",
-      "live": "Probar en vivo",
       "quota": "El motor gratuito agotó su cupo de hoy. Vuelve a intentarlo más tarde; mientras tanto puedes ver la prenda sobre un modelo.",
-      "notConfigured": "La prueba con IA no está activada en este servidor. Puedes ver la prenda en un cuerpo similar o probártela en vivo.",
+      "notConfigured": "La prueba con IA no está activada en este servidor. Puedes ver la prenda en un cuerpo similar.",
       "contentPolicy": "El motor no aceptó esta foto. Prueba con otra foto de cuerpo entero, de frente y con buena luz.",
       "busy": "El motor falló varias veces seguidas. Espera un minuto y vuelve a intentarlo.",
       "timeout": "Los motores tardaron demasiado en responder. Puedes reintentar en un momento."
@@ -428,10 +427,6 @@
       "title": "Cuerpo similar",
       "body": "No pedimos nada: ni foto, ni cámara, ni medidas. Es el modo por defecto."
     },
-    "live": {
-      "title": "Cámara en vivo",
-      "body": "Todo el procesamiento ocurre en tu navegador. Solo pedimos video (nunca audio) y la cámara se apaga en cuanto sales. Ninguna imagen se envía a ningún servidor; el modelo de detección se descarga de nuestro propio sitio."
-    },
     "photo": {
       "title": "Tu foto",
       "body": "Antes de subirla puedes recortar o difuminar tu rostro, y quitamos los metadatos (como la ubicación). La foto y el resultado se borran solos en {{hours}} horas, salvo que guardes el resultado en tu cuenta. Puedes borrarla antes cuando quieras."
@@ -541,11 +536,10 @@
   },
   "look": {
     "title": "Arma tu look",
-    "lead": "Elige una prenda por hueco y mírala puesta al instante en un modelo parecido a ti o en tu cámara. Las sugerencias combinan color y estilo con reglas fijas; tú decides.",
+    "lead": "Elige una prenda por hueco y mírala puesta al instante en un modelo parecido a ti, o pruébate el look entero con IA. Las sugerencias combinan color y estilo con reglas fijas; tú decides.",
     "stage": "Vista del look",
     "stageTab": {
       "model": "En un modelo",
-      "camera": "En tu cámara",
       "ai": "Con IA"
     },
     "pieces": "Prendas del look",
@@ -569,7 +563,6 @@
     "savedNotice": "Look guardado en este navegador.",
     "linkCopied": "Enlace copiado.",
     "linkManual": "No se pudo copiar: copia la dirección de la barra del navegador.",
-    "cameraEmpty": "Elige al menos una prenda con recorte para verla en tu cámara.",
     "open": "Armar un look con esta prenda",
     "goesWithTitle": "Combina con",
     "seeLook": "Ver el look completo",
@@ -615,7 +608,7 @@
   },
   "profile": {
     "title": "Mi perfil",
-    "lead": "Opcional. Guarda tu foto y tus medidas para que la talla, la cámara y la prueba con foto se ajusten a ti al instante.",
+    "lead": "Opcional. Guarda tu foto y tus medidas para que la talla y la prueba con foto se ajusten a ti al instante.",
     "photoAlt": "Foto de tu perfil",
     "noPhoto": "Sin foto",
     "addPhoto": "Añadir foto",
@@ -659,7 +652,6 @@
     "already": "Ya está en tu carrito con esa talla.",
     "stage": {
       "model": "En un modelo",
-      "camera": "En tu cámara",
       "ai": "Realista con IA"
     },
     "ai": {
@@ -765,7 +757,7 @@
         },
         "three": {
           "title": "Tu foto es tuya",
-          "text": "La cámara en vivo no sale de tu dispositivo y tus fotos caducan solas."
+          "text": "Tus fotos caducan solas y nunca se usan para nada más que tu prueba."
         }
       }
     },
@@ -777,9 +769,9 @@
     "modes": {
       "eyebrow": "Probador",
       "title": "Tres formas de probarte",
-      "camera": {
-        "title": "En vivo",
-        "text": "Con tu cámara: la prenda sigue tus movimientos al instante."
+      "model": {
+        "title": "En un modelo",
+        "text": "Mira la prenda puesta al instante en un modelo parecido a ti."
       },
       "photo": {
         "title": "Con tu foto",

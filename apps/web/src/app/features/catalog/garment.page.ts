@@ -3,11 +3,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import type { PoseRatios, TryOnMode } from '@vestirse/shared-types';
+import type { TryOnMode } from '@vestirse/shared-types';
 import { CartStore } from '../../core/cart.store';
 import { ComparisonStore } from '../../core/comparison/comparison.store';
 import { NoticeStore } from '../../core/notice.store';
-import { canvasToBlob } from '../../core/frame-export';
 import { TryOnSessionStore } from '../../core/tryon-session.store';
 import { SoundService } from '../../core/sound';
 import { RevealDirective } from '../../shared/motion/reveal.directive';
@@ -16,11 +15,9 @@ import { IconComponent } from '../../shared/ui/icon.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { TabsComponent, type TabItem } from '../../shared/ui/tabs.component';
 import { FitPanelComponent } from '../fit-engine/fit-panel.component';
-import { LiveTryOnComponent } from '../live-overlay/live-tryon.component';
 import type { Fit } from '../live-overlay/engine/rig';
 import { fitForSize } from '../live-overlay/engine/size-fit';
 import { canWear } from '../live-overlay/engine/tryon-scene';
-import { canOverlay } from '../live-overlay/overlay-geometry';
 import { PhotoTryOnComponent } from '../photo-upload/photo-tryon.component';
 import { ReviewsPanelComponent } from '../reviews/reviews-panel.component';
 import { ApproxViewComponent } from './approx-view.component';
@@ -35,7 +32,7 @@ import { describeLook } from '../look/look-description';
  */
 @Component({
   selector: 'app-garment-page',
-  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, RevealDirective, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, FitPanelComponent, GarmentGalleryComponent, PairsWithComponent, LiveTryOnComponent, PhotoTryOnComponent, ReviewsPanelComponent],
+  imports: [RouterLink, TranslocoPipe, PricePipe, IconComponent, RevealDirective, SkeletonComponent, TabsComponent, ApproxViewComponent, BodyPickerComponent, FitPanelComponent, GarmentGalleryComponent, PairsWithComponent, PhotoTryOnComponent, ReviewsPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     /* Mismo fondo que el lienzo de las fotos de catálogo: la foto no se ve "pegada". */
@@ -156,9 +153,6 @@ import { describeLook } from '../look/look-description';
                     <app-body-picker />
                   </div>
                 }
-                @case ('live-overlay') {
-                  <app-live-tryon [garment]="g" [recommendedSize]="store.chosenSize() ?? undefined" [realistic]="store.wearable()" (poseRatios)="onPoseRatios($event)" (realisticFrame)="onRealisticFrame($event)" [measure]="true" [measuring]="store.measuring()" (measureFrame)="onMeasureFrame($event)" />
-                }
                 @case ('photorealistic') {
                   <app-photo-tryon (fallbackTo)="setMode($event)" />
                 }
@@ -235,7 +229,8 @@ export class GarmentPage {
   readonly cart = inject(CartStore);
   private readonly notices = inject(NoticeStore);
   private readonly sound = inject(SoundService);
-  readonly modes: TryOnMode[] = ['similar-model', 'live-overlay', 'photorealistic'];
+  /** La cámara en vivo no se ofrece: su ajuste aún no es fiable para enseñarlo. */
+  readonly modes: TryOnMode[] = ['similar-model', 'photorealistic'];
 
   private readonly transloco = inject(TranslocoService);
   /** Emite cuando el diccionario del idioma activo está cargado (también al cambiar de idioma). */
@@ -245,7 +240,6 @@ export class GarmentPage {
     const g = this.store.garment();
     if (!g) return ['similar-model'];
     return this.modes.filter((m) => {
-      if (m === 'live-overlay') return canOverlay(g);
       if (m === 'photorealistic') return this.store.wearable();
       return true;
     });
@@ -311,28 +305,6 @@ export class GarmentPage {
 
   setMode(m: TryOnMode) {
     void this.store.setMode(m);
-  }
-
-  onPoseRatios(r: PoseRatios) {
-    this.store.poseRatios.set(r);
-  }
-
-  /** «Foto realista» desde la cámara: pasa al modo con foto, que pide consentimiento antes de subir nada. */
-  async onRealisticFrame(frame: HTMLCanvasElement) {
-    const blob = await canvasToBlob(frame);
-    if (!blob) return;
-    this.store.cameraFrame.set(blob);
-    this.setMode('photorealistic');
-  }
-
-  /** «Medirme con IA» desde la cámara: un solo fotograma, enviado una vez y no guardado. */
-  async onMeasureFrame(frame: HTMLCanvasElement) {
-    const blob = await canvasToBlob(frame);
-    if (!blob) return;
-    const result = await this.store.measureWithAi({ photo: blob });
-    if (result === 'need-height') this.notices.info('measure.needHeight');
-    else if (result?.usable) this.notices.success('measure.done');
-    else if (result) this.notices.info('measure.unusable');
   }
 
   addToCart() {
